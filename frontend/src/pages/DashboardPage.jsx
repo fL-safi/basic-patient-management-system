@@ -8,6 +8,43 @@ const DashboardPage = () => {
 	const handleLogout = () => {
 		logout();
 	};
+
+	const getRoleColor = (role) => {
+		switch (role) {
+			case 'admin':
+				return 'text-red-400';
+			case 'operator':
+				return 'text-blue-400';
+			case 'patient':
+				return 'text-green-400';
+			default:
+				return 'text-gray-400';
+		}
+	};
+
+	const getRoleBadgeColor = (role) => {
+		switch (role) {
+			case 'admin':
+				return 'bg-red-500 bg-opacity-20 border-red-500';
+			case 'operator':
+				return 'bg-blue-500 bg-opacity-20 border-blue-500';
+			case 'patient':
+				return 'bg-green-500 bg-opacity-20 border-green-500';
+			default:
+				return 'bg-gray-500 bg-opacity-20 border-gray-500';
+		}
+	};
+
+	const maskCNIC = (cnic) => {
+		if (!cnic) return '';
+		// Show only first 5 and last 1 digit, mask the middle part
+		const parts = cnic.split('-');
+		if (parts.length === 3) {
+			return `${parts[0]}-*******-${parts[2]}`;
+		}
+		return cnic;
+	};
+
 	return (
 		<motion.div
 			initial={{ opacity: 0, scale: 0.9 }}
@@ -30,6 +67,17 @@ const DashboardPage = () => {
 					<h3 className='text-xl font-semibold text-gray-400 mb-3'>Profile Information</h3>
 					<p className='text-gray-300'>Name: {user.name}</p>
 					<p className='text-gray-300'>Email: {user.email}</p>
+					<p className='text-gray-300'>CNIC: {user.cnic}</p>
+					<div className='flex items-center mt-2'>
+						<span className='text-gray-300 mr-2'>Role:</span>
+						<span
+							className={`px-2 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
+								user.role
+							)} ${getRoleColor(user.role)}`}
+						>
+							{user.role?.charAt(0).toUpperCase() + user.role?.slice(1)}
+						</span>
+					</div>
 				</motion.div>
 				<motion.div
 					className='p-4 bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700'
@@ -48,7 +96,6 @@ const DashboardPage = () => {
 					</p>
 					<p className='text-gray-300'>
 						<span className='font-bold'>Last Login: </span>
-
 						{formatDate(user.lastLogin)}
 					</p>
 				</motion.div>

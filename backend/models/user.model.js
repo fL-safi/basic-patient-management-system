@@ -15,6 +15,24 @@ const userSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
+		cnic: {
+			type: String,
+			required: true,
+			unique: true,
+			validate: {
+				validator: function(v) {
+					// CNIC format: 12345-1234567-1 (13 digits with dashes)
+					return /^\d{5}-\d{7}-\d{1}$/.test(v);
+				},
+				message: 'CNIC must be in format: 12345-1234567-1'
+			}
+		},
+		role: {
+			type: String,
+			enum: ["patient", "admin", "operator"],
+			default: "patient",
+			required: true,
+		},
 		lastLogin: {
 			type: Date,
 			default: Date.now,
