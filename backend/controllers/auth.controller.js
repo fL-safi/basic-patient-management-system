@@ -11,18 +11,36 @@ import {
 import { User } from "../models/user.model.js";
 
 export const signup = async (req, res) => {
-	const { email, password, name } = req.body;
+	const { email, password, name, role, cnic } = req.body;
 
 	try {
-		if (!email || !password || !name) {
+		if (!email || !password || !name || !cnic) {
 			throw new Error("All fields are required");
 		}
 
-		const userAlreadyExists = await User.findOne({ email });
-		console.log("userAlreadyExists", userAlreadyExists);
+		// Validate role
+		const validRoles = ["patient", "admin", "operator"];
+		if (role && !validRoles.includes(role)) {
+			throw new Error("Invalid role specified");
+		}
+
+		// Validate CNIC format
+		const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+		if (!cnicRegex.test(cnic)) {
+			throw new Error("CNIC must be in format: 12345-1234567-1");
+		}
+
+		const userAlreadyExists = await User.findOne({ 
+			$or: [{ email }, { cnic }] 
+		});
 
 		if (userAlreadyExists) {
-			return res.status(400).json({ success: false, message: "User already exists" });
+			if (userAlreadyExists.email === email) {
+				return res.status(400).json({ success: false, message: "User with this email already exists" });
+			}
+			if (userAlreadyExists.cnic === cnic) {
+				return res.status(400).json({ success: false, message: "User with this CNIC already exists" });
+			}
 		}
 
 		const hashedPassword = await bcryptjs.hash(password, 10);
@@ -32,6 +50,8 @@ export const signup = async (req, res) => {
 			email,
 			password: hashedPassword,
 			name,
+			cnic,
+			role: role || "patient", // Default to patient if no role specified
 			verificationToken,
 			verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
 		});
