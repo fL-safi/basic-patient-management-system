@@ -1,13 +1,11 @@
 import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
+import { useTheme } from "../hooks/useTheme";
 import { formatDate } from "../utils/date";
 
 const DashboardPage = () => {
-	const { user, logout } = useAuthStore();
-
-	const handleLogout = () => {
-		logout();
-	};
+	const { user } = useAuthStore();
+	const { theme } = useTheme();
 
 	const getRoleColor = (role) => {
 		switch (role) {
@@ -18,7 +16,7 @@ const DashboardPage = () => {
 			case 'patient':
 				return 'text-green-400';
 			default:
-				return 'text-gray-400';
+				return theme.textMuted.replace('text-', 'text-');
 		}
 	};
 
@@ -35,41 +33,31 @@ const DashboardPage = () => {
 		}
 	};
 
-	const maskCNIC = (cnic) => {
-		if (!cnic) return '';
-		// Show only first 5 and last 1 digit, mask the middle part
-		const parts = cnic.split('-');
-		if (parts.length === 3) {
-			return `${parts[0]}-*******-${parts[2]}`;
-		}
-		return cnic;
-	};
-
 	return (
 		<motion.div
 			initial={{ opacity: 0, scale: 0.9 }}
 			animate={{ opacity: 1, scale: 1 }}
 			exit={{ opacity: 0, scale: 0.9 }}
 			transition={{ duration: 0.5 }}
-			className='max-w-md w-full mx-auto mt-10 p-8 bg-gray-900 bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-xl shadow-2xl border border-gray-800'
+			className={`max-w-md w-full mx-auto mt-10 p-8 ${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl shadow-2xl ${theme.border} border`}
 		>
-			<h2 className='text-3xl font-bold mb-6 text-center bg-gradient-to-r from-gray-400 to-emerald-600 text-transparent bg-clip-text'>
+			<h2 className={`text-3xl font-bold mb-6 text-center bg-gradient-to-r ${theme.gradient} text-transparent bg-clip-text`}>
 				Dashboard
 			</h2>
 
 			<div className='space-y-6'>
 				<motion.div
-					className='p-4 bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700'
+					className={`p-4 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} border`}
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.2 }}
 				>
-					<h3 className='text-xl font-semibold text-gray-400 mb-3'>Profile Information</h3>
-					<p className='text-gray-300'>Name: {user.name}</p>
-					<p className='text-gray-300'>Email: {user.email}</p>
-					<p className='text-gray-300'>CNIC: {user.cnic}</p>
+					<h3 className={`text-xl font-semibold ${theme.textMuted} mb-3`}>Profile Information</h3>
+					<p className={theme.textSecondary}>Name: {user.name}</p>
+					<p className={theme.textSecondary}>Email: {user.email}</p>
+					<p className={theme.textSecondary}>CNIC: {user.cnic}</p>
 					<div className='flex items-center mt-2'>
-						<span className='text-gray-300 mr-2'>Role:</span>
+						<span className={`${theme.textSecondary} mr-2`}>Role:</span>
 						<span
 							className={`px-2 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
 								user.role
@@ -80,13 +68,13 @@ const DashboardPage = () => {
 					</div>
 				</motion.div>
 				<motion.div
-					className='p-4 bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700'
+					className={`p-4 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} border`}
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.4 }}
 				>
-					<h3 className='text-xl font-semibold text-gray-400 mb-3'>Account Activity</h3>
-					<p className='text-gray-300'>
+					<h3 className={`text-xl font-semibold ${theme.textMuted} mb-3`}>Account Activity</h3>
+					<p className={theme.textSecondary}>
 						<span className='font-bold'>Joined: </span>
 						{new Date(user.createdAt).toLocaleDateString("en-US", {
 							year: "numeric",
@@ -94,30 +82,12 @@ const DashboardPage = () => {
 							day: "numeric",
 						})}
 					</p>
-					<p className='text-gray-300'>
+					<p className={theme.textSecondary}>
 						<span className='font-bold'>Last Login: </span>
 						{formatDate(user.lastLogin)}
 					</p>
 				</motion.div>
 			</div>
-
-			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
-				transition={{ delay: 0.6 }}
-				className='mt-4'
-			>
-				<motion.button
-					whileHover={{ scale: 1.05 }}
-					whileTap={{ scale: 0.95 }}
-					onClick={handleLogout}
-					className='w-full py-3 px-4 bg-gradient-to-r from-gray-500 to-emerald-600 text-white 
-				font-bold rounded-lg shadow-lg hover:from-gray-600 hover:to-emerald-700
-				 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900'
-				>
-					Logout
-				</motion.button>
-			</motion.div>
 		</motion.div>
 	);
 };
