@@ -13,7 +13,7 @@ const SignUpPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [cnic, setCnic] = useState("");
-  const [role, setRole] = useState("patient");
+  const [role, setRole] = useState("doctor");
   const navigate = useNavigate();
 
   const { signup, error, isLoading } = useAuthStore();
@@ -73,8 +73,11 @@ const SignUpPage = () => {
               onChange={(e) => setRole(e.target.value)}
               className={`w-full pl-10 pr-3 py-2 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
             >
-              <option value="patient" className={theme.input}>
-                Patient
+              <option value="doctor" className={theme.input}>
+                Doctor
+              </option>
+              <option value="pharmacist" className={theme.input}>
+                Pharmacist
               </option>
               <option value="admin" className={theme.input}>
                 Admin

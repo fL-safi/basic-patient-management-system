@@ -19,7 +19,7 @@ export const signup = async (req, res) => {
 		}
 
 		// Validate role
-		const validRoles = ["patient", "admin", "operator"];
+		const validRoles = ["doctor", "pharmacist", "admin", "operator"];
 		if (role && !validRoles.includes(role)) {
 			throw new Error("Invalid role specified");
 		}
@@ -51,7 +51,7 @@ export const signup = async (req, res) => {
 			password: hashedPassword,
 			name,
 			cnic,
-			role: role || "patient", // Default to patient if no role specified
+			role: role || "doctor", // Default to doctor if no role specified
 			verificationToken,
 			verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
 		});
