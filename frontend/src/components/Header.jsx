@@ -27,7 +27,7 @@ const Header = () => {
               whileHover={{ scale: 1.05 }}
               className={`text-2xl font-bold bg-gradient-to-r ${theme.gradient} text-transparent bg-clip-text cursor-pointer`}
             >
-              MedApp
+              Healthway
             </motion.h1>
           </div>
 
