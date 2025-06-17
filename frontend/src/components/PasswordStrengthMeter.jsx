@@ -1,6 +1,9 @@
 import { Check, X } from "lucide-react";
+import { useTheme } from '../hooks/useTheme';
 
 const PasswordCriteria = ({ password }) => {
+	const { theme } = useTheme();
+	
 	const criteria = [
 		{ label: "At least 6 characters", met: password.length >= 6 },
 		{ label: "Contains uppercase letter", met: /[A-Z]/.test(password) },
@@ -16,9 +19,9 @@ const PasswordCriteria = ({ password }) => {
 					{item.met ? (
 						<Check className='size-4 text-green-500 mr-2' />
 					) : (
-						<X className='size-4 text-gray-500 mr-2' />
+						<X className={`size-4 ${theme.textMuted} mr-2`} />
 					)}
-					<span className={item.met ? "text-green-500" : "text-gray-400"}>{item.label}</span>
+					<span className={item.met ? "text-green-500" : theme.textMuted}>{item.label}</span>
 				</div>
 			))}
 		</div>
@@ -26,6 +29,8 @@ const PasswordCriteria = ({ password }) => {
 };
 
 const PasswordStrengthMeter = ({ password }) => {
+	const { theme } = useTheme();
+	
 	const getStrength = (pass) => {
 		let strength = 0;
 		if (pass.length >= 6) strength++;
@@ -52,11 +57,15 @@ const PasswordStrengthMeter = ({ password }) => {
 		return "Strong";
 	};
 
+	const getBackgroundColor = () => {
+		return theme.textMuted.includes('gray') ? 'bg-gray-600' : 'bg-slate-400';
+	};
+
 	return (
 		<div className='mt-2'>
 			<div className='flex justify-between items-center mb-1'>
-				<span className='text-xs text-gray-400'>Password strength</span>
-				<span className='text-xs text-gray-400'>{getStrengthText(strength)}</span>
+				<span className={`text-xs ${theme.textMuted}`}>Password strength</span>
+				<span className={`text-xs ${theme.textMuted}`}>{getStrengthText(strength)}</span>
 			</div>
 
 			<div className='flex space-x-1'>
@@ -64,7 +73,7 @@ const PasswordStrengthMeter = ({ password }) => {
 					<div
 						key={index}
 						className={`h-1 w-1/4 rounded-full transition-colors duration-300 
-                ${index < strength ? getColor(strength) : "bg-gray-600"}
+                ${index < strength ? getColor(strength) : getBackgroundColor()}
               `}
 					/>
 				))}
@@ -73,4 +82,5 @@ const PasswordStrengthMeter = ({ password }) => {
 		</div>
 	);
 };
+
 export default PasswordStrengthMeter;
