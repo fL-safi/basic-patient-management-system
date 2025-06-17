@@ -44,11 +44,16 @@ if (process.env.NODE_ENV === "production") {
 // });
 
 // For Vercel, we don't need app.listen in serverless functions
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => {
-    connectDB();
-    console.log("Server is running on port: ", PORT);
-  });
-} else {
-  connectDB();
-}
+// if (process.env.NODE_ENV !== "production") {
+//   app.listen(PORT, () => {
+//     connectDB();
+//     console.log("Server is running on port: ", PORT);
+//   });
+// } else {
+//   connectDB();
+// }
+
+connectDB();
+app.listen(PORT, () => {
+  console.log("Server is running on port: ", PORT);
+});
