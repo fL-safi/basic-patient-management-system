@@ -12,6 +12,21 @@ const Header = () => {
     logout();
   };
 
+  const getRoleBadgeColor = (role) => {
+    switch (role) {
+      case 'admin':
+        return 'bg-red-500 bg-opacity-20 text-red-400';
+      case 'operator':
+        return 'bg-blue-500 bg-opacity-20 text-blue-400';
+      case 'doctor':
+        return 'bg-green-500 bg-opacity-20 text-green-400';
+      case 'pharmacist':
+        return 'bg-purple-500 bg-opacity-20 text-purple-400';
+      default:
+        return 'bg-gray-500 bg-opacity-20 text-gray-400';
+    }
+  };
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -38,11 +53,7 @@ const Header = () => {
               <div className={`hidden sm:flex items-center space-x-2 ${theme.textSecondary}`}>
                 <User className="w-4 h-4" />
                 <span className="text-sm font-medium">{user.name}</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                  user.role === 'admin' ? 'bg-red-500 bg-opacity-20 text-red-400' :
-                  user.role === 'operator' ? 'bg-blue-500 bg-opacity-20 text-blue-400' :
-                  'bg-green-500 bg-opacity-20 text-green-400'
-                }`}>
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getRoleBadgeColor(user.role)}`}>
                   {user.role?.charAt(0).toUpperCase() + user.role?.slice(1)}
                 </span>
               </div>

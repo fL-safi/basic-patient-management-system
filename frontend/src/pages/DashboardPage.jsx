@@ -13,8 +13,10 @@ const DashboardPage = () => {
 				return 'text-red-400';
 			case 'operator':
 				return 'text-blue-400';
-			case 'patient':
+			case 'doctor':
 				return 'text-green-400';
+			case 'pharmacist':
+				return 'text-purple-400';
 			default:
 				return theme.textMuted.replace('text-', 'text-');
 		}
@@ -26,8 +28,10 @@ const DashboardPage = () => {
 				return 'bg-red-500 bg-opacity-20 border-red-500';
 			case 'operator':
 				return 'bg-blue-500 bg-opacity-20 border-blue-500';
-			case 'patient':
+			case 'doctor':
 				return 'bg-green-500 bg-opacity-20 border-green-500';
+			case 'pharmacist':
+				return 'bg-purple-500 bg-opacity-20 border-purple-500';
 			default:
 				return 'bg-gray-500 bg-opacity-20 border-gray-500';
 		}
