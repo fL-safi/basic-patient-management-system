@@ -15,7 +15,7 @@ const SignUpPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [cnic, setCnic] = useState("");
-  const [role, setRole] = useState("doctor");
+  const [role, setRole] = useState("admin");
   const navigate = useNavigate();
 
   const { signup, error, isLoading } = useAuthStore();
@@ -23,6 +23,8 @@ const SignUpPage = () => {
 
   const handleSignUp = async (e) => {
     e.preventDefault();
+
+
 
     // Validate CNIC format before submission
     const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
@@ -125,17 +127,8 @@ const SignUpPage = () => {
                       onChange={(e) => setRole(e.target.value)}
                       className={`w-full pl-10 pr-3 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
                     >
-                      <option value="doctor" className={theme.input}>
-                        Doctor
-                      </option>
-                      <option value="pharmacist" className={theme.input}>
-                        Pharmacist
-                      </option>
                       <option value="admin" className={theme.input}>
                         Admin
-                      </option>
-                      <option value="operator" className={theme.input}>
-                        Operator
                       </option>
                     </select>
                   </div>
