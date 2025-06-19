@@ -18,16 +18,22 @@ export const signup = async (req, res) => {
 			throw new Error("All fields are required");
 		}
 
-		// Validate role
-		const validRoles = ["doctor", "pharmacist", "admin", "operator"];
+		// Only allow admin role for signup
+		const validRoles = ["admin"];
 		if (role && !validRoles.includes(role)) {
-			throw new Error("Invalid role specified");
+			return res.status(400).json({ 
+				success: false, 
+				message: "Only admin role can be created through signup" 
+			});
 		}
 
 		// Validate CNIC format
 		const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
 		if (!cnicRegex.test(cnic)) {
-			throw new Error("CNIC must be in format: 12345-1234567-1");
+			return res.status(400).json({ 
+				success: false, 
+				message: "CNIC must be in format: 12345-1234567-1" 
+			});
 		}
 
 		const userAlreadyExists = await User.findOne({ 
@@ -51,7 +57,7 @@ export const signup = async (req, res) => {
 			password: hashedPassword,
 			name,
 			cnic,
-			role: role || "doctor", // Default to doctor if no role specified
+			role: "admin", // Always admin for signup
 			verificationToken,
 			verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
 		});
@@ -65,7 +71,7 @@ export const signup = async (req, res) => {
 
 		res.status(201).json({
 			success: true,
-			message: "User created successfully",
+			message: "Admin user created successfully",
 			user: {
 				...user._doc,
 				password: undefined,
@@ -76,38 +82,7 @@ export const signup = async (req, res) => {
 	}
 };
 
-export const verifyEmail = async (req, res) => {
-	const { code } = req.body;
-	try {
-		const user = await User.findOne({
-			verificationToken: code,
-			verificationTokenExpiresAt: { $gt: Date.now() },
-		});
 
-		if (!user) {
-			return res.status(400).json({ success: false, message: "Invalid or expired verification code" });
-		}
-
-		user.isVerified = true;
-		user.verificationToken = undefined;
-		user.verificationTokenExpiresAt = undefined;
-		await user.save();
-
-		await sendWelcomeEmail(user.email, user.name);
-
-		res.status(200).json({
-			success: true,
-			message: "Email verified successfully",
-			user: {
-				...user._doc,
-				password: undefined,
-			},
-		});
-	} catch (error) {
-		console.log("error in verifyEmail ", error);
-		res.status(500).json({ success: false, message: "Server error" });
-	}
-};
 
 export const login = async (req, res) => {
 	const { email, password } = req.body;
@@ -143,6 +118,40 @@ export const login = async (req, res) => {
 export const logout = async (req, res) => {
 	res.clearCookie("token");
 	res.status(200).json({ success: true, message: "Logged out successfully" });
+};
+
+
+export const verifyEmail = async (req, res) => {
+	const { code } = req.body;
+	try {
+		const user = await User.findOne({
+			verificationToken: code,
+			verificationTokenExpiresAt: { $gt: Date.now() },
+		});
+
+		if (!user) {
+			return res.status(400).json({ success: false, message: "Invalid or expired verification code" });
+		}
+
+		user.isVerified = true;
+		user.verificationToken = undefined;
+		user.verificationTokenExpiresAt = undefined;
+		await user.save();
+
+		await sendWelcomeEmail(user.email, user.name);
+
+		res.status(200).json({
+			success: true,
+			message: "Email verified successfully",
+			user: {
+				...user._doc,
+				password: undefined,
+			},
+		});
+	} catch (error) {
+		console.log("error in verifyEmail ", error);
+		res.status(500).json({ success: false, message: "Server error" });
+	}
 };
 
 export const forgotPassword = async (req, res) => {
