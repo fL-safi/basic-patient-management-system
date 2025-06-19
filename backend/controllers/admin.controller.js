@@ -190,11 +190,11 @@ export const registerPharmacistDispenserFromAdmin = async (req, res) => {
             gender
         } = req.body;
 
-        // Validate required fields for pharmacist-dispenser
+        // Validate required fields for pharmacist_dispenser
         if (!email || !password || !name || !cnic || !phoneNumber || !address) {
             return res.status(400).json({ 
                 success: false, 
-                message: "All required fields must be provided for pharmacist-dispenser registration" 
+                message: "All required fields must be provided for pharmacist_dispenser registration" 
             });
         }
 
@@ -214,10 +214,10 @@ export const registerPharmacistDispenserFromAdmin = async (req, res) => {
 
         if (userAlreadyExists) {
             if (userAlreadyExists.email === email) {
-                return res.status(400).json({ success: false, message: "Pharmacist-dispenser with this email already exists" });
+                return res.status(400).json({ success: false, message: "Pharmacist_dispenser with this email already exists" });
             }
             if (userAlreadyExists.cnic === cnic) {
-                return res.status(400).json({ success: false, message: "Pharmacist-dispenser with this CNIC already exists" });
+                return res.status(400).json({ success: false, message: "Pharmacist_dispenser with this CNIC already exists" });
             }
         }
 
@@ -232,13 +232,13 @@ export const registerPharmacistDispenserFromAdmin = async (req, res) => {
         // Hash password
         const hashedPassword = await bcryptjs.hash(password, 10);
 
-        // Create pharmacist-dispenser user
+        // Create pharmacist_dispenser user
         const pharmacistDispenser = new User({
             email,
             password: hashedPassword,
             name,
             cnic,
-            role: "pharmacist-dispenser",
+            role: "pharmacist_dispenser",
             phoneNumber,
             address,
             gender,
@@ -250,7 +250,7 @@ export const registerPharmacistDispenserFromAdmin = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: "Pharmacist-dispenser registered successfully",
+            message: "Pharmacist_dispenser registered successfully",
             user: {
                 ...pharmacistDispenser._doc,
                 password: undefined,
@@ -274,11 +274,11 @@ export const registerPharmacistInventoryFromAdmin = async (req, res) => {
             gender
         } = req.body;
 
-        // Validate required fields for pharmacist-inventory
+        // Validate required fields for pharmacist_inventory
         if (!email || !password || !name || !cnic || !phoneNumber || !address) {
             return res.status(400).json({ 
                 success: false, 
-                message: "All required fields must be provided for pharmacist-inventory registration" 
+                message: "All required fields must be provided for pharmacist_inventory registration" 
             });
         }
 
@@ -298,10 +298,10 @@ export const registerPharmacistInventoryFromAdmin = async (req, res) => {
 
         if (userAlreadyExists) {
             if (userAlreadyExists.email === email) {
-                return res.status(400).json({ success: false, message: "Pharmacist-inventory with this email already exists" });
+                return res.status(400).json({ success: false, message: "Pharmacist_inventory with this email already exists" });
             }
             if (userAlreadyExists.cnic === cnic) {
-                return res.status(400).json({ success: false, message: "Pharmacist-inventory with this CNIC already exists" });
+                return res.status(400).json({ success: false, message: "Pharmacist_inventory with this CNIC already exists" });
             }
         }
 
@@ -316,13 +316,13 @@ export const registerPharmacistInventoryFromAdmin = async (req, res) => {
         // Hash password
         const hashedPassword = await bcryptjs.hash(password, 10);
 
-        // Create pharmacist-inventory user
+        // Create pharmacist_inventory user
         const pharmacistInventory = new User({
             email,
             password: hashedPassword,
             name,
             cnic,
-            role: "pharmacist-inventory",
+            role: "pharmacist_inventory",
             phoneNumber,
             address,
             gender,
@@ -334,13 +334,57 @@ export const registerPharmacistInventoryFromAdmin = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: "Pharmacist-inventory registered successfully",
+            message: "Pharmacist_inventory registered successfully",
             user: {
                 ...pharmacistInventory._doc,
                 password: undefined,
             },
         });
 
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+
+
+export const getAllUsersData = async (req, res) => {
+    try {
+        // Fetch all users, excluding passwords
+        const users = await User.find({}, { password: 0 });
+
+        if (!users || users.length === 0) {
+            return res.status(404).json({ success: false, message: "No users found" });
+        }
+
+        // Create summaries for each role
+        const roleSummary = {
+            admin: 0,
+            doctor: 0,
+            receptionist: 0,
+            pharmacist_dispenser: 0,
+            pharmacist_inventory: 0
+        };
+
+        // Populate the role counts
+        users.forEach(user => {
+            if (roleSummary[user.role] !== undefined) {
+                roleSummary[user.role]++;
+            }
+        });
+
+        // Prepare the response data
+        const response = {
+            success: true,
+            message: "Users fetched successfully",
+            roles: roleSummary, // Role counts
+            users: users, // List of all users
+            quickSummary: {
+                totalUsers: users.length,
+                roleCounts: roleSummary
+            }
+        };
+
+        res.status(200).json(response);
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
     }

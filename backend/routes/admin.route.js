@@ -2,6 +2,7 @@ import express from "express";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { authorizeRoles } from "../middleware/roleAuth.js";
 import { 
+    getAllUsersData,
     registerDoctorFromAdmin, 
     registerReceptionistFromAdmin, 
     registerPharmacistDispenserFromAdmin, 
@@ -14,6 +15,7 @@ const router = express.Router();
 router.use(verifyToken);
 router.use(authorizeRoles("admin"));
 
+router.get("/get-users-data", getAllUsersData);
 router.post("/register/doctor", registerDoctorFromAdmin);
 router.post("/register/receptionist", registerReceptionistFromAdmin);
 router.post("/register/pharmacist-dispenser", registerPharmacistDispenserFromAdmin);
