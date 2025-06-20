@@ -66,4 +66,13 @@ export const getUsersData = async () => {
   }
 };
 
-// You can add more API functions here as needed
+// API call to update the password
+export const updatePassword = async (userData) => {
+  try {
+    const response = await axiosInstance.post('/auth/update-password', userData);
+    return response.data; // Return the API response data
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
