@@ -6,7 +6,10 @@ import {
     registerDoctorFromAdmin, 
     registerReceptionistFromAdmin, 
     registerPharmacistDispenserFromAdmin, 
-    registerPharmacistInventoryFromAdmin 
+    registerPharmacistInventoryFromAdmin,
+    getUserDataByRoleAndId,
+    updateUserDataByRoleAndId,
+    deleteUserDataByRoleAndId
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -20,5 +23,9 @@ router.post("/register/doctor", registerDoctorFromAdmin);
 router.post("/register/receptionist", registerReceptionistFromAdmin);
 router.post("/register/pharmacist-dispenser", registerPharmacistDispenserFromAdmin);
 router.post("/register/pharmacist-inventory", registerPharmacistInventoryFromAdmin);
+
+router.get("/:role/:id", getUserDataByRoleAndId);
+router.patch("/:role/:id", updateUserDataByRoleAndId);
+router.delete("/:role/:id", deleteUserDataByRoleAndId);
 
 export default router;

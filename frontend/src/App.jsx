@@ -19,6 +19,7 @@ import { useAuthStore } from "./store/authStore";
 import { useThemeStore } from "./store/themeStore";
 import { useTheme } from "./hooks/useTheme";
 import AllUsers from "./pages/admin/AllUsers";
+import RoleProfile from "./pages/admin/RoleProfile";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -30,19 +31,6 @@ const ProtectedRoute = ({ children }) => {
 
   return children;
 };
-
-// // redirect authenticated users to their role-based home page
-// const RedirectAuthenticatedUser = ({ children }) => {
-//   const { isAuthenticated, user } = useAuthStore();
-
-//   if (isAuthenticated && user.isVerified) {
-//     // Redirect to role-specific dashboard
-//     const roleRoute = `/${user.role}`;
-//     return <Navigate to={roleRoute} replace />;
-//   }
-
-//   return children;
-// };
 
 // redirect authenticated users to their role-based home page
 const RedirectAuthenticatedUser = ({ children }) => {
@@ -223,6 +211,26 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+  path="/admin/:role/:id" // Dynamic route for role profile
+  element={
+    <ProtectedRoute>
+      <RoleProtectedRoute allowedRoles={['admin']}>
+        <RoleProfile />
+      </RoleProtectedRoute>
+    </ProtectedRoute>
+  }
+/>
+          {/* <Route
+            path="/admin/user-profile"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <RoleProfile />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          /> */}
           <Route
             path="/admin/patients"
             element={
