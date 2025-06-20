@@ -22,47 +22,55 @@ import { useAuthStore } from '../store/authStore';
 const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
   const { theme } = useTheme();
   const location = useLocation();
-  const { user } = useAuthStore();  // Access the logged-in user
+  const { user } = useAuthStore();
 
-  // Define the sidebar menu items based on roles
-  const menuItems = [
-    { icon: Home, label: 'Dashboard', path: '/', color: 'text-blue-500' },
+  // Base menu items available to all roles
+  const baseMenuItems = [
+    { icon: Home, label: 'Dashboard', path: '', color: 'text-blue-500' },
     { icon: Users, label: 'Patients', path: '/patients', color: 'text-green-500' },
     { icon: Calendar, label: 'Appointments', path: '/appointments', color: 'text-purple-500' },
     { icon: FileText, label: 'Reports', path: '/reports', color: 'text-orange-500' },
     { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
   ];
 
-  // Role-specific items
-  const roleBasedItems = {
+  // Role-specific additional items
+  const roleSpecificItems = {
     admin: [
-      ...menuItems,
-      { icon: UserPlus, label: 'User Management', path: '/user-management', color: 'text-red-500' },
       { icon: Box, label: 'Inventory Management', path: '/inventory-management', color: 'text-yellow-500' }
     ],
-    receptionist: [
-      ...menuItems
-    ],
     doctor: [
-      ...menuItems,
       { icon: Stethoscope, label: 'Consultations', path: '/consultations', color: 'text-teal-500' }
     ],
     pharmacist_dispenser: [
-      ...menuItems,
       { icon: ShoppingCart, label: 'Prescriptions', path: '/prescriptions', color: 'text-purple-600' }
     ],
     pharmacist_inventory: [
-      ...menuItems,
       { icon: Box, label: 'Inventory Management', path: '/inventory-management', color: 'text-teal-600' }
-    ]
+    ],
+    receptionist: []
   };
+
+  // Get role-specific menu items
+  const getRoleBasedMenuItems = () => {
+    const rolePrefix = `/${user.role}`;
+    const baseItems = baseMenuItems.map(item => ({
+      ...item,
+      path: `${rolePrefix}${item.path}`
+    }));
+
+    const specificItems = (roleSpecificItems[user.role] || []).map(item => ({
+      ...item,
+      path: `${rolePrefix}${item.path}`
+    }));
+
+    return [...baseItems, ...specificItems];
+  };
+
+  const menuItems = getRoleBasedMenuItems();
 
   const isActiveRoute = (path) => location.pathname === path;
 
   const sidebarWidth = isMiniMode ? 'w-16' : 'w-72';
-
-  // Get menu items based on the user's role
-  const itemsForRole = roleBasedItems[user.role] || menuItems;
 
   return (
     <AnimatePresence>
@@ -76,7 +84,6 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
         >
           {/* Sidebar Header with Logo */}
           <div className={`flex items-center justify-between p-4 border-b ${theme.borderSecondary} min-h-[64px]`}>
-            {/* Logo */}
             <div className="flex items-center space-x-2">
               {isMiniMode ? (
                 <motion.div
@@ -97,9 +104,14 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
                   <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${theme.gradient} flex items-center justify-center text-white font-bold text-sm`}>
                     H
                   </div>
-                  <h2 className={`text-lg font-bold bg-gradient-to-r ${theme.gradient} text-transparent bg-clip-text`}>
-                    Healthway
-                  </h2>
+                  <div>
+                    <h2 className={`text-lg font-bold bg-gradient-to-r ${theme.gradient} text-transparent bg-clip-text`}>
+                      Healthway
+                    </h2>
+                    <p className={`text-xs ${theme.textMuted} capitalize`}>
+                      {user.role.replace('_', ' ')} Panel
+                    </p>
+                  </div>
                 </motion.div>
               )}
             </div>
@@ -107,7 +119,7 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
 
           {/* Navigation Menu */}
           <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
-            {itemsForRole.map((item, index) => {
+            {menuItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = isActiveRoute(item.path);
 
@@ -130,11 +142,23 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
                   >
                     <Icon className={`w-5 h-5 ${isActive ? item.color : ''} transition-colors duration-200 flex-shrink-0`} />
                     {!isMiniMode && (
-                      <motion.span initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 'auto' }} exit={{ opacity: 0, width: 0 }} className="font-medium whitespace-nowrap">
+                      <motion.span 
+                        initial={{ opacity: 0, width: 0 }} 
+                        animate={{ opacity: 1, width: 'auto' }} 
+                        exit={{ opacity: 0, width: 0 }} 
+                        className="font-medium whitespace-nowrap"
+                      >
                         {item.label}
                       </motion.span>
                     )}
                   </Link>
+
+                  {/* Tooltip for mini mode */}
+                  {isMiniMode && (
+                    <div className={`absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 top-1/2 transform -translate-y-1/2`}>
+                      {item.label}
+                    </div>
+                  )}
                 </motion.div>
               );
             })}
@@ -146,8 +170,8 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ delay: 0.3 }}
-            className={`p-4 border-t ${theme.borderSecondary} cursor-pointer flex justify-center items-center`} // Added flexbox centering
-            onClick={onToggleMiniMode} // Toggle on footer click
+            className={`p-4 border-t ${theme.borderSecondary} cursor-pointer flex justify-center items-center`}
+            onClick={onToggleMiniMode}
           >
             <div className={`p-3 ${theme.cardSecondary} rounded-lg text-center w-16 flex justify-center items-center`}>
               <ChevronRight className={`w-4 h-4 ${isMiniMode ? 'rotate-180' : ''}`} />
