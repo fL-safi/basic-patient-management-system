@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import { 
   Users, 
@@ -23,6 +24,7 @@ import { getUsersData } from '../../api/api';
 import UserRegistrationModal from '../../components/admin/UserRegistrationModal'; // Import the modal
 
 const AllUsers = () => {
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('doctor');
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,6 +35,10 @@ const AllUsers = () => {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
+
+    const handleNameClick = (user) => {
+    navigate(`/admin/${user.role}/${user._id}`);
+  };
 
   // Fetch users data from the API
   const fetchData = async () => {
@@ -193,11 +199,17 @@ const AllUsers = () => {
                 <Stethoscope className="w-5 h-5 text-purple-500" />
               </div>
               <div>
-                <div className={`font-medium ${theme.textPrimary}`}>{user.name}</div>
+                <div 
+                  className={`font-medium ${theme.textPrimary} cursor-pointer hover:text-emerald-500 transition-colors`}
+                  onClick={() => handleNameClick(user)}
+                >
+                  {user.name}
+                </div>
                 <div className={`text-sm ${theme.textMuted}`}>{user.gender}</div>
               </div>
             </div>
           </td>
+          {/* Rest of the doctor row remains the same */}
           <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.email}</td>
           <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>
             <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
@@ -208,88 +220,100 @@ const AllUsers = () => {
           <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>
             <div className="flex flex-wrap gap-1">
               {user.doctorSchedule?.slice(0, 2).map((day) => (
-<span key={day} className="px-1 py-0.5 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                 {day.slice(0, 3)}
-               </span>
-             ))}
-             {user.doctorSchedule?.length > 2 && (
-               <span className="px-1 py-0.5 rounded text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
-                 +{user.doctorSchedule.length - 2}
-               </span>
-             )}
-           </div>
-         </td>
-         <td className="px-6 py-4">
-           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-             user.isActive 
-               ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-               : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-           }`}>
-             {user.isActive ? 'Active' : 'Inactive'}
-           </span>
-         </td>
-         <td className="px-6 py-4">
-           <div className="flex items-center space-x-2">
-             <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
-               <Eye className="w-4 h-4 text-blue-500" />
-             </button>
-             <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
-               <Edit className="w-4 h-4 text-green-500" />
-             </button>
-             <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
-               <Trash2 className="w-4 h-4 text-red-500" />
-             </button>
-           </div>
-         </td>
-       </tr>
-     );
-   }
+                <span key={day} className="px-1 py-0.5 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  {day.slice(0, 3)}
+                </span>
+              ))}
+              {user.doctorSchedule?.length > 2 && (
+                <span className="px-1 py-0.5 rounded text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                  +{user.doctorSchedule.length - 2}
+                </span>
+              )}
+            </div>
+          </td>
+          <td className="px-6 py-4">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              user.isActive 
+                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+            }`}>
+              {user.isActive ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td className="px-6 py-4">
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => handleNameClick(user)}
+                className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+              >
+                <Eye className="w-4 h-4 text-blue-500" />
+              </button>
+              <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
+                <Edit className="w-4 h-4 text-green-500" />
+              </button>
+              <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
+                <Trash2 className="w-4 h-4 text-red-500" />
+              </button>
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
 
    // Common table row for other roles
    return (
-     <tr key={user._id} className={`${theme.borderSecondary} border-b hover:bg-opacity-50 ${theme.cardSecondary} transition-colors`}>
-       <td className="px-6 py-4">
-         <div className="flex items-center space-x-3">
-           <div className={`w-10 h-10 rounded-full ${theme.cardSecondary} flex items-center justify-center`}>
-             <UserCheck className="w-5 h-5 text-blue-500" />
-           </div>
-           <div>
-             <div className={`font-medium ${theme.textPrimary}`}>{user.name}</div>
-             <div className={`text-sm ${theme.textMuted}`}>{user.gender}</div>
-           </div>
-         </div>
-       </td>
-       <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.email}</td>
-       <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.cnic}</td>
-       <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.phoneNumber}</td>
-       <td className="px-6 py-4">
-         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-           user.isActive 
-             ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-             : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-         }`}>
-           {user.isActive ? 'Active' : 'Inactive'}
-         </span>
-       </td>
-       <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>
-         {user.lastLogin ? formatDateTime(user.lastLogin) : 'Never'}
-       </td>
-       <td className="px-6 py-4">
-         <div className="flex items-center space-x-2">
-           <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
-             <Eye className="w-4 h-4 text-blue-500" />
-           </button>
-           <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
-             <Edit className="w-4 h-4 text-green-500" />
-           </button>
-           <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
-             <Trash2 className="w-4 h-4 text-red-500" />
-           </button>
-         </div>
-       </td>
-     </tr>
-   );
- };
+      <tr key={user._id} className={`${theme.borderSecondary} border-b hover:bg-opacity-50 ${theme.cardSecondary} transition-colors`}>
+        <td className="px-6 py-4">
+          <div className="flex items-center space-x-3">
+            <div className={`w-10 h-10 rounded-full ${theme.cardSecondary} flex items-center justify-center`}>
+              <UserCheck className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <div 
+                className={`font-medium ${theme.textPrimary} cursor-pointer hover:text-emerald-500 transition-colors`}
+                onClick={() => handleNameClick(user)}
+              >
+                {user.name}
+              </div>
+              <div className={`text-sm ${theme.textMuted}`}>{user.gender}</div>
+            </div>
+          </div>
+        </td>
+        <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.email}</td>
+        <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.cnic}</td>
+        <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.phoneNumber}</td>
+        <td className="px-6 py-4">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            user.isActive 
+              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+          }`}>
+            {user.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>
+          {user.lastLogin ? formatDateTime(user.lastLogin) : 'Never'}
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex items-center space-x-2">
+            <button 
+              onClick={() => handleNameClick(user)}
+              className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+            >
+              <Eye className="w-4 h-4 text-blue-500" />
+            </button>
+            <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
+              <Edit className="w-4 h-4 text-green-500" />
+            </button>
+            <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
+              <Trash2 className="w-4 h-4 text-red-500" />
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  };
 
  // Filter users based on search term
  const filteredUsers = usersData?.users?.filter(user => {

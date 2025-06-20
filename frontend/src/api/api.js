@@ -76,3 +76,13 @@ export const updatePassword = async (userData) => {
     throw error;
   }
 };
+
+export const getUserDataByRoleAndId = async (role, id) => {
+  try {
+    const response = await axiosInstance.get(`/admin/${role}/${id}`);
+    return response.data; // Return the API response data
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};

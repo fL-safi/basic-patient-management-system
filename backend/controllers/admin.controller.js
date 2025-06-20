@@ -389,3 +389,99 @@ export const getAllUsersData = async (req, res) => {
         res.status(400).json({ success: false, message: error.message });
     }
 };
+
+export const getUserDataByRoleAndId = async (req, res) => {
+    try {
+        const { role, id } = req.params;
+
+        // Validate that the role is one of the allowed roles
+        const validRoles = ["doctor", "receptionist", "pharmacist_dispenser", "pharmacist_inventory"];
+        if (!validRoles.includes(role)) {
+            return res.status(400).json({ success: false, message: "Invalid role" });
+        }
+
+        // Find the user by role and ID
+        const user = await User.findOne({ _id: id, role: role }).select("-password");  // Exclude password
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: `${role} not found` });
+        }
+
+        // Return the found user data
+        res.status(200).json({
+            success: true,
+            message: `${role.charAt(0).toUpperCase() + role.slice(1)} data fetched successfully`,
+            user: user,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+export const updateUserDataByRoleAndId = async (req, res) => {
+    try {
+        const { role, id } = req.params;
+        const updatedData = req.body;  // The new data sent in the request body
+
+        // Validate that the role is one of the allowed roles
+        const validRoles = ["doctor", "receptionist", "pharmacist_dispenser", "pharmacist_inventory"];
+        if (!validRoles.includes(role)) {
+            return res.status(400).json({ success: false, message: "Invalid role" });
+        }
+
+        // Find the user by role and ID
+        const user = await User.findOne({ _id: id, role: role });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: `${role.charAt(0).toUpperCase() + role.slice(1)} not found` });
+        }
+
+        // Validate fields if needed based on role
+        if (role === "doctor") {
+            if (updatedData.speciality && !updatedData.registrationNumber) {
+                return res.status(400).json({ success: false, message: "Registration number is required for doctors" });
+            }
+        }
+
+        // Use findByIdAndUpdate for partial update, only the provided fields will be updated
+        const updatedUser = await User.findByIdAndUpdate(id, updatedData, { new: true, runValidators: true });
+
+        // Return the updated user data
+        res.status(200).json({
+            success: true,
+            message: `${role.charAt(0).toUpperCase() + role.slice(1)} data updated successfully`,
+            user: updatedUser,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+export const deleteUserDataByRoleAndId = async (req, res) => {
+    try {
+        const { role, id } = req.params;
+
+        // Validate that the role is one of the allowed roles
+        const validRoles = ["doctor", "receptionist", "pharmacist_dispenser", "pharmacist_inventory"];
+        if (!validRoles.includes(role)) {
+            return res.status(400).json({ success: false, message: "Invalid role" });
+        }
+
+        // Find and delete the user by role and ID
+        const user = await User.findOneAndDelete({ _id: id, role: role });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: `${role.charAt(0).toUpperCase() + role.slice(1)} not found` });
+        }
+
+        // Return a success response
+        res.status(200).json({
+            success: true,
+            message: `${role.charAt(0).toUpperCase() + role.slice(1)} deleted successfully`,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
