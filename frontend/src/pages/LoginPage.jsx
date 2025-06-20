@@ -16,11 +16,23 @@ const LoginPage = () => {
   const { login, isLoading, error } = useAuthStore();
   const { theme } = useTheme();
 
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+  //   await login(email, password);
+  //   navigate("/");
+  // };
+
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  try {
     await login(email, password);
-    navigate("/");
-  };
+    // The RedirectAuthenticatedUser component will handle the role-based redirect
+    // No need to manually navigate here as it will be handled automatically
+  } catch (error) {
+    // Error handling is managed by the auth store
+    console.error('Login failed:', error);
+  }
+};
 
   return (
     <div
@@ -165,12 +177,13 @@ const LoginPage = () => {
                 >
                   <p className={`text-sm ${theme.textMuted}`}>
                     Don't have an account?{" "}
-                    <Link
+                    <span className={`${theme.textMuted} hover:text-emerald-500 hover:underline transition-colors font-medium cursor-pointer`}>Contact Your Administrator</span>
+                    {/* <Link
                       to="/signup"
                       className={`${theme.textMuted} hover:text-emerald-500 hover:underline transition-colors font-medium`}
                     >
                       Create account
-                    </Link>
+                    </Link> */}
                   </p>
                 </div>
 

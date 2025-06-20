@@ -12,6 +12,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 import LoadingSpinner from "./components/LoadingSpinner";
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
 
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
@@ -30,23 +31,58 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// redirect authenticated users to the home page
+// // redirect authenticated users to their role-based home page
+// const RedirectAuthenticatedUser = ({ children }) => {
+//   const { isAuthenticated, user } = useAuthStore();
+
+//   if (isAuthenticated && user.isVerified) {
+//     // Redirect to role-specific dashboard
+//     const roleRoute = `/${user.role}`;
+//     return <Navigate to={roleRoute} replace />;
+//   }
+
+//   return children;
+// };
+
+// redirect authenticated users to their role-based home page
 const RedirectAuthenticatedUser = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
 
-  if (isAuthenticated && user.isVerified) {
-    return <Navigate to="/" replace />;
+  if (isAuthenticated && user) {
+    // Redirect to role-specific dashboard
+    const roleRoute = `/${user.role}`;
+    return <Navigate to={roleRoute} replace />;
   }
 
   return children;
+};
+
+// Helper component to redirect root "/" to role-based route
+const RoleBasedRedirect = () => {
+  const { user } = useAuthStore();
+  const roleRoute = `/${user.role}`;
+  return <Navigate to={roleRoute} replace />;
+};
+
+// Generic page components for different routes
+const GenericPage = ({ title, role }) => {
+  const { theme } = useTheme();
+  return (
+    <div className="p-8 text-center">
+      <h1 className={`text-2xl font-bold ${theme.textPrimary}`}>
+        {title} - {role.charAt(0).toUpperCase() + role.slice(1)}
+      </h1>
+      <p className={`${theme.textMuted} mt-2`}>Coming soon...</p>
+    </div>
+  );
 };
 
 function App() {
   const { isCheckingAuth, checkAuth, isAuthenticated } = useAuthStore();
   const { initializeTheme } = useThemeStore();
   const { theme } = useTheme();
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open
-  const [sidebarMiniMode, setSidebarMiniMode] = useState(false); // Default to full mode
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarMiniMode, setSidebarMiniMode] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -57,20 +93,17 @@ function App() {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
-        setSidebarOpen(false); // Close sidebar on mobile
+        setSidebarOpen(false);
       } else {
-        setSidebarOpen(true); // Open sidebar on desktop
+        setSidebarOpen(true);
       }
     };
 
-    // Set initial state based on screen size
     handleResize();
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Listen for custom sidebar open event
   useEffect(() => {
     const handleOpenSidebar = () => {
       setSidebarOpen(true);
@@ -98,12 +131,10 @@ function App() {
     <div
       className={`min-h-screen bg-gradient-to-br ${theme.primary} relative overflow-hidden`}
     >
-      {/* Header - only show when authenticated */}
       {isAuthenticated && (
         <Header sidebarOpen={sidebarOpen} sidebarMiniMode={sidebarMiniMode} />
       )}
 
-      {/* Sidebar - only show when authenticated */}
       {isAuthenticated && (
         <Sidebar
           isOpen={sidebarOpen}
@@ -113,7 +144,6 @@ function App() {
         />
       )}
 
-      {/* Main Content */}
       <div
         className={`${
           isAuthenticated ? "pt-16 transition-all duration-300" : ""
@@ -130,14 +160,17 @@ function App() {
         }`}
       >
         <Routes>
+          {/* Root redirect to role-based route */}
           <Route
             path="/"
             element={
               <ProtectedRoute>
-                <AllUsers />
+                <RoleBasedRedirect />
               </ProtectedRoute>
             }
           />
+
+          {/* Auth routes */}
           <Route
             path="/signup"
             element={
@@ -178,60 +211,308 @@ function App() {
               </RedirectAuthenticatedUser>
             }
           />
-          {/* Placeholder routes for sidebar menu items */}
+
+          {/* Admin Routes */}
           <Route
-            path="/patients"
+            path="/admin"
             element={
               <ProtectedRoute>
-                <div className="p-8 text-center">
-                  <h1 className={`text-2xl font-bold ${theme.textPrimary}`}>
-                    Patients Page
-                  </h1>
-                  <p className={`${theme.textMuted} mt-2`}>Coming soon...</p>
-                </div>
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <AllUsers />
+                </RoleProtectedRoute>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/appointments"
+            path="/admin/patients"
             element={
               <ProtectedRoute>
-                <div className="p-8 text-center">
-                  <h1 className={`text-2xl font-bold ${theme.textPrimary}`}>
-                    Appointments Page
-                  </h1>
-                  <p className={`${theme.textMuted} mt-2`}>Coming soon...</p>
-                </div>
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <GenericPage title="Patients Page" role="admin" />
+                </RoleProtectedRoute>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/reports"
+            path="/admin/appointments"
             element={
               <ProtectedRoute>
-                <div className="p-8 text-center">
-                  <h1 className={`text-2xl font-bold ${theme.textPrimary}`}>
-                    Reports Page
-                  </h1>
-                  <p className={`${theme.textMuted} mt-2`}>Coming soon...</p>
-                </div>
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <GenericPage title="Appointments Page" role="admin" />
+                </RoleProtectedRoute>
               </ProtectedRoute>
             }
           />
           <Route
-            path="/settings"
+            path="/admin/reports"
             element={
               <ProtectedRoute>
-                <div className="p-8 text-center">
-                  <h1 className={`text-2xl font-bold ${theme.textPrimary}`}>
-                    Settings Page
-                  </h1>
-                  <p className={`${theme.textMuted} mt-2`}>Coming soon...</p>
-                </div>
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <GenericPage title="Reports Page" role="admin" />
+                </RoleProtectedRoute>
               </ProtectedRoute>
             }
           />
-          {/* catch all routes */}
+          <Route
+            path="/admin/inventory-management"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <GenericPage title="Inventory Management Page" role="admin" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <GenericPage title="Settings Page" role="admin" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Doctor Routes */}
+          <Route
+            path="/doctor"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['doctor']}>
+                  <GenericPage title="Dashboard" role="doctor" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/patients"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['doctor']}>
+                  <GenericPage title="Patients Page" role="doctor" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/appointments"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['doctor']}>
+                  <GenericPage title="Appointments Page" role="doctor" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/consultations"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['doctor']}>
+                  <GenericPage title="Consultations Page" role="doctor" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/reports"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['doctor']}>
+                  <GenericPage title="Reports Page" role="doctor" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/settings"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['doctor']}>
+                  <GenericPage title="Settings Page" role="doctor" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Receptionist Routes */}
+          <Route
+            path="/receptionist"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['receptionist']}>
+                  <GenericPage title="Dashboard" role="receptionist" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receptionist/patients"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['receptionist']}>
+                  <GenericPage title="Patients Page" role="receptionist" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receptionist/appointments"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['receptionist']}>
+                  <GenericPage title="Appointments Page" role="receptionist" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receptionist/reports"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['receptionist']}>
+                  <GenericPage title="Reports Page" role="receptionist" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receptionist/settings"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['receptionist']}>
+                  <GenericPage title="Settings Page" role="receptionist" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Pharmacist Dispenser Routes */}
+          <Route
+            path="/pharmacist_dispenser"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
+                  <GenericPage title="Dashboard" role="pharmacist_dispenser" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pharmacist_dispenser/patients"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
+                  <GenericPage title="Patients Page" role="pharmacist_dispenser" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pharmacist_dispenser/appointments"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
+                  <GenericPage title="Appointments Page" role="pharmacist_dispenser" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pharmacist_dispenser/prescriptions"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
+                  <GenericPage title="Prescriptions Page" role="pharmacist_dispenser" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pharmacist_dispenser/reports"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
+                  <GenericPage title="Reports Page" role="pharmacist_dispenser" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pharmacist_dispenser/settings"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
+                  <GenericPage title="Settings Page" role="pharmacist_dispenser" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Pharmacist Inventory Routes */}
+          <Route
+            path="/pharmacist_inventory"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
+                  <GenericPage title="Dashboard" role="pharmacist_inventory" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pharmacist_inventory/patients"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
+                  <GenericPage title="Patients Page" role="pharmacist_inventory" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pharmacist_inventory/appointments"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
+                  <GenericPage title="Appointments Page" role="pharmacist_inventory" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pharmacist_inventory/inventory-management"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
+                  <GenericPage title="Inventory Management Page" role="pharmacist_inventory" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pharmacist_inventory/reports"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
+                  <GenericPage title="Reports Page" role="pharmacist_inventory" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pharmacist_inventory/settings"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
+                  <GenericPage title="Settings Page" role="pharmacist_inventory" />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch all routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
