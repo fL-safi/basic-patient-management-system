@@ -226,3 +226,56 @@ export const checkAuth = async (req, res) => {
 		res.status(400).json({ success: false, message: error.message });
 	}
 };
+
+
+// Update password
+export const updatePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        // Validate that both current and new passwords are provided
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Both current and new passwords are required"
+            });
+        }
+
+        // Find the user by the ID from the JWT token (req.userId)
+        const user = await User.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Check if the current password is correct
+        const isPasswordValid = await bcryptjs.compare(currentPassword, user.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({
+                success: false,
+                message: "Current password is incorrect"
+            });
+        }
+
+        // Hash the new password
+        const hashedPassword = await bcryptjs.hash(newPassword, 10);
+
+        // Update the password in the database
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Password updated successfully"
+        });
+    } catch (error) {
+        console.log("Error in updatePassword ", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error while updating password"
+        });
+    }
+};

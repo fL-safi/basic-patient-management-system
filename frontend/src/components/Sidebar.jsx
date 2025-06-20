@@ -154,11 +154,11 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
                   </Link>
 
                   {/* Tooltip for mini mode */}
-                  {isMiniMode && (
+                  {/* {isMiniMode && (
                     <div className={`absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 top-1/2 transform -translate-y-1/2`}>
                       {item.label}
                     </div>
-                  )}
+                  )} */}
                 </motion.div>
               );
             })}
