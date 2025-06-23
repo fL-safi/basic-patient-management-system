@@ -205,37 +205,28 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['admin']}>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                   <AllUsers />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
           />
           <Route
-  path="/admin/:role/:id" // Dynamic route for role profile
-  element={
-    <ProtectedRoute>
-      <RoleProtectedRoute allowedRoles={['admin']}>
-        <RoleProfile />
-      </RoleProtectedRoute>
-    </ProtectedRoute>
-  }
-/>
-          {/* <Route
-            path="/admin/user-profile"
+            path="/admin/:role/:id" // Dynamic route for role profile
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['admin']}>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                   <RoleProfile />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
-          /> */}
+          />
+
           <Route
             path="/admin/patients"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['admin']}>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                   <GenericPage title="Patients Page" role="admin" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -245,7 +236,7 @@ function App() {
             path="/admin/appointments"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['admin']}>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                   <GenericPage title="Appointments Page" role="admin" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -255,7 +246,7 @@ function App() {
             path="/admin/reports"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['admin']}>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                   <GenericPage title="Reports Page" role="admin" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -265,7 +256,7 @@ function App() {
             path="/admin/inventory-management"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['admin']}>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                   <GenericPage title="Inventory Management Page" role="admin" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -275,7 +266,7 @@ function App() {
             path="/admin/settings"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['admin']}>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                   <GenericPage title="Settings Page" role="admin" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -287,7 +278,7 @@ function App() {
             path="/doctor"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['doctor']}>
+                <RoleProtectedRoute allowedRoles={["doctor"]}>
                   <GenericPage title="Dashboard" role="doctor" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -297,7 +288,7 @@ function App() {
             path="/doctor/patients"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['doctor']}>
+                <RoleProtectedRoute allowedRoles={["doctor"]}>
                   <GenericPage title="Patients Page" role="doctor" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -307,7 +298,7 @@ function App() {
             path="/doctor/appointments"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['doctor']}>
+                <RoleProtectedRoute allowedRoles={["doctor"]}>
                   <GenericPage title="Appointments Page" role="doctor" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -317,7 +308,7 @@ function App() {
             path="/doctor/consultations"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['doctor']}>
+                <RoleProtectedRoute allowedRoles={["doctor"]}>
                   <GenericPage title="Consultations Page" role="doctor" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -327,7 +318,7 @@ function App() {
             path="/doctor/reports"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['doctor']}>
+                <RoleProtectedRoute allowedRoles={["doctor"]}>
                   <GenericPage title="Reports Page" role="doctor" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -337,7 +328,7 @@ function App() {
             path="/doctor/settings"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['doctor']}>
+                <RoleProtectedRoute allowedRoles={["doctor"]}>
                   <GenericPage title="Settings Page" role="doctor" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -349,7 +340,7 @@ function App() {
             path="/receptionist"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['receptionist']}>
+                <RoleProtectedRoute allowedRoles={["receptionist"]}>
                   <GenericPage title="Dashboard" role="receptionist" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -359,7 +350,7 @@ function App() {
             path="/receptionist/patients"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['receptionist']}>
+                <RoleProtectedRoute allowedRoles={["receptionist"]}>
                   <GenericPage title="Patients Page" role="receptionist" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -369,7 +360,7 @@ function App() {
             path="/receptionist/appointments"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['receptionist']}>
+                <RoleProtectedRoute allowedRoles={["receptionist"]}>
                   <GenericPage title="Appointments Page" role="receptionist" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -379,7 +370,7 @@ function App() {
             path="/receptionist/reports"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['receptionist']}>
+                <RoleProtectedRoute allowedRoles={["receptionist"]}>
                   <GenericPage title="Reports Page" role="receptionist" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -389,7 +380,7 @@ function App() {
             path="/receptionist/settings"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['receptionist']}>
+                <RoleProtectedRoute allowedRoles={["receptionist"]}>
                   <GenericPage title="Settings Page" role="receptionist" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -401,7 +392,7 @@ function App() {
             path="/pharmacist_dispenser"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
+                <RoleProtectedRoute allowedRoles={["pharmacist_dispenser"]}>
                   <GenericPage title="Dashboard" role="pharmacist_dispenser" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -411,8 +402,11 @@ function App() {
             path="/pharmacist_dispenser/patients"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
-                  <GenericPage title="Patients Page" role="pharmacist_dispenser" />
+                <RoleProtectedRoute allowedRoles={["pharmacist_dispenser"]}>
+                  <GenericPage
+                    title="Patients Page"
+                    role="pharmacist_dispenser"
+                  />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -421,8 +415,11 @@ function App() {
             path="/pharmacist_dispenser/appointments"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
-                  <GenericPage title="Appointments Page" role="pharmacist_dispenser" />
+                <RoleProtectedRoute allowedRoles={["pharmacist_dispenser"]}>
+                  <GenericPage
+                    title="Appointments Page"
+                    role="pharmacist_dispenser"
+                  />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -431,8 +428,11 @@ function App() {
             path="/pharmacist_dispenser/prescriptions"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
-                  <GenericPage title="Prescriptions Page" role="pharmacist_dispenser" />
+                <RoleProtectedRoute allowedRoles={["pharmacist_dispenser"]}>
+                  <GenericPage
+                    title="Prescriptions Page"
+                    role="pharmacist_dispenser"
+                  />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -441,8 +441,11 @@ function App() {
             path="/pharmacist_dispenser/reports"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
-                  <GenericPage title="Reports Page" role="pharmacist_dispenser" />
+                <RoleProtectedRoute allowedRoles={["pharmacist_dispenser"]}>
+                  <GenericPage
+                    title="Reports Page"
+                    role="pharmacist_dispenser"
+                  />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -451,8 +454,11 @@ function App() {
             path="/pharmacist_dispenser/settings"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_dispenser']}>
-                  <GenericPage title="Settings Page" role="pharmacist_dispenser" />
+                <RoleProtectedRoute allowedRoles={["pharmacist_dispenser"]}>
+                  <GenericPage
+                    title="Settings Page"
+                    role="pharmacist_dispenser"
+                  />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -463,7 +469,7 @@ function App() {
             path="/pharmacist_inventory"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
+                <RoleProtectedRoute allowedRoles={["pharmacist_inventory"]}>
                   <GenericPage title="Dashboard" role="pharmacist_inventory" />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -473,8 +479,11 @@ function App() {
             path="/pharmacist_inventory/patients"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
-                  <GenericPage title="Patients Page" role="pharmacist_inventory" />
+                <RoleProtectedRoute allowedRoles={["pharmacist_inventory"]}>
+                  <GenericPage
+                    title="Patients Page"
+                    role="pharmacist_inventory"
+                  />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -483,8 +492,11 @@ function App() {
             path="/pharmacist_inventory/appointments"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
-                  <GenericPage title="Appointments Page" role="pharmacist_inventory" />
+                <RoleProtectedRoute allowedRoles={["pharmacist_inventory"]}>
+                  <GenericPage
+                    title="Appointments Page"
+                    role="pharmacist_inventory"
+                  />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -493,8 +505,11 @@ function App() {
             path="/pharmacist_inventory/inventory-management"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
-                  <GenericPage title="Inventory Management Page" role="pharmacist_inventory" />
+                <RoleProtectedRoute allowedRoles={["pharmacist_inventory"]}>
+                  <GenericPage
+                    title="Inventory Management Page"
+                    role="pharmacist_inventory"
+                  />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -503,8 +518,11 @@ function App() {
             path="/pharmacist_inventory/reports"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
-                  <GenericPage title="Reports Page" role="pharmacist_inventory" />
+                <RoleProtectedRoute allowedRoles={["pharmacist_inventory"]}>
+                  <GenericPage
+                    title="Reports Page"
+                    role="pharmacist_inventory"
+                  />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -513,8 +531,11 @@ function App() {
             path="/pharmacist_inventory/settings"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['pharmacist_inventory']}>
-                  <GenericPage title="Settings Page" role="pharmacist_inventory" />
+                <RoleProtectedRoute allowedRoles={["pharmacist_inventory"]}>
+                  <GenericPage
+                    title="Settings Page"
+                    role="pharmacist_inventory"
+                  />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }

@@ -18,10 +18,11 @@ import {
   Calendar,
   Mail,
   Phone,
-  MapPin
+  MapPin,
 } from 'lucide-react';
 import { getUsersData } from '../../api/api';
 import UserRegistrationModal from '../../components/admin/UserRegistrationModal'; // Import the modal
+import DeleteConfirmationModal from '../../components/admin/DeleteConfirmationModal';
 
 const AllUsers = () => {
   const navigate = useNavigate();
@@ -35,6 +36,10 @@ const AllUsers = () => {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
+
+    // Delete modal states - ADD THESE
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
     const handleNameClick = (user) => {
     navigate(`/admin/${user.role}/${user._id}`);
@@ -67,6 +72,24 @@ const AllUsers = () => {
   const handleRegistrationSuccess = () => {
     // Refresh the data
     fetchData();
+  };
+
+    // ADD THESE DELETE HANDLERS
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setIsDeleteModalOpen(true);
+  };
+
+    const handleDeleteSuccess = () => {
+    // Refresh the data after successful deletion
+    fetchData();
+    setIsDeleteModalOpen(false);
+    setUserToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
+    setUserToDelete(null);
   };
 
   // If loading, return loading spinner
@@ -209,7 +232,6 @@ const AllUsers = () => {
               </div>
             </div>
           </td>
-          {/* Rest of the doctor row remains the same */}
           <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.email}</td>
           <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>
             <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
@@ -251,7 +273,11 @@ const AllUsers = () => {
               <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
                 <Edit className="w-4 h-4 text-green-500" />
               </button>
-              <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
+              {/* UPDATE THIS DELETE BUTTON */}
+              <button 
+                onClick={() => handleDeleteClick(user)}
+                className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+              >
                 <Trash2 className="w-4 h-4 text-red-500" />
               </button>
             </div>
@@ -261,8 +287,8 @@ const AllUsers = () => {
     }
 
 
-   // Common table row for other roles
-   return (
+    // Common table row for other roles
+    return (
       <tr key={user._id} className={`${theme.borderSecondary} border-b hover:bg-opacity-50 ${theme.cardSecondary} transition-colors`}>
         <td className="px-6 py-4">
           <div className="flex items-center space-x-3">
@@ -306,7 +332,11 @@ const AllUsers = () => {
             <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
               <Edit className="w-4 h-4 text-green-500" />
             </button>
-            <button className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
+            {/* UPDATE THIS DELETE BUTTON */}
+            <button 
+              onClick={() => handleDeleteClick(user)}
+              className={`p-1 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+            >
               <Trash2 className="w-4 h-4 text-red-500" />
             </button>
           </div>
@@ -440,7 +470,7 @@ const AllUsers = () => {
                className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
              />
            </div>
-           <button className={`flex items-center space-x-2 px-4 py-3 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} border hover:bg-opacity-70 transition-colors`}>
+           <button className={`flex items-center space-x-2 px-4 py-3 ${theme.textPrimary} ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} border hover:bg-opacity-70 transition-colors`}>
              <Filter className="w-5 h-5" />
              <span>Filter</span>
            </button>
@@ -500,6 +530,16 @@ const AllUsers = () => {
        role={selectedRole}
        onSuccess={handleRegistrationSuccess}
      />
+
+
+      {/* ADD THE DELETE CONFIRMATION MODAL */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleDeleteCancel}
+        onSuccess={handleDeleteSuccess}
+        userData={userToDelete}
+      />
+
    </div>
  );
 };

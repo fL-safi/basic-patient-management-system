@@ -23,6 +23,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { getUserDataByRoleAndId } from "../../api/api";
+import UpdateUserModal from "../../components/admin/UpdateUserModal";
+import AccountStatusModal from "../../components/admin/AccountStatusModal";
 
 const RoleProfile = () => {
   const { theme } = useTheme();
@@ -32,6 +34,14 @@ const RoleProfile = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isAccountStatusModalOpen, setIsAccountStatusModalOpen] =
+    useState(false);
+
+  const handleProfileUpdate = (updatedUser) => {
+    setUserData(updatedUser);
+    // Show success message or notification here if needed
+  };
 
   // Fetch user data from API
   useEffect(() => {
@@ -161,7 +171,7 @@ const RoleProfile = () => {
           <div>
             <button
               onClick={() => navigate("/admin")}
-              className={`flex items-center space-x-2 mb-4 px-3 py-2 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} border hover:bg-opacity-70 transition-colors`}
+              className={`flex items-center space-x-2 mb-4 ${theme.textPrimary} px-3 py-2 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} border hover:bg-opacity-70 transition-colors`}
             >
               <ArrowLeft className="w-4 h-4" />
               {/* <span>Back to All Users</span> */}
@@ -216,7 +226,7 @@ const RoleProfile = () => {
             {/* Profile Details */}
             <div className="p-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                   <span className={`text-sm ${theme.textMuted}`}>
                     Account Status
                   </span>
@@ -236,6 +246,38 @@ const RoleProfile = () => {
                         </span>
                       </>
                     )}
+                  </div>
+                </div> */}
+
+                <div className="flex items-center justify-between">
+                  <span className={`text-sm ${theme.textMuted}`}>
+                    Account Status
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2">
+                      {userData.isActive ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <span className="text-green-500 font-medium text-sm">
+                            Active
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4 text-red-500" />
+                          <span className="text-red-500 font-medium text-sm">
+                            Inactive
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setIsAccountStatusModalOpen(true)}
+                      className={`p-1 rounded-lg ${theme.textPrimary} ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+                      title="Edit Account Status"
+                    >
+                      <Edit className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
 
@@ -289,9 +331,18 @@ const RoleProfile = () => {
 
               {/* Action Buttons */}
               <div className="mt-6 space-y-3">
+                {/* <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r ${theme.buttonGradient} text-white font-medium rounded-lg shadow-lg ${theme.buttonGradientHover} transition-all duration-200`}
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Edit Profile</span>
+                </motion.button> */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
+                  onClick={() => setIsUpdateModalOpen(true)}
                   className={`w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r ${theme.buttonGradient} text-white font-medium rounded-lg shadow-lg ${theme.buttonGradientHover} transition-all duration-200`}
                 >
                   <Edit className="w-4 h-4" />
@@ -299,7 +350,7 @@ const RoleProfile = () => {
                 </motion.button>
 
                 <button
-                  className={`w-full flex items-center justify-center space-x-2 px-4 py-2 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} border hover:bg-opacity-70 transition-colors`}
+                  className={`w-full flex items-center justify-center space-x-2 px-4 py-2 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} ${theme.textPrimary} border hover:bg-opacity-70 transition-colors`}
                 >
                   <Settings className="w-4 h-4" />
                   <span>Settings</span>
@@ -563,7 +614,7 @@ const RoleProfile = () => {
                       <Clock className="w-4 h-4 text-blue-500" />
                     </div>
                     <div>
-                      <p className={`font-medium ${theme.textPrimary}`}>
+                      <p className={`font-medium `}>
                         Last Login
                       </p>
                       <p className={`text-sm ${theme.textMuted}`}>
@@ -571,7 +622,7 @@ const RoleProfile = () => {
                       </p>
                     </div>
                   </div>
-                  <span className={`font-semibold ${theme.textSecondary}`}>
+                  <span className={`font-semibold`}>
                     {userData.lastLogin
                       ? formatDateTime(userData.lastLogin)
                       : "Never"}
@@ -584,7 +635,7 @@ const RoleProfile = () => {
                       <Calendar className="w-4 h-4 text-green-500" />
                     </div>
                     <div>
-                      <p className={`font-medium ${theme.textPrimary}`}>
+                      <p className={`font-medium `}>
                         Account Created
                       </p>
                       <p className={`text-sm ${theme.textMuted}`}>
@@ -592,7 +643,7 @@ const RoleProfile = () => {
                       </p>
                     </div>
                   </div>
-                  <span className={`font-semibold ${theme.textSecondary}`}>
+                  <span className={`font-semibold`}>
                     {formatDate(userData.createdAt)}
                   </span>
                 </div>
@@ -603,7 +654,7 @@ const RoleProfile = () => {
                       <Edit className="w-4 h-4 text-orange-500" />
                     </div>
                     <div>
-                      <p className={`font-medium ${theme.textPrimary}`}>
+                      <p className={`font-medium `}>
                         Last Updated
                       </p>
                       <p className={`text-sm ${theme.textMuted}`}>
@@ -611,7 +662,7 @@ const RoleProfile = () => {
                       </p>
                     </div>
                   </div>
-                  <span className={`font-semibold ${theme.textSecondary}`}>
+                  <span className={`font-semibold`}>
                     {formatDateTime(userData.updatedAt)}
                   </span>
                 </div>
@@ -620,6 +671,22 @@ const RoleProfile = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Update Profile Modal */}
+      <UpdateUserModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        userData={userData}
+        onSuccess={handleProfileUpdate}
+      />
+
+      {/* Account Status Modal */}
+      <AccountStatusModal
+        isOpen={isAccountStatusModalOpen}
+        onClose={() => setIsAccountStatusModalOpen(false)}
+        userData={userData}
+        onSuccess={handleProfileUpdate}
+      />
     </div>
   );
 };

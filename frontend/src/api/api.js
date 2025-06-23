@@ -86,3 +86,35 @@ export const getUserDataByRoleAndId = async (role, id) => {
     throw error;
   }
 };
+
+export const updateUserDataByRoleAndId = async (role, id, userData) => {
+  try {
+    const response = await axiosInstance.patch(`/admin/${role}/${id}`, userData);
+    return response.data; // Return the API response data
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+
+// API call to update user account status by role and ID
+export const updateUserAccountStatus = async (role, id, statusData) => {
+  try {
+    const response = await axiosInstance.patch(`/admin/${role}/${id}/`, statusData);
+    return response.data; // Return the API response data
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+export const deleteUserByRoleAndId = async (role, id) => {
+  try {
+    const response = await axiosInstance.delete(`/admin/${role}/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
