@@ -1,106 +1,112 @@
 // UpdateUserModal.jsx
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useTheme } from '../../hooks/useTheme';
-import { 
-  User, 
-  Mail, 
-  CreditCard, 
-  Phone, 
-  MapPin, 
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useTheme } from "../../hooks/useTheme";
+import {
+  User,
+  Mail,
+  CreditCard,
+  Phone,
+  MapPin,
   Users,
   Stethoscope,
   FileText,
   Calendar,
   Loader,
-  Save
-} from 'lucide-react';
-import Modal from '../../components/UI/Modal';
+  Save,
+} from "lucide-react";
+import Modal from "../../components/UI/Modal";
+import CNICInput from "../CNICInput";
 
 const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    cnic: '',
-    phoneNumber: '',
-    address: '',
-    gender: '',
+    name: "",
+    email: "",
+    cnic: "",
+    phoneNumber: "",
+    address: "",
+    gender: "",
     // Doctor specific fields
-    speciality: '',
-    registrationNumber: '',
-    doctorSchedule: []
+    speciality: "",
+    registrationNumber: "",
+    doctorSchedule: [],
   });
 
   // Pre-fill form data when userData changes
   useEffect(() => {
     if (userData) {
       setFormData({
-        name: userData.name || '',
-        email: userData.email || '',
-        cnic: userData.cnic || '',
-        phoneNumber: userData.phoneNumber || '',
-        address: userData.address || '',
-        gender: userData.gender || '',
-        speciality: userData.speciality || '',
-        registrationNumber: userData.registrationNumber || '',
-        doctorSchedule: userData.doctorSchedule || []
+        name: userData.name || "",
+        email: userData.email || "",
+        cnic: userData.cnic || "",
+        phoneNumber: userData.phoneNumber || "",
+        address: userData.address || "",
+        gender: userData.gender || "",
+        speciality: userData.speciality || "",
+        registrationNumber: userData.registrationNumber || "",
+        doctorSchedule: userData.doctorSchedule || [],
       });
     }
   }, [userData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     // Clear errors when user starts typing
-    if (error) setError('');
+    if (error) setError("");
   };
 
   const handleScheduleChange = (day) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       doctorSchedule: prev.doctorSchedule.includes(day)
-        ? prev.doctorSchedule.filter(d => d !== day)
-        : [...prev.doctorSchedule, day]
+        ? prev.doctorSchedule.filter((d) => d !== day)
+        : [...prev.doctorSchedule, day],
     }));
   };
 
   const validateForm = () => {
-    if (!formData.name || !formData.email || !formData.cnic || 
-        !formData.phoneNumber || !formData.address) {
-      setError('All required fields must be filled');
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.cnic ||
+      !formData.phoneNumber ||
+      !formData.address
+    ) {
+      setError("All required fields must be filled");
       return false;
     }
 
     // CNIC validation
     const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
     if (!cnicRegex.test(formData.cnic)) {
-      setError('CNIC must be in format: 12345-1234567-1');
+      setError("CNIC must be in format: 12345-1234567-1");
       return false;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       return false;
     }
 
     // Doctor specific validation
-    if (userData?.role === 'doctor') {
+    if (userData?.role === "doctor") {
       if (!formData.speciality || !formData.registrationNumber) {
-        setError('Speciality and registration number are required for doctors');
+        setError("Speciality and registration number are required for doctors");
         return false;
       }
       if (formData.doctorSchedule.length === 0) {
-        setError('Please select at least one working day');
+        setError("Please select at least one working day");
         return false;
       }
     }
@@ -110,28 +116,33 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       // Import the update function
-      const { updateUserDataByRoleAndId } = await import('../../api/api');
-      
-      const response = await updateUserDataByRoleAndId(userData.role, userData._id, formData);
+      const { updateUserDataByRoleAndId } = await import("../../api/api");
 
-      setSuccess(response.message || 'Profile updated successfully');
+      const response = await updateUserDataByRoleAndId(
+        userData.role,
+        userData._id,
+        formData
+      );
+
+      setSuccess(response.message || "Profile updated successfully");
       setTimeout(() => {
         onSuccess(response.user); // Pass updated user data back
         onClose();
         resetForm();
       }, 1500);
-
     } catch (error) {
-      setError(error.response?.data?.message || 'Update failed. Please try again.');
+      setError(
+        error.response?.data?.message || "Update failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -139,78 +150,93 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      email: '',
-      cnic: '',
-      phoneNumber: '',
-      address: '',
-      gender: '',
-      speciality: '',
-      registrationNumber: '',
-      doctorSchedule: []
+      name: "",
+      email: "",
+      cnic: "",
+      phoneNumber: "",
+      address: "",
+      gender: "",
+      speciality: "",
+      registrationNumber: "",
+      doctorSchedule: [],
     });
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
   };
 
   const handleClose = () => {
     // Reset to original userData when closing without saving
     if (userData) {
       setFormData({
-        name: userData.name || '',
-        email: userData.email || '',
-        cnic: userData.cnic || '',
-        phoneNumber: userData.phoneNumber || '',
-        address: userData.address || '',
-        gender: userData.gender || '',
-        speciality: userData.speciality || '',
-        registrationNumber: userData.registrationNumber || '',
-        doctorSchedule: userData.doctorSchedule || []
+        name: userData.name || "",
+        email: userData.email || "",
+        cnic: userData.cnic || "",
+        phoneNumber: userData.phoneNumber || "",
+        address: userData.address || "",
+        gender: userData.gender || "",
+        speciality: userData.speciality || "",
+        registrationNumber: userData.registrationNumber || "",
+        doctorSchedule: userData.doctorSchedule || [],
       });
     }
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     onClose();
   };
 
   const getRoleConfig = () => {
-    if (!userData) return { title: 'Update Profile', subtitle: '', icon: User, color: 'text-gray-500', bgColor: 'bg-gray-500' };
-    
+    if (!userData)
+      return {
+        title: "Update Profile",
+        subtitle: "",
+        icon: User,
+        color: "text-gray-500",
+        bgColor: "bg-gray-500",
+      };
+
     const configs = {
       doctor: {
-        title: 'Update Doctor Profile',
+        title: "Update Doctor Profile",
         subtitle: `Update ${userData.name}'s profile information`,
         icon: Stethoscope,
-        color: 'text-purple-500',
-        bgColor: 'bg-purple-500'
+        color: "text-purple-500",
+        bgColor: "bg-purple-500",
       },
       receptionist: {
-        title: 'Update Receptionist Profile',
+        title: "Update Receptionist Profile",
         subtitle: `Update ${userData.name}'s profile information`,
         icon: User,
-        color: 'text-blue-500',
-        bgColor: 'bg-blue-500'
+        color: "text-blue-500",
+        bgColor: "bg-blue-500",
       },
       pharmacist_dispenser: {
-        title: 'Update Dispenser Profile',
+        title: "Update Dispenser Profile",
         subtitle: `Update ${userData.name}'s profile information`,
         icon: Users,
-        color: 'text-green-500',
-        bgColor: 'bg-green-500'
+        color: "text-green-500",
+        bgColor: "bg-green-500",
       },
       pharmacist_inventory: {
-        title: 'Update Inventory Staff Profile',
+        title: "Update Inventory Staff Profile",
         subtitle: `Update ${userData.name}'s profile information`,
         icon: Users,
-        color: 'text-orange-500',
-        bgColor: 'bg-orange-500'
-      }
+        color: "text-orange-500",
+        bgColor: "bg-orange-500",
+      },
     };
     return configs[userData.role] || configs.doctor;
   };
 
   const config = getRoleConfig();
-  const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const weekDays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
 
   if (!userData) return null;
 
@@ -224,7 +250,9 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         {/* Header Icon */}
         <div className="flex justify-center mb-6">
-          <div className={`p-4 rounded-full ${config.bgColor} bg-opacity-20 border border-current ${config.color}`}>
+          <div
+            className={`p-4 rounded-full ${config.bgColor} bg-opacity-20 border border-current ${config.color}`}
+          >
             <config.icon className={`w-8 h-8 ${config.color}`} />
           </div>
         </div>
@@ -252,19 +280,25 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
 
         {/* Basic Information */}
         <div>
-          <h3 className={`text-lg font-semibold ${theme.textPrimary} mb-4 flex items-center space-x-2`}>
+          <h3
+            className={`text-lg font-semibold ${theme.textPrimary} mb-4 flex items-center space-x-2`}
+          >
             <User className="w-5 h-5" />
             <span>Basic Information</span>
           </h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Name */}
             <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
                 Full Name *
               </label>
               <div className="relative">
-                <User className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                <User
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                />
                 <input
                   type="text"
                   name="name"
@@ -279,11 +313,15 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
 
             {/* Email */}
             <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
                 Email Address *
               </label>
               <div className="relative">
-                <Mail className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                <Mail
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                />
                 <input
                   type="email"
                   name="email"
@@ -297,7 +335,7 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
             </div>
 
             {/* CNIC */}
-            <div>
+            {/* <div>
               <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
                 CNIC *
               </label>
@@ -314,15 +352,35 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
                   required
                 />
               </div>
+            </div> */}
+
+            <div>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
+                CNIC *
+              </label>
+              <CNICInput
+                value={formData.cnic}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, cnic: val }))
+                }
+                placeholder="CNIC (12345-1234567-1)"
+                error={error.includes("CNIC") ? error : ""}
+              />
             </div>
 
             {/* Phone */}
             <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
                 Phone Number *
               </label>
               <div className="relative">
-                <Phone className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                <Phone
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                />
                 <input
                   type="tel"
                   name="phoneNumber"
@@ -337,7 +395,9 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
 
             {/* Gender */}
             <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
                 Gender
               </label>
               <select
@@ -356,11 +416,15 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
 
           {/* Address */}
           <div className="mt-4">
-            <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+            <label
+              className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+            >
               Address *
             </label>
             <div className="relative">
-              <MapPin className={`absolute left-3 top-3 w-5 h-5 ${theme.textMuted}`} />
+              <MapPin
+                className={`absolute left-3 top-3 w-5 h-5 ${theme.textMuted}`}
+              />
               <textarea
                 name="address"
                 value={formData.address}
@@ -375,21 +439,27 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
         </div>
 
         {/* Doctor Specific Fields */}
-        {userData.role === 'doctor' && (
+        {userData.role === "doctor" && (
           <div>
-            <h3 className={`text-lg font-semibold ${theme.textPrimary} mb-4 flex items-center space-x-2`}>
+            <h3
+              className={`text-lg font-semibold ${theme.textPrimary} mb-4 flex items-center space-x-2`}
+            >
               <Stethoscope className="w-5 h-5" />
               <span>Professional Information</span>
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Speciality */}
               <div>
-                <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                >
                   Speciality *
                 </label>
                 <div className="relative">
-                  <FileText className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                  <FileText
+                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                  />
                   <input
                     type="text"
                     name="speciality"
@@ -404,11 +474,15 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
 
               {/* Registration Number */}
               <div>
-                <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                >
                   Registration Number *
                 </label>
                 <div className="relative">
-                  <CreditCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                  <CreditCard
+                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                  />
                   <input
                     type="text"
                     name="registrationNumber"
@@ -424,20 +498,27 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
 
             {/* Doctor Schedule */}
             <div className="mt-4">
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2 flex items-center space-x-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2 flex items-center space-x-2`}
+              >
                 <Calendar className="w-4 h-4" />
                 <span>Working Days *</span>
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {weekDays.map((day) => (
-                  <label key={day} className="flex items-center space-x-2 cursor-pointer">
+                  <label
+                    key={day}
+                    className="flex items-center space-x-2 cursor-pointer"
+                  >
                     <input
                       type="checkbox"
                       checked={formData.doctorSchedule.includes(day)}
                       onChange={() => handleScheduleChange(day)}
                       className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                     />
-                    <span className={`text-sm ${theme.textSecondary}`}>{day}</span>
+                    <span className={`text-sm ${theme.textSecondary}`}>
+                      {day}
+                    </span>
                   </label>
                 ))}
               </div>

@@ -1,104 +1,111 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useTheme } from '../../hooks/useTheme';
-import { 
-  User, 
-  Mail, 
-  Lock, 
-  CreditCard, 
-  Phone, 
-  MapPin, 
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { useTheme } from "../../hooks/useTheme";
+import {
+  User,
+  Mail,
+  Lock,
+  CreditCard,
+  Phone,
+  MapPin,
   Users,
   Stethoscope,
   FileText,
   Calendar,
   Eye,
   EyeOff,
-  Loader
-} from 'lucide-react';
-import Modal from '../../components/UI/Modal';
-import { 
-  registerDoctor, 
-  registerReceptionist, 
-  registerPharmacistDispenser, 
-  registerPharmacistInventory 
-} from '../../api/api';
+  Loader,
+} from "lucide-react";
+import Modal from "../../components/UI/Modal";
+import {
+  registerDoctor,
+  registerReceptionist,
+  registerPharmacistDispenser,
+  registerPharmacistInventory,
+} from "../../api/api";
+import CNICInput from "../CNICInput";
 
 const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    cnic: '',
-    phoneNumber: '',
-    address: '',
-    gender: '',
+    name: "",
+    email: "",
+    password: "",
+    cnic: "",
+    phoneNumber: "",
+    address: "",
+    gender: "",
     // Doctor specific fields
-    speciality: '',
-    registrationNumber: '',
-    doctorSchedule: []
+    speciality: "",
+    registrationNumber: "",
+    doctorSchedule: [],
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     // Clear errors when user starts typing
-    if (error) setError('');
+    if (error) setError("");
   };
 
   const handleScheduleChange = (day) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       doctorSchedule: prev.doctorSchedule.includes(day)
-        ? prev.doctorSchedule.filter(d => d !== day)
-        : [...prev.doctorSchedule, day]
+        ? prev.doctorSchedule.filter((d) => d !== day)
+        : [...prev.doctorSchedule, day],
     }));
   };
 
   const validateForm = () => {
-    if (!formData.name || !formData.email || !formData.password || !formData.cnic || 
-        !formData.phoneNumber || !formData.address) {
-      setError('All required fields must be filled');
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.password ||
+      !formData.cnic ||
+      !formData.phoneNumber ||
+      !formData.address
+    ) {
+      setError("All required fields must be filled");
       return false;
     }
 
     // CNIC validation
     const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
     if (!cnicRegex.test(formData.cnic)) {
-      setError('CNIC must be in format: 12345-1234567-1');
+      setError("CNIC must be in format: 12345-1234567-1");
       return false;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       return false;
     }
 
     // Password validation
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError("Password must be at least 6 characters long");
       return false;
     }
 
     // Doctor specific validation
-    if (role === 'doctor') {
+    if (role === "doctor") {
       if (!formData.speciality || !formData.registrationNumber) {
-        setError('Speciality and registration number are required for doctors');
+        setError("Speciality and registration number are required for doctors");
         return false;
       }
       if (formData.doctorSchedule.length === 0) {
-        setError('Please select at least one working day');
+        setError("Please select at least one working day");
         return false;
       }
     }
@@ -108,32 +115,32 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       let response;
       const submitData = { ...formData };
 
       switch (role) {
-        case 'doctor':
+        case "doctor":
           response = await registerDoctor(submitData);
           break;
-        case 'receptionist':
+        case "receptionist":
           response = await registerReceptionist(submitData);
           break;
-        case 'pharmacist_dispenser':
+        case "pharmacist_dispenser":
           response = await registerPharmacistDispenser(submitData);
           break;
-        case 'pharmacist_inventory':
+        case "pharmacist_inventory":
           response = await registerPharmacistInventory(submitData);
           break;
         default:
-          throw new Error('Invalid role');
+          throw new Error("Invalid role");
       }
 
       setSuccess(response.message);
@@ -142,9 +149,11 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
         onClose();
         resetForm();
       }, 1500);
-
     } catch (error) {
-      setError(error.response?.data?.message || 'Registration failed. Please try again.');
+      setError(
+        error.response?.data?.message ||
+          "Registration failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -152,19 +161,19 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      email: '',
-      password: '',
-      cnic: '',
-      phoneNumber: '',
-      address: '',
-      gender: '',
-      speciality: '',
-      registrationNumber: '',
-      doctorSchedule: []
+      name: "",
+      email: "",
+      password: "",
+      cnic: "",
+      phoneNumber: "",
+      address: "",
+      gender: "",
+      speciality: "",
+      registrationNumber: "",
+      doctorSchedule: [],
     });
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
   };
 
   const handleClose = () => {
@@ -175,39 +184,47 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
   const getRoleConfig = () => {
     const configs = {
       doctor: {
-        title: 'Register New Doctor',
-        subtitle: 'Add a new medical doctor to the system',
+        title: "Register New Doctor",
+        subtitle: "Add a new medical doctor to the system",
         icon: Stethoscope,
-        color: 'text-purple-500',
-        bgColor: 'bg-purple-500'
+        color: "text-purple-500",
+        bgColor: "bg-purple-500",
       },
       receptionist: {
-        title: 'Register New Receptionist',
-        subtitle: 'Add a new receptionist to the front desk team',
+        title: "Register New Receptionist",
+        subtitle: "Add a new receptionist to the front desk team",
         icon: User,
-        color: 'text-blue-500',
-        bgColor: 'bg-blue-500'
+        color: "text-blue-500",
+        bgColor: "bg-blue-500",
       },
       pharmacist_dispenser: {
-        title: 'Register New Dispenser',
-        subtitle: 'Add a new pharmacy dispenser to the team',
+        title: "Register New Dispenser",
+        subtitle: "Add a new pharmacy dispenser to the team",
         icon: Users,
-        color: 'text-green-500',
-        bgColor: 'bg-green-500'
+        color: "text-green-500",
+        bgColor: "bg-green-500",
       },
       pharmacist_inventory: {
-        title: 'Register New Inventory Staff',
-        subtitle: 'Add a new inventory pharmacist to the team',
+        title: "Register New Inventory Staff",
+        subtitle: "Add a new inventory pharmacist to the team",
         icon: Users,
-        color: 'text-orange-500',
-        bgColor: 'bg-orange-500'
-      }
+        color: "text-orange-500",
+        bgColor: "bg-orange-500",
+      },
     };
     return configs[role] || configs.doctor;
   };
 
   const config = getRoleConfig();
-  const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const weekDays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
 
   return (
     <Modal
@@ -219,7 +236,9 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         {/* Header Icon */}
         <div className="flex justify-center mb-6">
-          <div className={`p-4 rounded-full ${config.bgColor} bg-opacity-20 border border-current ${config.color}`}>
+          <div
+            className={`p-4 rounded-full ${config.bgColor} bg-opacity-20 border border-current ${config.color}`}
+          >
             <config.icon className={`w-8 h-8 ${config.color}`} />
           </div>
         </div>
@@ -247,19 +266,25 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
         {/* Basic Information */}
         <div>
-          <h3 className={`text-lg font-semibold ${theme.textPrimary} mb-4 flex items-center space-x-2`}>
+          <h3
+            className={`text-lg font-semibold ${theme.textPrimary} mb-4 flex items-center space-x-2`}
+          >
             <User className="w-5 h-5" />
             <span>Basic Information</span>
           </h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Name */}
             <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
                 Full Name *
               </label>
               <div className="relative">
-                <User className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                <User
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                />
                 <input
                   type="text"
                   name="name"
@@ -274,11 +299,15 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
             {/* Email */}
             <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
                 Email Address *
               </label>
               <div className="relative">
-                <Mail className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                <Mail
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                />
                 <input
                   type="email"
                   name="email"
@@ -293,11 +322,15 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
             {/* Password */}
             <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
                 Password *
               </label>
               <div className="relative">
-                <Lock className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                <Lock
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -312,13 +345,17 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
                   onClick={() => setShowPassword(!showPassword)}
                   className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${theme.textMuted} hover:${theme.textSecondary} transition-colors`}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
 
             {/* CNIC */}
-            <div>
+            {/* <div>
               <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
                 CNIC *
               </label>
@@ -334,17 +371,35 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
                   pattern="\d{5}-\d{7}-\d{1}"
                   required
                 />
-                
               </div>
+            </div> */}
+
+            <div>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
+                CNIC *
+              </label>
+              <CNICInput
+                value={formData.cnic}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, cnic: val }))
+                }
+                placeholder="12345-1234567-1"
+              />
             </div>
 
             {/* Phone */}
             <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
                 Phone Number *
               </label>
               <div className="relative">
-                <Phone className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                <Phone
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                />
                 <input
                   type="tel"
                   name="phoneNumber"
@@ -359,7 +414,9 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
             {/* Gender */}
             <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
                 Gender
               </label>
               <select
@@ -378,11 +435,15 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
           {/* Address */}
           <div className="mt-4">
-            <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+            <label
+              className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+            >
               Address *
             </label>
             <div className="relative">
-              <MapPin className={`absolute left-3 top-3 w-5 h-5 ${theme.textMuted}`} />
+              <MapPin
+                className={`absolute left-3 top-3 w-5 h-5 ${theme.textMuted}`}
+              />
               <textarea
                 name="address"
                 value={formData.address}
@@ -397,21 +458,27 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
         </div>
 
         {/* Doctor Specific Fields */}
-        {role === 'doctor' && (
+        {role === "doctor" && (
           <div>
-            <h3 className={`text-lg font-semibold ${theme.textPrimary} mb-4 flex items-center space-x-2`}>
+            <h3
+              className={`text-lg font-semibold ${theme.textPrimary} mb-4 flex items-center space-x-2`}
+            >
               <Stethoscope className="w-5 h-5" />
               <span>Professional Information</span>
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Speciality */}
               <div>
-                <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                >
                   Speciality *
                 </label>
                 <div className="relative">
-                  <FileText className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                  <FileText
+                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                  />
                   <input
                     type="text"
                     name="speciality"
@@ -426,11 +493,15 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
               {/* Registration Number */}
               <div>
-                <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                >
                   Registration Number *
                 </label>
                 <div className="relative">
-                  <CreditCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                  <CreditCard
+                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                  />
                   <input
                     type="text"
                     name="registrationNumber"
@@ -446,20 +517,27 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
             {/* Doctor Schedule */}
             <div className="mt-4">
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2 flex items-center space-x-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2 flex items-center space-x-2`}
+              >
                 <Calendar className="w-4 h-4" />
                 <span>Working Days *</span>
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {weekDays.map((day) => (
-                  <label key={day} className="flex items-center space-x-2 cursor-pointer">
+                  <label
+                    key={day}
+                    className="flex items-center space-x-2 cursor-pointer"
+                  >
                     <input
                       type="checkbox"
                       checked={formData.doctorSchedule.includes(day)}
                       onChange={() => handleScheduleChange(day)}
                       className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                     />
-                    <span className={`text-sm ${theme.textSecondary}`}>{day}</span>
+                    <span className={`text-sm ${theme.textSecondary}`}>
+                      {day}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -492,7 +570,12 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
             ) : (
               <>
                 <User className="w-5 h-5" />
-                <span>Register {role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                <span>
+                  Register{" "}
+                  {role
+                    .replace("_", " ")
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                </span>
               </>
             )}
           </motion.button>
