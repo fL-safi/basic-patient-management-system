@@ -173,7 +173,7 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
             className={`p-4 border-t ${theme.borderSecondary} cursor-pointer flex justify-center items-center`}
             onClick={onToggleMiniMode}
           >
-            <div className={`p-3 ${theme.cardSecondary} rounded-lg text-center w-16 flex justify-center items-center`}>
+            <div className={`p-3 ${theme.cardSecondary} ${theme.textPrimary} rounded-lg text-center w-16 flex justify-center items-center`}>
               <ChevronRight className={`w-4 h-4 ${isMiniMode ? 'rotate-180' : ''}`} />
             </div>
           </motion.div>

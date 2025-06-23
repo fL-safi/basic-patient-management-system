@@ -38,7 +38,7 @@ const Modal = ({ isOpen, onClose, children, title, subtitle }) => {
               </div>
               <button
                 onClick={onClose}
-                className={`p-2 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+                className={`p-2 rounded-lg ${theme.textPrimary} ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
               >
                 <X className="w-5 h-5" />
               </button>
