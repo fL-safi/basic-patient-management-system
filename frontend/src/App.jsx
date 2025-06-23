@@ -21,6 +21,9 @@ import { useTheme } from "./hooks/useTheme";
 import AllUsers from "./pages/admin/AllUsers";
 import RoleProfile from "./pages/admin/RoleProfile";
 
+import AccountStatusRoute from "./components/AccountStatusRoute";
+import AccountInactive from "./components/AccountInactive";
+
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -37,6 +40,11 @@ const RedirectAuthenticatedUser = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
 
   if (isAuthenticated && user) {
+    // Check account status first - redirect inactive users
+    if (user.isActive === false) {
+      return <Navigate to="/account-inactive" replace />;
+    }
+
     // Redirect to role-specific dashboard
     const roleRoute = `/${user.role}`;
     return <Navigate to={roleRoute} replace />;
@@ -66,7 +74,7 @@ const GenericPage = ({ title, role }) => {
 };
 
 function App() {
-  const { isCheckingAuth, checkAuth, isAuthenticated } = useAuthStore();
+  const { isCheckingAuth, checkAuth, isAuthenticated, user } = useAuthStore();
   const { initializeTheme } = useThemeStore();
   const { theme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -119,7 +127,7 @@ function App() {
     <div
       className={`min-h-screen bg-gradient-to-br ${theme.primary} relative overflow-hidden`}
     >
-      {isAuthenticated && (
+      {/* {isAuthenticated && (
         <Header sidebarOpen={sidebarOpen} sidebarMiniMode={sidebarMiniMode} />
       )}
 
@@ -130,13 +138,29 @@ function App() {
           onToggleMiniMode={toggleSidebarMiniMode}
           onClose={closeSidebar}
         />
+      )} */}
+
+      {/* Only show header and sidebar for authenticated users with active accounts */}
+      {isAuthenticated && user && user.isActive !== false && (
+        <Header sidebarOpen={sidebarOpen} sidebarMiniMode={sidebarMiniMode} />
+      )}
+
+      {isAuthenticated && user && user.isActive !== false && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          isMiniMode={sidebarMiniMode}
+          onToggleMiniMode={toggleSidebarMiniMode}
+          onClose={closeSidebar}
+        />
       )}
 
       <div
         className={`${
-          isAuthenticated ? "pt-16 transition-all duration-300" : ""
+          isAuthenticated && user && user.isActive
+            ? "pt-16 transition-all duration-300"
+            : ""
         } flex items-center justify-center ${
-          isAuthenticated
+          isAuthenticated && user && user.isActive
             ? `min-h-[calc(100vh-4rem)] ${
                 sidebarOpen && window.innerWidth >= 1024
                   ? sidebarMiniMode
@@ -148,6 +172,9 @@ function App() {
         }`}
       >
         <Routes>
+          {/* Account Inactive Route - No protection needed, just the component */}
+          <Route path="/account-inactive" element={<AccountInactive />} />
+
           {/* Root redirect to role-based route */}
           <Route
             path="/"
@@ -279,7 +306,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["doctor"]}>
-                  <GenericPage title="Dashboard" role="doctor" />
+                  <AccountStatusRoute>
+                    <GenericPage title="Dashboard" role="doctor" />
+                  </AccountStatusRoute>
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -289,7 +318,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["doctor"]}>
-                  <GenericPage title="Patients Page" role="doctor" />
+                  <AccountStatusRoute>
+                    <GenericPage title="Patients Page" role="doctor" />
+                  </AccountStatusRoute>
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -299,7 +330,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["doctor"]}>
-                  <GenericPage title="Appointments Page" role="doctor" />
+                  <AccountStatusRoute>
+                    <GenericPage title="Appointments Page" role="doctor" />
+                  </AccountStatusRoute>
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
@@ -309,7 +342,9 @@ function App() {
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["doctor"]}>
-                  <GenericPage title="Consultations Page" role="doctor" />
+                  <AccountStatusRoute>
+                    <GenericPage title="Consultations Page" role="doctor" />
+                  </AccountStatusRoute>
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }

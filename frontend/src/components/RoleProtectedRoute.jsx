@@ -12,7 +12,7 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
 
 	if (allowedRoles && !allowedRoles.includes(user?.role)) {
 		return (
-			<div className={`min-h-screen bg-gradient-to-br ${theme.primary} flex items-center justify-center`}>
+			<div className={`min-h-screen flex items-center justify-center`}>
 				<div className={`max-w-md w-full mx-auto mt-10 p-8 ${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl shadow-2xl ${theme.border} border`}>
 					<h2 className={`text-2xl font-bold mb-4 text-center text-red-400`}>Access Denied</h2>
 					<p className={`${theme.textSecondary} text-center`}>
