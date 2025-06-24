@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const inventorySchema = new mongoose.Schema(
   {
-    medicineName: {
+    medicineName: { //Best Buying price, selling cost, date of purchase, billID, Add stock(Bulk addition)
       type: String,
       required: true,
     },
