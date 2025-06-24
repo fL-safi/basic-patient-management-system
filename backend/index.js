@@ -8,6 +8,7 @@ import { connectDB } from "./db/connectDB.js";
 
 import authRoutes from "./routes/auth.route.js";
 import adminRoutes from "./routes/admin.route.js";
+import patientRoutes from "./routes/patient.route.js"
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use(cookieParser()); // allows us to parse incoming cookies
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/patients", patientRoutes)
 
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "/frontend/dist")));
