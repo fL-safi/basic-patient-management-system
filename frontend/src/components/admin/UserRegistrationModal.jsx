@@ -15,6 +15,8 @@ import {
   Eye,
   EyeOff,
   Loader,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import Modal from "../../components/UI/Modal";
 import {
@@ -24,6 +26,7 @@ import {
   registerPharmacistInventory,
 } from "../../api/api";
 import CNICInput from "../CNICInput";
+import { SPECIALITIES, GENDERS } from "../../constants/selectOptions";
 
 const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
   const { theme } = useTheme();
@@ -31,12 +34,14 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isDoctorFieldsOpen, setIsDoctorFieldsOpen] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    firstName: "",
+    lastName: "",
+    email: null,
     password: "",
-    cnic: "",
+    cnic: null,
     phoneNumber: "",
     address: "",
     gender: "",
@@ -45,6 +50,17 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
     registrationNumber: "",
     doctorSchedule: [],
   });
+
+  // Generate username based on firstName and lastName
+  const generateUsername = (firstName, lastName) => {
+    if (!firstName || !lastName) return "";
+    return firstName.charAt(0).toLowerCase() + lastName.toLowerCase();
+  };
+
+  const displayUsername = generateUsername(
+    formData.firstName,
+    formData.lastName
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -67,29 +83,33 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
   const validateForm = () => {
     if (
-      !formData.name ||
-      !formData.email ||
+      !formData.firstName ||
+      !formData.lastName ||
       !formData.password ||
-      !formData.cnic ||
       !formData.phoneNumber ||
-      !formData.address
+      !formData.address ||
+      !formData.gender
     ) {
       setError("All required fields must be filled");
       return false;
     }
 
-    // CNIC validation
-    const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
-    if (!cnicRegex.test(formData.cnic)) {
-      setError("CNIC must be in format: 12345-1234567-1");
-      return false;
+    // CNIC validation (only if provided)
+    if (formData.cnic) {
+      const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+      if (!cnicRegex.test(formData.cnic)) {
+        setError("CNIC must be in format: 12345-1234567-1");
+        return false;
+      }
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError("Please enter a valid email address");
-      return false;
+    // Email validation (only if provided)
+    if (formData.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError("Please enter a valid email address");
+        return false;
+      }
     }
 
     // Password validation
@@ -161,10 +181,11 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      email: "",
+      firstName: "",
+      lastName: "",
+      email: null,
       password: "",
-      cnic: "",
+      cnic: null,
       phoneNumber: "",
       address: "",
       gender: "",
@@ -174,6 +195,7 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
     });
     setError("");
     setSuccess("");
+    setIsDoctorFieldsOpen(false);
   };
 
   const handleClose = () => {
@@ -274,12 +296,12 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Name */}
+            {/* First Name */}
             <div>
               <label
                 className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
               >
-                Full Name *
+                First Name *
               </label>
               <div className="relative">
                 <User
@@ -287,37 +309,63 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
                 />
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="firstName"
+                  value={formData.firstName}
                   onChange={handleInputChange}
                   className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                  placeholder="Enter full name"
+                  placeholder="Enter first name"
                   required
                 />
               </div>
             </div>
 
-            {/* Email */}
+            {/* Last Name */}
             <div>
               <label
                 className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
               >
-                Email Address *
+                Last Name *
               </label>
               <div className="relative">
-                <Mail
+                <User
                   className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
                 />
                 <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
                   onChange={handleInputChange}
                   className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                  placeholder="Enter email address"
+                  placeholder="Enter last name"
                   required
                 />
               </div>
+            </div>
+
+            {/* Username (LoginID) - ReadOnly */}
+            <div>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
+                LoginID (Username) *
+              </label>
+              <div className="relative">
+                <User
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                />
+                <input
+                  type="text"
+                  value={displayUsername}
+                  readOnly
+                  className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border bg-gray-100 dark:bg-gray-700 ${theme.textPrimary} cursor-not-allowed`}
+                  placeholder="Auto-generated based on name"
+                />
+              </div>
+              {displayUsername && (
+                <p className={`text-xs ${theme.textMuted} mt-1`}>
+                  This will be your login username
+                </p>
+              )}
             </div>
 
             {/* Password */}
@@ -354,41 +402,6 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
               </div>
             </div>
 
-            {/* CNIC */}
-            {/* <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
-                CNIC *
-              </label>
-              <div className="relative">
-                <CreditCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
-                <input
-                  type="text"
-                  name="cnic"
-                  value={formData.cnic}
-                  onChange={handleInputChange}
-                  className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                  placeholder="12345-1234567-1"
-                  pattern="\d{5}-\d{7}-\d{1}"
-                  required
-                />
-              </div>
-            </div> */}
-
-            <div>
-              <label
-                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
-              >
-                CNIC *
-              </label>
-              <CNICInput
-                value={formData.cnic}
-                onChange={(val) =>
-                  setFormData((prev) => ({ ...prev, cnic: val }))
-                }
-                placeholder="12345-1234567-1"
-              />
-            </div>
-
             {/* Phone */}
             <div>
               <label
@@ -417,19 +430,34 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
               <label
                 className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
               >
-                Gender
+                Gender *
               </label>
               <select
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
                 className={`w-full px-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                required
+              >
+                <option value="">Select Gender</option>
+                {GENDERS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              {/* <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleInputChange}
+                className={`w-full px-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                required
               >
                 <option value="">Select Gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
-              </select>
+              </select> */}
             </div>
           </div>
 
@@ -455,93 +483,168 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
               />
             </div>
           </div>
+
+          {/* Optional Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {/* Email - Optional */}
+            <div>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
+                Email Address (Optional)
+              </label>
+              <div className="relative">
+                <Mail
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                  placeholder="Enter email address"
+                />
+              </div>
+            </div>
+
+            {/* CNIC - Optional */}
+            <div>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
+                CNIC (Optional)
+              </label>
+              <CNICInput
+                value={formData.cnic}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, cnic: val }))
+                }
+                placeholder="12345-1234567-1"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Doctor Specific Fields */}
+        {/* Doctor Specific Fields - Collapsible */}
         {role === "doctor" && (
           <div>
-            <h3
-              className={`text-lg font-semibold ${theme.textPrimary} mb-4 flex items-center space-x-2`}
+            <button
+              type="button"
+              onClick={() => setIsDoctorFieldsOpen(!isDoctorFieldsOpen)}
+              className={`w-full flex items-center justify-between p-4 ${theme.cardSecondary} rounded-lg ${theme.textPrimary} hover:bg-opacity-70 transition-colors`}
             >
-              <Stethoscope className="w-5 h-5" />
-              <span>Professional Information</span>
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Speciality */}
-              <div>
-                <label
-                  className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
-                >
-                  Speciality *
-                </label>
-                <div className="relative">
-                  <FileText
-                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
-                  />
-                  <input
-                    type="text"
-                    name="speciality"
-                    value={formData.speciality}
-                    onChange={handleInputChange}
-                    className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                    placeholder="e.g., Cardiology, Neurology"
-                    required
-                  />
-                </div>
+              <div className="flex items-center space-x-2">
+                <Stethoscope className="w-5 h-5" />
+                <span className="text-lg font-semibold">
+                  Professional Information
+                </span>
               </div>
+              {isDoctorFieldsOpen ? (
+                <ChevronUp className="w-5 h-5" />
+              ) : (
+                <ChevronDown className="w-5 h-5" />
+              )}
+            </button>
 
-              {/* Registration Number */}
-              <div>
-                <label
-                  className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
-                >
-                  Registration Number *
-                </label>
-                <div className="relative">
-                  <CreditCard
-                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
-                  />
-                  <input
-                    type="text"
-                    name="registrationNumber"
-                    value={formData.registrationNumber}
-                    onChange={handleInputChange}
-                    className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                    placeholder="Medical registration number"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Doctor Schedule */}
-            <div className="mt-4">
-              <label
-                className={`block text-sm font-medium ${theme.textSecondary} mb-2 flex items-center space-x-2`}
+            {isDoctorFieldsOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-4 space-y-4"
               >
-                <Calendar className="w-4 h-4" />
-                <span>Working Days *</span>
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {weekDays.map((day) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Speciality */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                    >
+                      Speciality *
+                    </label>
+                    <div className="relative">
+                      <FileText
+                        className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                      />
+                      {/* <input
+                        type="text"
+                        name="speciality"
+                        value={formData.speciality}
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                        placeholder="e.g., Cardiology, Neurology"
+                        required
+                      /> */}
+                      <select
+                        name="speciality"
+                        value={formData.speciality}
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                        required
+                      >
+                        <option value="">Select Speciality</option>
+                        {SPECIALITIES.map((spec) => (
+                          <option key={spec} value={spec}>
+                            {spec}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Registration Number */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                    >
+                      Registration Number *
+                    </label>
+                    <div className="relative">
+                      <CreditCard
+                        className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                      />
+                      <input
+                        type="text"
+                        name="registrationNumber"
+                        value={formData.registrationNumber}
+                        onChange={handleInputChange}
+                        className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                        placeholder="Medical registration number"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Doctor Schedule */}
+                <div>
                   <label
-                    key={day}
-                    className="flex items-center space-x-2 cursor-pointer"
+                    className={`block text-sm font-medium ${theme.textSecondary} mb-2 flex items-center space-x-2`}
                   >
-                    <input
-                      type="checkbox"
-                      checked={formData.doctorSchedule.includes(day)}
-                      onChange={() => handleScheduleChange(day)}
-                      className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                    />
-                    <span className={`text-sm ${theme.textSecondary}`}>
-                      {day}
-                    </span>
+                    <Calendar className="w-4 h-4" />
+                    <span>Working Days *</span>
                   </label>
-                ))}
-              </div>
-            </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {weekDays.map((day) => (
+                      <label
+                        key={day}
+                        className="flex items-center space-x-2 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.doctorSchedule.includes(day)}
+                          onChange={() => handleScheduleChange(day)}
+                          className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className={`text-sm ${theme.textSecondary}`}>
+                          {day}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
 

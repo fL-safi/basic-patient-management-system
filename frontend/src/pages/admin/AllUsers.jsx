@@ -42,7 +42,7 @@ const AllUsers = () => {
   const [userToDelete, setUserToDelete] = useState(null);
 
     const handleNameClick = (user) => {
-    navigate(`/admin/${user.role}/${user._id}`);
+    navigate(`/admin/user-management/${user.role}/${user._id}`);
   };
 
   // Fetch users data from the API
@@ -203,10 +203,10 @@ const AllUsers = () => {
   };
 
   const renderTableHeader = (tabId) => {
-    const commonHeaders = ['Name', 'Email', 'CNIC', 'Phone', 'Status', 'Last Login', 'Actions'];
+    const commonHeaders = ['Name', 'Gender', 'Phone', 'Status', 'Last Login', 'Actions'];
     
     if (tabId === 'doctor') {
-      return ['Name', 'Email', 'Speciality', 'Registration', 'Schedule', 'Status', 'Actions'];
+      return ['Name', 'Gender', 'Speciality', 'Registration', 'Schedule', 'Status', 'Actions'];
     }
     
     return commonHeaders;
@@ -226,13 +226,13 @@ const AllUsers = () => {
                   className={`font-medium ${theme.textPrimary} cursor-pointer hover:text-emerald-500 transition-colors`}
                   onClick={() => handleNameClick(user)}
                 >
-                  {user.name}
+                  {user.firstName} {user.lastName}
                 </div>
-                <div className={`text-sm ${theme.textMuted}`}>{user.gender}</div>
+                <div className={`text-sm ${theme.textMuted}`}>@{user.username}</div>
               </div>
             </div>
           </td>
-          <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.email}</td>
+          <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.gender}</td>
           <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>
             <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
               {user.speciality}
@@ -300,14 +300,14 @@ const AllUsers = () => {
                 className={`font-medium ${theme.textPrimary} cursor-pointer hover:text-emerald-500 transition-colors`}
                 onClick={() => handleNameClick(user)}
               >
-                {user.name}
+                {user.firstName} {user.lastName}
               </div>
-              <div className={`text-sm ${theme.textMuted}`}>{user.gender}</div>
+              <div className={`text-sm ${theme.textMuted}`}>@{user.username}</div>
             </div>
           </div>
         </td>
-        <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.email}</td>
-        <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.cnic}</td>
+        <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.gender}</td>
+        {/* <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.cnic}</td> */}
         <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.phoneNumber}</td>
         <td className="px-6 py-4">
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -352,12 +352,12 @@ const AllUsers = () => {
    
    const searchLower = searchTerm.toLowerCase();
    return (
-     user.name?.toLowerCase().includes(searchLower) ||
-     user.email?.toLowerCase().includes(searchLower) ||
-     user.cnic?.includes(searchTerm) ||
-     user.phoneNumber?.includes(searchTerm) ||
-     (user.speciality && user.speciality.toLowerCase().includes(searchLower)) ||
-     (user.registrationNumber && user.registrationNumber.toLowerCase().includes(searchLower))
+     user.firstName?.toLowerCase().includes(searchLower) ||
+     user.lastName?.toLowerCase().includes(searchLower)
+  //    user.cnic?.includes(searchTerm) ||
+  //    user.phoneNumber?.includes(searchTerm) ||
+  //    (user.speciality && user.speciality.toLowerCase().includes(searchLower)) ||
+  //    (user.registrationNumber && user.registrationNumber.toLowerCase().includes(searchLower))
    );
  }) || [];
 
@@ -482,7 +482,7 @@ const AllUsers = () => {
              <thead>
                <tr className={`${theme.borderSecondary} border-b`}>
                  {renderTableHeader(activeTab).map((header) => (
-                   <th key={header} className={`px-6 py-3 text-left text-xs font-medium ${theme.textMuted} uppercase tracking-wider`}>
+                   <th key={header} className={`px-6 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}>
                      {header}
                    </th>
                  ))}

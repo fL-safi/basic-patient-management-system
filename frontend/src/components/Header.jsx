@@ -119,7 +119,7 @@ const Header = ({ sidebarOpen, sidebarMiniMode }) => {
                     <span
                       className={`hidden sm:inline text-sm font-medium truncate max-w-32 ${theme.textPrimary}`}
                     >
-                      {user.name}
+                      {user.username}
                     </span>
                     <ChevronDown
                       className={`w-4 h-4 ${

@@ -4,23 +4,37 @@ const userSchema = new mongoose.Schema(
   {
     email: {
       type: String,
-      required: true,
-      unique: true,
+      required: false, // Made optional
+      unique: false,
+      sparse: true, // Allows multiple null values
     },
     password: {
       type: String,
       required: true,
     },
-    name: {
+    // Split name into firstName and lastName
+    firstName: {
       type: String,
       required: true,
     },
-    cnic: {
+    lastName: {
+      type: String,
+      required: true,
+    },
+    // Added username field
+    username: {
       type: String,
       required: true,
       unique: true,
+    },
+    cnic: {
+      type: String,
+      required: false, // Made optional
+      unique: false,
+      sparse: true, // Allows multiple null values
       validate: {
         validator: function (v) {
+          if (!v) return true; // Allow empty/null values
           // CNIC format: 12345-1234567-1 (13 digits with dashes)
           return /^\d{5}-\d{7}-\d{1}$/.test(v);
         },
@@ -69,7 +83,9 @@ const userSchema = new mongoose.Schema(
     gender: {
       type: String,
       enum: ["male", "female", "other"],
-      required: false,
+      required: function () {
+        return this.role !== "admin"; // Made mandatory for non-admins
+      },
     },
     address: {
       type: String,
@@ -88,6 +104,7 @@ const userSchema = new mongoose.Schema(
     registrationNumber: {
       type: String,
       unique: true,
+      sparse: true,
       required: function () {
         return this.role === "doctor"; // Only for doctors
       },

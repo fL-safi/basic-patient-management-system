@@ -1,12 +1,28 @@
 import bcryptjs from "bcryptjs";
 import { User } from "../models/user.model.js";
 
+// Helper function to generate unique username
+const generateUniqueUsername = async (firstName, lastName) => {
+  const baseUsername = firstName.charAt(0).toLowerCase() + lastName.toLowerCase();
+  let username = baseUsername;
+  let counter = 1;
+
+  // Check if username exists and increment counter if needed
+  while (await User.findOne({ username })) {
+    username = baseUsername + counter;
+    counter++;
+  }
+
+  return username;
+};
+
 export const registerDoctorFromAdmin = async (req, res) => {
     try {
         const { 
             email, 
             password, 
-            name, 
+            firstName,
+            lastName,
             cnic, 
             phoneNumber, 
             address, 
@@ -17,56 +33,35 @@ export const registerDoctorFromAdmin = async (req, res) => {
         } = req.body;
 
         // Validate required fields for doctor
-        if (!email || !password || !name || !cnic || !phoneNumber || !address || !speciality || !registrationNumber || !doctorSchedule) {
+        if (!firstName || !lastName || !password || !phoneNumber || !address || !gender || !speciality || !registrationNumber || !doctorSchedule) {
             return res.status(400).json({ 
                 success: false, 
                 message: "All required fields must be provided for doctor registration" 
             });
         }
 
-        // Validate CNIC format
-        const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
-        if (!cnicRegex.test(cnic)) {
+        // Validate CNIC format if provided
+        if (cnic && !/^\d{5}-\d{7}-\d{1}$/.test(cnic)) {
             return res.status(400).json({ 
                 success: false, 
                 message: "CNIC must be in format: 12345-1234567-1" 
             });
         }
 
-        // Check if user already exists
-        const userAlreadyExists = await User.findOne({ 
-            $or: [{ email }, { cnic }, { registrationNumber }] 
-        });
-
-        if (userAlreadyExists) {
-            if (userAlreadyExists.email === email) {
-                return res.status(400).json({ success: false, message: "Doctor with this email already exists" });
-            }
-            if (userAlreadyExists.cnic === cnic) {
-                return res.status(400).json({ success: false, message: "Doctor with this CNIC already exists" });
-            }
-            if (userAlreadyExists.registrationNumber === registrationNumber) {
-                return res.status(400).json({ success: false, message: "Doctor with this registration number already exists" });
-            }
-        }
-
-        // Validate gender if provided
-        if (gender && !['male', 'female', 'other'].includes(gender)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Gender must be male, female, or other" 
-            });
-        }
+        // Generate unique username
+        const username = await generateUniqueUsername(firstName, lastName);
 
         // Hash password
         const hashedPassword = await bcryptjs.hash(password, 10);
 
         // Create doctor user
         const doctor = new User({
-            email,
+            email: email || undefined, // Don't set email to null, set it as undefined if not provided
             password: hashedPassword,
-            name,
-            cnic,
+            firstName,
+            lastName,
+            username,
+            cnic: cnic || undefined, // Don't set cnic to null, set it as undefined if not provided
             role: "doctor",
             phoneNumber,
             address,
@@ -83,12 +78,8 @@ export const registerDoctorFromAdmin = async (req, res) => {
         res.status(201).json({
             success: true,
             message: "Doctor registered successfully",
-            user: {
-                ...doctor._doc,
-                password: undefined,
-            },
+            user: { ...doctor._doc, password: undefined }
         });
-
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
     }
@@ -99,61 +90,44 @@ export const registerReceptionistFromAdmin = async (req, res) => {
         const { 
             email, 
             password, 
-            name, 
+            firstName, 
+            lastName, 
             cnic, 
             phoneNumber, 
             address, 
-            gender
+            gender 
         } = req.body;
 
-        // Validate required fields for receptionist
-        if (!email || !password || !name || !cnic || !phoneNumber || !address) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "All required fields must be provided for receptionist registration" 
+        // Validate required fields
+        if (!firstName || !lastName || !password || !phoneNumber || !address || !gender) {
+            return res.status(400).json({
+                success: false,
+                message: "All required fields must be provided for receptionist registration"
             });
         }
 
-        // Validate CNIC format
-        const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
-        if (!cnicRegex.test(cnic)) {
+        // CNIC validation (optional)
+        if (cnic && !/^\d{5}-\d{7}-\d{1}$/.test(cnic)) {
             return res.status(400).json({ 
                 success: false, 
                 message: "CNIC must be in format: 12345-1234567-1" 
             });
         }
 
-        // Check if user already exists
-        const userAlreadyExists = await User.findOne({ 
-            $or: [{ email }, { cnic }] 
-        });
-
-        if (userAlreadyExists) {
-            if (userAlreadyExists.email === email) {
-                return res.status(400).json({ success: false, message: "Receptionist with this email already exists" });
-            }
-            if (userAlreadyExists.cnic === cnic) {
-                return res.status(400).json({ success: false, message: "Receptionist with this CNIC already exists" });
-            }
-        }
-
-        // Validate gender if provided
-        if (gender && !['male', 'female', 'other'].includes(gender)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Gender must be male, female, or other" 
-            });
-        }
+        // Generate unique username
+        const username = await generateUniqueUsername(firstName, lastName);
 
         // Hash password
         const hashedPassword = await bcryptjs.hash(password, 10);
 
         // Create receptionist user
         const receptionist = new User({
-            email,
+            email: email || undefined, // Don't set email to null, set it as undefined if not provided
             password: hashedPassword,
-            name,
-            cnic,
+            firstName,
+            lastName,
+            username,
+            cnic: cnic || undefined, // Don't set cnic to null, set it as undefined if not provided
             role: "receptionist",
             phoneNumber,
             address,
@@ -167,77 +141,57 @@ export const registerReceptionistFromAdmin = async (req, res) => {
         res.status(201).json({
             success: true,
             message: "Receptionist registered successfully",
-            user: {
-                ...receptionist._doc,
-                password: undefined,
-            },
+            user: { ...receptionist._doc, password: undefined }
         });
-
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
     }
 };
+
 
 export const registerPharmacistDispenserFromAdmin = async (req, res) => {
     try {
         const { 
             email, 
             password, 
-            name, 
+            firstName, 
+            lastName, 
             cnic, 
             phoneNumber, 
             address, 
-            gender
+            gender 
         } = req.body;
 
-        // Validate required fields for pharmacist_dispenser
-        if (!email || !password || !name || !cnic || !phoneNumber || !address) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "All required fields must be provided for pharmacist_dispenser registration" 
+        // Validate required fields
+        if (!firstName || !lastName || !password || !phoneNumber || !address || !gender) {
+            return res.status(400).json({
+                success: false,
+                message: "All required fields must be provided for pharmacist_dispenser registration"
             });
         }
 
-        // Validate CNIC format
-        const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
-        if (!cnicRegex.test(cnic)) {
+        // CNIC validation (optional)
+        if (cnic && !/^\d{5}-\d{7}-\d{1}$/.test(cnic)) {
             return res.status(400).json({ 
                 success: false, 
                 message: "CNIC must be in format: 12345-1234567-1" 
             });
         }
 
-        // Check if user already exists
-        const userAlreadyExists = await User.findOne({ 
-            $or: [{ email }, { cnic }] 
-        });
-
-        if (userAlreadyExists) {
-            if (userAlreadyExists.email === email) {
-                return res.status(400).json({ success: false, message: "Pharmacist_dispenser with this email already exists" });
-            }
-            if (userAlreadyExists.cnic === cnic) {
-                return res.status(400).json({ success: false, message: "Pharmacist_dispenser with this CNIC already exists" });
-            }
-        }
-
-        // Validate gender if provided
-        if (gender && !['male', 'female', 'other'].includes(gender)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Gender must be male, female, or other" 
-            });
-        }
+        // Generate unique username
+        const username = await generateUniqueUsername(firstName, lastName);
 
         // Hash password
         const hashedPassword = await bcryptjs.hash(password, 10);
 
         // Create pharmacist_dispenser user
         const pharmacistDispenser = new User({
-            email,
+            email: email || undefined, // Don't set email to null, set it as undefined if not provided
             password: hashedPassword,
-            name,
-            cnic,
+            firstName,
+            lastName,
+            username,
+            cnic: cnic || undefined, // Don't set cnic to null, set it as undefined if not provided
             role: "pharmacist_dispenser",
             phoneNumber,
             address,
@@ -250,78 +204,59 @@ export const registerPharmacistDispenserFromAdmin = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: "Pharmacist_dispenser registered successfully",
-            user: {
-                ...pharmacistDispenser._doc,
-                password: undefined,
-            },
+            message: "Pharmacist dispenser registered successfully",
+            user: { ...pharmacistDispenser._doc, password: undefined }
         });
-
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
     }
 };
+
+
 
 export const registerPharmacistInventoryFromAdmin = async (req, res) => {
     try {
         const { 
             email, 
             password, 
-            name, 
+            firstName, 
+            lastName, 
             cnic, 
             phoneNumber, 
             address, 
-            gender
+            gender 
         } = req.body;
 
-        // Validate required fields for pharmacist_inventory
-        if (!email || !password || !name || !cnic || !phoneNumber || !address) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "All required fields must be provided for pharmacist_inventory registration" 
+        // Validate required fields
+        if (!firstName || !lastName || !password || !phoneNumber || !address || !gender) {
+            return res.status(400).json({
+                success: false,
+                message: "All required fields must be provided for pharmacist_inventory registration"
             });
         }
 
-        // Validate CNIC format
-        const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
-        if (!cnicRegex.test(cnic)) {
+        // CNIC validation (optional)
+        if (cnic && !/^\d{5}-\d{7}-\d{1}$/.test(cnic)) {
             return res.status(400).json({ 
                 success: false, 
                 message: "CNIC must be in format: 12345-1234567-1" 
             });
         }
 
-        // Check if user already exists
-        const userAlreadyExists = await User.findOne({ 
-            $or: [{ email }, { cnic }] 
-        });
-
-        if (userAlreadyExists) {
-            if (userAlreadyExists.email === email) {
-                return res.status(400).json({ success: false, message: "Pharmacist_inventory with this email already exists" });
-            }
-            if (userAlreadyExists.cnic === cnic) {
-                return res.status(400).json({ success: false, message: "Pharmacist_inventory with this CNIC already exists" });
-            }
-        }
-
-        // Validate gender if provided
-        if (gender && !['male', 'female', 'other'].includes(gender)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Gender must be male, female, or other" 
-            });
-        }
+        // Generate unique username
+        const username = await generateUniqueUsername(firstName, lastName);
 
         // Hash password
         const hashedPassword = await bcryptjs.hash(password, 10);
 
         // Create pharmacist_inventory user
         const pharmacistInventory = new User({
-            email,
+            email: email || undefined, // Don't set email to null, set it as undefined if not provided
             password: hashedPassword,
-            name,
-            cnic,
+            firstName,
+            lastName,
+            username,
+            cnic: cnic || undefined, // Don't set cnic to null, set it as undefined if not provided
             role: "pharmacist_inventory",
             phoneNumber,
             address,
@@ -334,18 +269,13 @@ export const registerPharmacistInventoryFromAdmin = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: "Pharmacist_inventory registered successfully",
-            user: {
-                ...pharmacistInventory._doc,
-                password: undefined,
-            },
+            message: "Pharmacist inventory registered successfully",
+            user: { ...pharmacistInventory._doc, password: undefined }
         });
-
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
     }
 };
-
 
 export const getAllUsersData = async (req, res) => {
     try {

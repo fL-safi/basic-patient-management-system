@@ -170,7 +170,7 @@ const RoleProfile = () => {
         <div className="flex items-center gap-6">
           <div>
             <button
-              onClick={() => navigate("/admin")}
+              onClick={() => navigate("/admin/user-management")}
               className={`flex items-center space-x-2 mb-4 ${theme.textPrimary} px-3 py-2 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} border hover:bg-opacity-70 transition-colors`}
             >
               <ArrowLeft className="w-4 h-4" />
@@ -183,7 +183,7 @@ const RoleProfile = () => {
               {formatRoleName(userData.role)} Profile
             </h1>
             <p className={`${theme.textMuted}`}>
-              View and manage {userData.name}'s profile information
+              View and manage {userData.firstName} {userData.lastName}'s profile information
             </p>
           </div>
         </div>
@@ -212,9 +212,12 @@ const RoleProfile = () => {
                 <div className="flex items-center justify-center w-20 h-20 bg-white bg-opacity-20 rounded-full mx-auto mb-4">
                   <RoleIcon className="w-10 h-10 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-center mb-2">
-                  {userData.name}
+                <h2 className="text-xl font-bold text-center">
+                  {userData.firstName} {userData.lastName}
                 </h2>
+                <h3 className="text-sm text-center mb-2">
+                  @{userData.username}
+                </h3>
                 <div className="flex items-center justify-center space-x-2">
                   <span className="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-medium">
                     {formatRoleName(userData.role)}
@@ -397,7 +400,7 @@ const RoleProfile = () => {
                     </span>
                   </div>
                   <p className={`font-semibold ${theme.textPrimary} ml-11`}>
-                    {userData.name}
+                    {userData.firstName} {userData.lastName}
                   </p>
                 </div>
 

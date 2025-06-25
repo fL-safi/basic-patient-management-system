@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import Input from "../components/Input";
 import CNICInput from "../components/CNICInput";
-import { Loader, Lock, Mail, User, UserCheck } from "lucide-react";
-import { useState } from "react";
+import { Loader, Lock, Mail, User, UserCheck, AtSign } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PasswordStrengthMeter from "../components/PasswordStrengthMeter";
 import { useAuthStore } from "../store/authStore";
@@ -11,7 +11,9 @@ import { useTheme } from '../hooks/useTheme';
 import hospitalImage from "../assets/signup-avatar.png"; // Adjust path as needed
 
 const SignUpPage = () => {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [cnic, setCnic] = useState("");
@@ -21,19 +23,42 @@ const SignUpPage = () => {
   const { signup, error, isLoading } = useAuthStore();
   const { theme } = useTheme();
 
+  // Generate username whenever firstName or lastName changes
+  useEffect(() => {
+    if (firstName && lastName) {
+      const generatedUsername = `${firstName.charAt(0).toLowerCase()}${lastName.toLowerCase()}`;
+      setUsername(generatedUsername);
+    } else {
+      setUsername("");
+    }
+  }, [firstName, lastName]);
+
   const handleSignUp = async (e) => {
     e.preventDefault();
 
-
-
-    // Validate CNIC format before submission
-    const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
-    if (!cnicRegex.test(cnic)) {
+    // Validate required fields
+    if (!firstName || !lastName || !password) {
       return;
     }
 
+    // Validate CNIC format if provided
+    if (cnic) {
+      const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+      if (!cnicRegex.test(cnic)) {
+        return;
+      }
+    }
+
     try {
-      await signup(email, password, name, role, cnic);
+            await signup(
+        firstName.trim(), 
+        lastName.trim(), 
+        username, 
+        email.trim() || null, 
+        cnic.trim() || null, 
+        password, 
+        role
+      );
       navigate("/");
     } catch (error) {
       console.log(error);
@@ -48,7 +73,7 @@ const SignUpPage = () => {
         transition={{ duration: 0.5 }}
         className={`max-w-6xl w-full ${theme.cardOpacity} backdrop-filter backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden`}
       >
-        <div className="flex flex-col lg:flex-row min-h-[600px]">
+        <div className="flex flex-col lg:flex-row min-h-[700px]">
           {/* Left Section - Image and Welcome Text */}
           <div className={`lg:w-1/2 bg-gradient-to-br from-emerald-500 to-emerald-700 p-8 flex flex-col justify-center items-center text-white relative overflow-hidden`}>
             {/* Background Pattern */}
@@ -103,19 +128,42 @@ const SignUpPage = () => {
                 </p>
 
                 <form onSubmit={handleSignUp} className="space-y-6">
+                  {/* First Name */}
                   <Input
                     icon={User}
                     type="text"
-                    placeholder="Full Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    placeholder="First Name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
                   />
 
-                  <CNICInput
-                    value={cnic}
-                    onChange={setCnic}
-                    placeholder="CNIC (12345-1234567-1)"
+                  {/* Last Name */}
+                  <Input
+                    icon={User}
+                    type="text"
+                    placeholder="Last Name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
                   />
+
+                  {/* Username (Read-only) */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <AtSign className={`w-5 h-5 ${theme.textMuted}`} />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Username (Auto-generated)"
+                      value={username}
+                      readOnly
+                      className={`w-full pl-10 pr-3 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.textPrimary} bg-gray-50 dark:bg-gray-800 cursor-not-allowed transition duration-200`}
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <span className={`text-xs ${theme.textMuted}`}>Auto</span>
+                    </div>
+                  </div>
 
                   {/* Role Selection Dropdown */}
                   <div className="relative">
@@ -133,21 +181,44 @@ const SignUpPage = () => {
                     </select>
                   </div>
 
-                  <Input
-                    icon={Mail}
-                    type="email"
-                    placeholder="Email Address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+                  {/* Email (Optional) */}
+                  <div className="relative">
+                    <Input
+                      icon={Mail}
+                      type="email"
+                      placeholder="Email Address (Optional)"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <span className={`text-xs ${theme.textMuted}`}>Optional</span>
+                    </div>
+                  </div>
 
+                  {/* CNIC (Optional) */}
+                  <div className="relative">
+                    <CNICInput
+                      value={cnic}
+                      onChange={setCnic}
+                      placeholder="CNIC (12345-1234567-1) - Optional"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <span className={`text-xs ${theme.textMuted}`}>Optional</span>
+                    </div>
+                  </div>
+
+                  {/* Password */}
                   <Input
                     icon={Lock}
                     type="password"
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required
                   />
+
+                  {/* Password Strength Meter */}
+                  {/* <PasswordStrengthMeter password={password} /> */}
 
                   {error && (
                     <motion.p 
@@ -198,6 +269,17 @@ const SignUpPage = () => {
                     </span>
                     <span>•</span>
                     <span>Medical Grade Security</span>
+                  </p>
+                </div>
+
+                {/* Username generation info */}
+                <div className={`mt-4 p-3 ${theme.cardSecondary} rounded-lg`}>
+                  <p className={`text-xs ${theme.textMuted} text-center`}>
+                    <strong className={theme.textSecondary}>
+                      Username Info:
+                    </strong>{" "}
+                    Your username is automatically generated from your first and last name. 
+                    It will be unique and used for logging in.
                   </p>
                 </div>
               </div>
