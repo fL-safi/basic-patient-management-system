@@ -13,10 +13,39 @@ export const useAuthStore = create((set) => ({
 	isCheckingAuth: true,
 	message: null,
 
-	signup: async (email, password, name, role, cnic) => {
+	// Helper function to generate username
+	generateUsername: (firstName, lastName) => {
+		if (!firstName || !lastName) return '';
+		
+		// Get first letter of firstName and full lastName, convert to lowercase
+		const username = (firstName.charAt(0) + lastName).toLowerCase();
+		return username;
+	},
+
+	// Function to check if username exists and get available username
+	checkUsernameAvailability: async (firstName, lastName) => {
+		try {
+			const baseUsername = (firstName.charAt(0) + lastName).toLowerCase();
+			const response = await axios.post(`${API_URL}/check-username`, { username: baseUsername });
+			return response.data.availableUsername; // Backend will return available username (baseUsername, baseUsername1, etc.)
+		} catch (error) {
+			console.error('Error checking username availability:', error);
+			return null;
+		}
+	},
+
+	signup: async (firstName, lastName, username, email, cnic, password, role) => {
 		set({ isLoading: true, error: null });
 		try {
-			const response = await axios.post(`${API_URL}/signup`, { email, password, name, role, cnic });
+			const response = await axios.post(`${API_URL}/signup`, { 
+				firstName, 
+				lastName, 
+				username, 
+				email: email || undefined, // Send undefined if email is empty
+				cnic: cnic || undefined,   // Send undefined if cnic is empty
+				password, 
+				role 
+			});
 			set({ user: response.data.user, isAuthenticated: true, isLoading: false });
 		} catch (error) {
 			set({ error: error.response.data.message || "Error signing up", isLoading: false });
@@ -24,10 +53,10 @@ export const useAuthStore = create((set) => ({
 		}
 	},
 	
-	login: async (email, password) => {
+	login: async (username, password) => {
 		set({ isLoading: true, error: null });
 		try {
-			const response = await axios.post(`${API_URL}/login`, { email, password });
+			const response = await axios.post(`${API_URL}/login`, { username, password });
 			set({
 				isAuthenticated: true,
 				user: response.data.user,

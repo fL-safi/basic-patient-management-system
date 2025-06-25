@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, Loader, Shield } from "lucide-react";
+import { AtSign, Lock, Loader, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import Input from "../components/Input";
 import { useNavigate } from "react-router-dom";
@@ -9,30 +9,24 @@ import { useTheme } from "../hooks/useTheme";
 import hospitalImage from "../assets/login-avatar.png";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState(""); // Changed from email to username
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const { login, isLoading, error } = useAuthStore();
   const { theme } = useTheme();
 
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-  //   await login(email, password);
-  //   navigate("/");
-  // };
-
   const handleLogin = async (e) => {
-  e.preventDefault();
-  try {
-    await login(email, password);
-    // The RedirectAuthenticatedUser component will handle the role-based redirect
-    // No need to manually navigate here as it will be handled automatically
-  } catch (error) {
-    // Error handling is managed by the auth store
-    console.error('Login failed:', error);
-  }
-};
+    e.preventDefault();
+    try {
+      await login(username, password); // Pass username instead of email
+      // The RedirectAuthenticatedUser component will handle the role-based redirect
+      // No need to manually navigate here as it will be handled automatically
+    } catch (error) {
+      // Error handling is managed by the auth store
+      console.error('Login failed:', error);
+    }
+  };
 
   return (
     <div
@@ -105,37 +99,27 @@ const LoginPage = () => {
                 </p>
 
                 <form onSubmit={handleLogin} className="space-y-6">
+                  {/* Username Input */}
                   <Input
-                    icon={Mail}
-                    type="email"
-                    placeholder="Email Address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    icon={AtSign}
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
                   />
 
+                  {/* Password Input */}
                   <Input
                     icon={Lock}
                     type="password"
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required
                   />
 
                   <div className="flex items-center justify-end">
-                    {/* <div className="flex items-center">
-                      <input
-                        id="remember-me"
-                        name="remember-me"
-                        type="checkbox"
-                        className={`h-4 w-4 text-emerald-600 focus:ring-emerald-500 ${theme.borderSecondary} border rounded`}
-                      />
-                      <label
-                        htmlFor="remember-me"
-                        className={`ml-2 block text-sm ${theme.textMuted}`}
-                      >
-                        Remember me
-                      </label>
-                    </div> */}
                     <Link
                       to="/forgot-password"
                       className={`text-sm ${theme.textMuted} hover:text-emerald-500 hover:underline transition-colors font-medium`}

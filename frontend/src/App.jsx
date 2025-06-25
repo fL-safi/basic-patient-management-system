@@ -233,13 +233,25 @@ function App() {
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["admin"]}>
+                  <DashboardPage />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/user-management"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                   <AllUsers />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
           />
+
           <Route
-            path="/admin/:role/:id" // Dynamic route for role profile
+            path="/admin/user-management/:role/:id" // Dynamic route for role profile
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["admin"]}>
@@ -249,16 +261,6 @@ function App() {
             }
           />
 
-          <Route
-            path="/admin/patients"
-            element={
-              <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={["admin"]}>
-                  <GenericPage title="Patients Page" role="admin" />
-                </RoleProtectedRoute>
-              </ProtectedRoute>
-            }
-          />
           <Route
             path="/admin/appointments"
             element={

@@ -1,3 +1,4 @@
+
 import bcryptjs from "bcryptjs";
 import crypto from "crypto";
 
@@ -10,12 +11,28 @@ import {
 } from "../mailtrap/emails.js";
 import { User } from "../models/user.model.js";
 
+// Helper function to generate unique username
+const generateUniqueUsername = async (firstName, lastName) => {
+	const baseUsername = `${firstName.charAt(0).toLowerCase()}${lastName.toLowerCase()}`;
+	
+	// Check if base username exists
+	let username = baseUsername;
+	let counter = 1;
+	
+	while (await User.findOne({ username })) {
+		username = `${baseUsername}${counter}`;
+		counter++;
+	}
+	
+	return username;
+};
+
 export const signup = async (req, res) => {
-	const { email, password, name, role, cnic } = req.body;
+	const { email, password, firstName, lastName, role, cnic } = req.body;
 
 	try {
-		if (!email || !password || !name || !cnic) {
-			throw new Error("All fields are required");
+		if (!password || !firstName || !lastName) {
+			throw new Error("Password, first name, and last name are required");
 		}
 
 		// Only allow admin role for signup
@@ -27,36 +44,30 @@ export const signup = async (req, res) => {
 			});
 		}
 
-		// Validate CNIC format
-		const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
-		if (!cnicRegex.test(cnic)) {
-			return res.status(400).json({ 
-				success: false, 
-				message: "CNIC must be in format: 12345-1234567-1" 
-			});
-		}
-
-		const userAlreadyExists = await User.findOne({ 
-			$or: [{ email }, { cnic }] 
-		});
-
-		if (userAlreadyExists) {
-			if (userAlreadyExists.email === email) {
-				return res.status(400).json({ success: false, message: "User with this email already exists" });
-			}
-			if (userAlreadyExists.cnic === cnic) {
-				return res.status(400).json({ success: false, message: "User with this CNIC already exists" });
+		// Validate CNIC format if provided
+		if (cnic) {
+			const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+			if (!cnicRegex.test(cnic)) {
+				return res.status(400).json({ 
+					success: false, 
+					message: "CNIC must be in format: 12345-1234567-1" 
+				});
 			}
 		}
+
+		// Generate unique username
+		const username = await generateUniqueUsername(firstName, lastName);
 
 		const hashedPassword = await bcryptjs.hash(password, 10);
 		const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
 
 		const user = new User({
-			email,
+			email: email || undefined, // Don't set null, let it be undefined
 			password: hashedPassword,
-			name,
-			cnic,
+			firstName,
+			lastName,
+			username,
+			cnic: cnic || undefined, // Don't set null, let it be undefined
 			role: "admin", // Always admin for signup
 			verificationToken,
 			verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
@@ -82,15 +93,18 @@ export const signup = async (req, res) => {
 	}
 };
 
-
-
 export const login = async (req, res) => {
-	const { email, password } = req.body;
+	const { username, password } = req.body; // Changed from email to username
 	try {
-		const user = await User.findOne({ email });
+		if (!username || !password) {
+			return res.status(400).json({ success: false, message: "Username and password are required" });
+		}
+
+		const user = await User.findOne({ username });
 		if (!user) {
 			return res.status(400).json({ success: false, message: "Invalid credentials" });
 		}
+		
 		const isPasswordValid = await bcryptjs.compare(password, user.password);
 		if (!isPasswordValid) {
 			return res.status(400).json({ success: false, message: "Invalid credentials" });
@@ -114,6 +128,7 @@ export const login = async (req, res) => {
 		res.status(400).json({ success: false, message: error.message });
 	}
 };
+
 
 export const logout = async (req, res) => {
 	res.clearCookie("token");

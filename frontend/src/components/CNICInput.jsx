@@ -33,7 +33,7 @@ const CNICInput = ({ value, onChange, placeholder = "CNIC (12345-1234567-1)", er
         maxLength={15}
         autoComplete="off"
         inputMode="numeric"
-        className={`w-full pl-10 pr-3 py-2 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+        className={`w-full pl-10 pr-3 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
       />
       {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
     </div>

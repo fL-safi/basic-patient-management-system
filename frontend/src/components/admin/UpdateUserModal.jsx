@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Modal from "../../components/UI/Modal";
 import CNICInput from "../CNICInput";
+import { SPECIALITIES, GENDERS } from "../../constants/selectOptions";
 
 const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
   const { theme } = useTheme();
@@ -25,7 +26,8 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
   const [success, setSuccess] = useState("");
 
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     cnic: "",
     phoneNumber: "",
@@ -41,7 +43,8 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
   useEffect(() => {
     if (userData) {
       setFormData({
-        name: userData.name || "",
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
         email: userData.email || "",
         cnic: userData.cnic || "",
         phoneNumber: userData.phoneNumber || "",
@@ -75,20 +78,13 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
 
   const validateForm = () => {
     if (
-      !formData.name ||
-      !formData.email ||
-      !formData.cnic ||
+      !formData.firstName ||
+      !formData.lastName ||
       !formData.phoneNumber ||
-      !formData.address
+      !formData.address ||
+      !formData.gender
     ) {
       setError("All required fields must be filled");
-      return false;
-    }
-
-    // CNIC validation
-    const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
-    if (!cnicRegex.test(formData.cnic)) {
-      setError("CNIC must be in format: 12345-1234567-1");
       return false;
     }
 
@@ -168,7 +164,8 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
     // Reset to original userData when closing without saving
     if (userData) {
       setFormData({
-        name: userData.name || "",
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
         email: userData.email || "",
         cnic: userData.cnic || "",
         phoneNumber: userData.phoneNumber || "",
@@ -197,28 +194,28 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
     const configs = {
       doctor: {
         title: "Update Doctor Profile",
-        subtitle: `Update ${userData.name}'s profile information`,
+        subtitle: `Update ${userData.firstName}${userData.lastName}'s profile information`,
         icon: Stethoscope,
         color: "text-purple-500",
         bgColor: "bg-purple-500",
       },
       receptionist: {
         title: "Update Receptionist Profile",
-        subtitle: `Update ${userData.name}'s profile information`,
+        subtitle: `Update  ${userData.firstName}${userData.lastName}'s profile information`,
         icon: User,
         color: "text-blue-500",
         bgColor: "bg-blue-500",
       },
       pharmacist_dispenser: {
         title: "Update Dispenser Profile",
-        subtitle: `Update ${userData.name}'s profile information`,
+        subtitle: `Update  ${userData.firstName}${userData.lastName}'s profile information`,
         icon: Users,
         color: "text-green-500",
         bgColor: "bg-green-500",
       },
       pharmacist_inventory: {
         title: "Update Inventory Staff Profile",
-        subtitle: `Update ${userData.name}'s profile information`,
+        subtitle: `Update  ${userData.firstName}${userData.lastName}'s profile information`,
         icon: Users,
         color: "text-orange-500",
         bgColor: "bg-orange-500",
@@ -289,11 +286,11 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Name */}
-            <div>
+            {/* <div>
               <label
                 className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
               >
-                Full Name *
+                First Name *
               </label>
               <div className="relative">
                 <User
@@ -302,73 +299,35 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
                 <input
                   type="text"
                   name="name"
-                  value={formData.name}
+                  value={formData.firstName}
                   onChange={handleInputChange}
                   className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                  placeholder="Enter full name"
+                  placeholder="Enter First name"
                   required
                 />
               </div>
             </div>
-
-            {/* Email */}
             <div>
               <label
                 className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
               >
-                Email Address *
+                Last Name *
               </label>
               <div className="relative">
-                <Mail
+                <User
                   className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
                 />
                 <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                  placeholder="Enter email address"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* CNIC */}
-            {/* <div>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
-                CNIC *
-              </label>
-              <div className="relative">
-                <CreditCard className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
-                <input
                   type="text"
-                  name="cnic"
-                  value={formData.cnic}
+                  name="name"
+                  value={formData.lastName}
                   onChange={handleInputChange}
                   className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                  placeholder="12345-1234567-1"
-                  pattern="\d{5}-\d{7}-\d{1}"
+                  placeholder="Enter Last name"
                   required
                 />
               </div>
             </div> */}
-
-            <div>
-              <label
-                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
-              >
-                CNIC *
-              </label>
-              <CNICInput
-                value={formData.cnic}
-                onChange={(val) =>
-                  setFormData((prev) => ({ ...prev, cnic: val }))
-                }
-                placeholder="CNIC (12345-1234567-1)"
-                error={error.includes("CNIC") ? error : ""}
-              />
-            </div>
 
             {/* Phone */}
             <div>
@@ -436,6 +395,45 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
               />
             </div>
           </div>
+
+          <div>
+            <label
+              className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+            >
+              CNIC
+            </label>
+            <CNICInput
+              value={formData.cnic}
+              onChange={(val) =>
+                setFormData((prev) => ({ ...prev, cnic: val }))
+              }
+              placeholder="CNIC (12345-1234567-1)"
+              error={error.includes("CNIC") ? error : ""}
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label
+              className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+            >
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail
+                className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+              />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                placeholder="Enter email address"
+                required
+              />
+            </div>
+          </div>
         </div>
 
         {/* Doctor Specific Fields */}
@@ -460,7 +458,7 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
                   <FileText
                     className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
                   />
-                  <input
+                  {/* <input
                     type="text"
                     name="speciality"
                     value={formData.speciality}
@@ -468,7 +466,21 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
                     className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
                     placeholder="e.g., Cardiology, Neurology"
                     required
-                  />
+                  /> */}
+                  <select
+                    name="speciality"
+                    value={formData.speciality}
+                    onChange={handleInputChange}
+                    className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                    required
+                  >
+                    <option value="">Select Speciality</option>
+                    {SPECIALITIES.map((spec) => (
+                      <option key={spec} value={spec}>
+                        {spec}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
