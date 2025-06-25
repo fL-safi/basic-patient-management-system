@@ -50,7 +50,7 @@ const UpdateUserModal = ({ isOpen, onClose, userData, onSuccess }) => {
         phoneNumber: userData.phoneNumber || "",
         address: userData.address || "",
         gender: userData.gender || "",
-        speciality: userData.speciality || "",
+        speciality: userData.speciality || [],
         registrationNumber: userData.registrationNumber || "",
         doctorSchedule: userData.doctorSchedule || [],
       });

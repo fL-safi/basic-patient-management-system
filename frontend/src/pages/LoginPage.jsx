@@ -191,7 +191,7 @@ const LoginPage = () => {
                     <strong className={theme.textSecondary}>
                       Quick Access:
                     </strong>{" "}
-                    Use your registered email and password to access patient
+                    Use your registered username and password to access patient
                     records, manage appointments, and view medical reports.
                   </p>
                 </div>

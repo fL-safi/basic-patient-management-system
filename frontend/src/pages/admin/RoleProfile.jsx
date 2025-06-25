@@ -84,7 +84,7 @@ const RoleProfile = () => {
             {error || "User not found"}
           </p>
           <button
-            onClick={() => navigate("/admin")}
+            onClick={() => navigate("/admin/user-management")}
             className={`px-4 py-2 bg-gradient-to-r ${theme.buttonGradient} text-white rounded-lg`}
           >
             Back to Users
