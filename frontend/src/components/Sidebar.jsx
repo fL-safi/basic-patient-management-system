@@ -10,6 +10,7 @@ import {
   Calendar,
   Menu,
   X,
+  Pill,
   UserPlus,
   Box,
   Stethoscope,
@@ -27,26 +28,38 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
   // Base menu items available to all roles
   const baseMenuItems = [
     { icon: Home, label: 'Dashboard', path: '', color: 'text-blue-500' },
-    { icon: Users, label: 'User Management', path: '/user-management', color: 'text-green-500' },
-    { icon: Calendar, label: 'Schedule', path: '/appointments', color: 'text-purple-500' },
-    { icon: FileText, label: 'Reports', path: '/reports', color: 'text-orange-500' },
-    { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
   ];
 
   // Role-specific additional items
   const roleSpecificItems = {
     admin: [
+      { icon: Users, label: 'User Management', path: '/user-management', color: 'text-green-500' },
+      { icon: Calendar, label: 'Schedule', path: '/appointments', color: 'text-purple-500' },
       { icon: Box, label: 'Inventory Management', path: '/inventory-management', color: 'text-yellow-500' },
+      { icon: FileText, label: 'Reports', path: '/reports', color: 'text-orange-500' },
+      { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
+
+
+
       // { icon: Box, label: 'Inventory Management', path: '/inventory-management', color: 'text-yellow-500' }
     ],
     doctor: [
-      { icon: Stethoscope, label: 'Consultations', path: '/consultations', color: 'text-teal-500' }
+      { icon: Stethoscope, label: 'Consultations', path: '/consultations', color: 'text-teal-500' },
+      { icon: Calendar, label: 'Schedule', path: '/appointments', color: 'text-purple-500' },
+      { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
+
     ],
     pharmacist_dispenser: [
-      { icon: ShoppingCart, label: 'Prescriptions', path: '/prescriptions', color: 'text-purple-600' }
+      { icon: ShoppingCart, label: 'Prescriptions', path: '/prescriptions', color: 'text-purple-600' },
+      { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
+
     ],
     pharmacist_inventory: [
-      { icon: Box, label: 'Inventory Management', path: '/inventory-management', color: 'text-teal-600' }
+      { icon: Box, label: 'Inventory Management', path: '/inventory-management', color: 'text-teal-600' },
+      { icon: Pill, label: 'All Stocks', path: '/all-stocks', color: 'text-purple-600' },
+      { icon: FileText, label: 'Reports', path: '/reports', color: 'text-orange-500' },
+      { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
+
     ],
     receptionist: []
   };

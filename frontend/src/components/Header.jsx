@@ -36,7 +36,7 @@ const Header = ({ sidebarOpen, sidebarMiniMode }) => {
       case "pharmacist_dispenser":
         return "bg-purple-500 bg-opacity-20 text-purple-400";
       default:
-        return "bg-gray-500 bg-opacity-20 text-gray-400";
+        return "bg-teal-900 bg-opacity-20 text-teal-900";
     }
   };
 
@@ -83,7 +83,7 @@ const Header = ({ sidebarOpen, sidebarMiniMode }) => {
               {/* Role Badge */}
               {user && (
                 <span
-                  className={`hidden sm:inline-flex px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getRoleBadgeColor(
+                  className={`hidden sm:inline-flex px-2 py-1 cursor-pointer rounded-full text-xs font-semibold whitespace-nowrap ${getRoleBadgeColor(
                     user.role
                   )}`}
                 >
