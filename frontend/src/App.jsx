@@ -25,6 +25,7 @@ import AccountStatusRoute from "./components/AccountStatusRoute";
 import AccountInactive from "./components/AccountInactive";
 import Stocks from "./pages/inventory/Stocks";
 import AllStocks from "./pages/inventory/AllStocks";
+import DefaultPasswordModal from "./components/DefaultPasswordModal";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -82,6 +83,9 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarMiniMode, setSidebarMiniMode] = useState(false);
 
+    const [showDefaultPasswordModal, setShowDefaultPasswordModal] = useState(false);
+
+
   useEffect(() => {
     checkAuth();
     initializeTheme();
@@ -101,6 +105,14 @@ function App() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+    useEffect(() => {
+    if (isAuthenticated && user && user.isDefaultPassword) {
+      setShowDefaultPasswordModal(true);
+    } else {
+      setShowDefaultPasswordModal(false);
+    }
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     const handleOpenSidebar = () => {
@@ -596,6 +608,12 @@ function App() {
         </Routes>
       </div>
       <Toaster />
+
+      <DefaultPasswordModal 
+        isOpen={showDefaultPasswordModal} 
+        onClose={() => setShowDefaultPasswordModal(false)} 
+      />
+
     </div>
   );
 }

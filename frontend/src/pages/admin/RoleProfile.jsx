@@ -14,17 +14,21 @@ import {
   Stethoscope,
   Clock,
   Edit,
-  Settings,
+  LockOpen,
   LogOut,
   CheckCircle,
   XCircle,
   Badge,
   Users,
   ArrowLeft,
+  Copy,
 } from "lucide-react";
-import { getUserDataByRoleAndId } from "../../api/api";
+import { getUserDataByRoleAndId, resetUserPassword } from "../../api/api";
 import UpdateUserModal from "../../components/admin/UpdateUserModal";
 import AccountStatusModal from "../../components/admin/AccountStatusModal";
+import Modal from "../../components/UI/Modal";
+import toast from "react-hot-toast";
+import CredentialsModal from "../../components/admin/CredentialsModal";
 
 const RoleProfile = () => {
   const { theme } = useTheme();
@@ -37,10 +41,69 @@ const RoleProfile = () => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isAccountStatusModalOpen, setIsAccountStatusModalOpen] =
     useState(false);
-
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [resetCredentials, setResetCredentials] = useState(null);
+  const [copiedField, setCopiedField] = useState(null);
   const handleProfileUpdate = (updatedUser) => {
     setUserData(updatedUser);
     // Show success message or notification here if needed
+  };
+
+  // Add this function to handle copying to clipboard
+  const copyToClipboard = async (text, fieldName) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      toast.success(`${fieldName} copied to clipboard!`, { duration: 2000 });
+
+      // Reset the copied state after 2 seconds
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      toast.error("Failed to copy to clipboard");
+    }
+  };
+
+  // Update the handleResetPassword function
+  const handleResetPassword = async () => {
+    try {
+      setIsResettingPassword(true);
+      setShowResetConfirmModal(false);
+
+      const response = await resetUserPassword(userData._id);
+
+      if (response.success) {
+        // Set credentials for the modal
+        setResetCredentials({
+          username: userData.username,
+          password: "abc12345",
+        });
+
+        // Show success toast
+        toast.success(
+          `Password reset successfully for ${userData.firstName} ${userData.lastName}`,
+          {
+            duration: 4000,
+            position: "top-center",
+          }
+        );
+
+        // Show credentials modal
+        setShowCredentialsModal(true);
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to reset password. Please try again.";
+      toast.error(errorMessage, {
+        duration: 4000,
+        position: "top-center",
+      });
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   // Fetch user data from API
@@ -183,7 +246,8 @@ const RoleProfile = () => {
               {formatRoleName(userData.role)} Profile
             </h1>
             <p className={`${theme.textMuted}`}>
-              View and manage {userData.firstName} {userData.lastName}'s profile information
+              View and manage {userData.firstName} {userData.lastName}'s profile
+              information
             </p>
           </div>
         </div>
@@ -351,12 +415,13 @@ const RoleProfile = () => {
                   <Edit className="w-4 h-4" />
                   <span>Edit Profile</span>
                 </motion.button>
-
                 <button
-                  className={`w-full flex items-center justify-center space-x-2 px-4 py-2 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} ${theme.textPrimary} border hover:bg-opacity-70 transition-colors`}
+                  onClick={() => setShowResetConfirmModal(true)}
+                  disabled={isResettingPassword}
+                  className={`w-full flex items-center justify-center space-x-2 px-4 py-2 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} ${theme.textPrimary} border hover:bg-opacity-70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  <Settings className="w-4 h-4" />
-                  <span>Settings</span>
+                  <LockOpen className="w-4 h-4" />
+                  <span>Reset Password</span>
                 </button>
               </div>
             </div>
@@ -617,9 +682,7 @@ const RoleProfile = () => {
                       <Clock className="w-4 h-4 text-blue-500" />
                     </div>
                     <div>
-                      <p className={`font-medium `}>
-                        Last Login
-                      </p>
+                      <p className={`font-medium `}>Last Login</p>
                       <p className={`text-sm ${theme.textMuted}`}>
                         Most recent access to the system
                       </p>
@@ -638,9 +701,7 @@ const RoleProfile = () => {
                       <Calendar className="w-4 h-4 text-green-500" />
                     </div>
                     <div>
-                      <p className={`font-medium `}>
-                        Account Created
-                      </p>
+                      <p className={`font-medium `}>Account Created</p>
                       <p className={`text-sm ${theme.textMuted}`}>
                         Initial registration date
                       </p>
@@ -657,9 +718,7 @@ const RoleProfile = () => {
                       <Edit className="w-4 h-4 text-orange-500" />
                     </div>
                     <div>
-                      <p className={`font-medium `}>
-                        Last Updated
-                      </p>
+                      <p className={`font-medium `}>Last Updated</p>
                       <p className={`text-sm ${theme.textMuted}`}>
                         Profile information last modified
                       </p>
@@ -689,6 +748,97 @@ const RoleProfile = () => {
         onClose={() => setIsAccountStatusModalOpen(false)}
         userData={userData}
         onSuccess={handleProfileUpdate}
+      />
+
+      {/* Reset Password Confirmation Modal */}
+      <Modal
+        isOpen={showResetConfirmModal}
+        onClose={() => setShowResetConfirmModal(false)}
+        title="Reset Password Confirmation"
+        subtitle="This action will reset the user's password to default"
+      >
+        <div className="p-6">
+          <div
+            className={`mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800`}
+          >
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">!</span>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+                  Important Notice
+                </h4>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  Are you sure you want to reset the password for{" "}
+                  <span className="font-semibold">
+                    {userData.firstName} {userData.lastName}
+                  </span>
+                  ?
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`mb-6 p-4 ${theme.cardSecondary} rounded-lg`}>
+            <h5 className={`font-medium ${theme.textPrimary} mb-2`}>
+              What will happen:
+            </h5>
+            <ul className={`text-sm ${theme.textMuted} space-y-1`}>
+              <li>• User's current password will be replaced</li>
+              <li>• Default password "abc12345" will be set</li>
+              <li>• User will need to use new credentials to login</li>
+              <li>• User can change password after logging in</li>
+            </ul>
+          </div>
+
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowResetConfirmModal(false)}
+              className={`flex-1 px-4 py-2 ${theme.cardSecondary} rounded-lg ${theme.borderSecondary} ${theme.textPrimary} border hover:bg-opacity-70 transition-colors`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleResetPassword}
+              disabled={isResettingPassword}
+              className={`flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2`}
+            >
+              {isResettingPassword ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Resetting...</span>
+                </>
+              ) : (
+                <>
+                  <LockOpen className="w-4 h-4" />
+                  <span>Reset Password</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Credentials Modal */}
+      <CredentialsModal
+        isOpen={showCredentialsModal}
+        onClose={() => {
+          setShowCredentialsModal(false);
+          setResetCredentials(null);
+          setCopiedField(null);
+        }}
+        credentials={resetCredentials}
+        title="Login Credentials"
+        subtitle="Password has been reset successfully"
+        successMessage="Password Reset Successful"
+        nextSteps={[
+          "• Share these credentials with the user securely",
+          "• User should change password after first login",
+          "• Old password is no longer valid",
+        ]}
       />
     </div>
   );

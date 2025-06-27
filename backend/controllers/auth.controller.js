@@ -3,12 +3,6 @@ import bcryptjs from "bcryptjs";
 import crypto from "crypto";
 
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
-import {
-	sendPasswordResetEmail,
-	sendResetSuccessEmail,
-	sendVerificationEmail,
-	sendWelcomeEmail,
-} from "../mailtrap/emails.js";
 import { User } from "../models/user.model.js";
 
 // Helper function to generate unique username
@@ -135,99 +129,6 @@ export const logout = async (req, res) => {
 	res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
-
-export const verifyEmail = async (req, res) => {
-	const { code } = req.body;
-	try {
-		const user = await User.findOne({
-			verificationToken: code,
-			verificationTokenExpiresAt: { $gt: Date.now() },
-		});
-
-		if (!user) {
-			return res.status(400).json({ success: false, message: "Invalid or expired verification code" });
-		}
-
-		user.isVerified = true;
-		user.verificationToken = undefined;
-		user.verificationTokenExpiresAt = undefined;
-		await user.save();
-
-		await sendWelcomeEmail(user.email, user.name);
-
-		res.status(200).json({
-			success: true,
-			message: "Email verified successfully",
-			user: {
-				...user._doc,
-				password: undefined,
-			},
-		});
-	} catch (error) {
-		console.log("error in verifyEmail ", error);
-		res.status(500).json({ success: false, message: "Server error" });
-	}
-};
-
-export const forgotPassword = async (req, res) => {
-	const { email } = req.body;
-	try {
-		const user = await User.findOne({ email });
-
-		if (!user) {
-			return res.status(400).json({ success: false, message: "User not found" });
-		}
-
-		// Generate reset token
-		const resetToken = crypto.randomBytes(20).toString("hex");
-		const resetTokenExpiresAt = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
-
-		user.resetPasswordToken = resetToken;
-		user.resetPasswordExpiresAt = resetTokenExpiresAt;
-
-		await user.save();
-
-		// send email
-		await sendPasswordResetEmail(user.email, `${process.env.CLIENT_URL}/reset-password/${resetToken}`);
-
-		res.status(200).json({ success: true, message: "Password reset link sent to your email" });
-	} catch (error) {
-		console.log("Error in forgotPassword ", error);
-		res.status(400).json({ success: false, message: error.message });
-	}
-};
-
-export const resetPassword = async (req, res) => {
-	try {
-		const { token } = req.params;
-		const { password } = req.body;
-
-		const user = await User.findOne({
-			resetPasswordToken: token,
-			resetPasswordExpiresAt: { $gt: Date.now() },
-		});
-
-		if (!user) {
-			return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
-		}
-
-		// update password
-		const hashedPassword = await bcryptjs.hash(password, 10);
-
-		user.password = hashedPassword;
-		user.resetPasswordToken = undefined;
-		user.resetPasswordExpiresAt = undefined;
-		await user.save();
-
-		await sendResetSuccessEmail(user.email);
-
-		res.status(200).json({ success: true, message: "Password reset successful" });
-	} catch (error) {
-		console.log("Error in resetPassword ", error);
-		res.status(400).json({ success: false, message: error.message });
-	}
-};
-
 export const checkAuth = async (req, res) => {
 	try {
 		const user = await User.findById(req.userId).select("-password");
@@ -278,8 +179,11 @@ export const updatePassword = async (req, res) => {
         // Hash the new password
         const hashedPassword = await bcryptjs.hash(newPassword, 10);
 
-        // Update the password in the database
+        // Update the password and set isDefaultPassword to false
         user.password = hashedPassword;
+        if (user.role !== "admin") {
+            user.isDefaultPassword = false;
+        }
         await user.save();
 
         res.status(200).json({
@@ -291,6 +195,60 @@ export const updatePassword = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Server error while updating password"
+        });
+    }
+};
+
+
+// Reset password (admin only)
+export const resetPassword = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        
+        // Validate that userId is provided
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID is required"
+            });
+        }
+
+        // Find the user to reset password for
+        const userToReset = await User.findById(userId);
+
+        if (!userToReset) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Prevent admin from resetting another admin's password
+        if (userToReset.role === "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "Cannot reset password for admin users"
+            });
+        }
+
+        // Set default password "abc12345"
+        const defaultPassword = "abc12345";
+        const hashedPassword = await bcryptjs.hash(defaultPassword, 10);
+
+        // Update user's password and set isDefaultPassword to true
+        userToReset.password = hashedPassword;
+        userToReset.isDefaultPassword = true;
+        await userToReset.save();
+
+        res.status(200).json({
+            success: true,
+            message: `Password reset successfully for user ${userToReset.username}. Default password: ${defaultPassword}`
+        });
+    } catch (error) {
+        console.log("Error in resetPassword ", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error while resetting password"
         });
     }
 };
