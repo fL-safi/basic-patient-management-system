@@ -64,6 +64,7 @@ export const registerDoctorFromAdmin = async (req, res) => {
             cnic: cnic || undefined, // Don't set cnic to null, set it as undefined if not provided
             role: "doctor",
             phoneNumber,
+            isDefaultPassword: true,
             address,
             gender,
             speciality,
@@ -127,6 +128,7 @@ export const registerReceptionistFromAdmin = async (req, res) => {
             firstName,
             lastName,
             username,
+            isDefaultPassword: true,
             cnic: cnic || undefined, // Don't set cnic to null, set it as undefined if not provided
             role: "receptionist",
             phoneNumber,
@@ -191,6 +193,7 @@ export const registerPharmacistDispenserFromAdmin = async (req, res) => {
             firstName,
             lastName,
             username,
+            isDefaultPassword: true,
             cnic: cnic || undefined, // Don't set cnic to null, set it as undefined if not provided
             role: "pharmacist_dispenser",
             phoneNumber,
@@ -256,6 +259,7 @@ export const registerPharmacistInventoryFromAdmin = async (req, res) => {
             firstName,
             lastName,
             username,
+            isDefaultPassword: true,
             cnic: cnic || undefined, // Don't set cnic to null, set it as undefined if not provided
             role: "pharmacist_inventory",
             phoneNumber,

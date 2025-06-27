@@ -77,6 +77,18 @@ export const updatePassword = async (userData) => {
   }
 };
 
+export const resetUserPassword = async (userId) => {
+  try {
+    const response = await axiosInstance.post('/auth/reset-password', {
+      userId: userId
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Reset Password API Error:', error);
+    throw error;
+  }
+};
+
 export const getUserDataByRoleAndId = async (role, id) => {
   try {
     const response = await axiosInstance.get(`/admin/${role}/${id}`);
@@ -148,3 +160,4 @@ export const getAllStocksData = async () => {
     throw error;
   }
 };
+

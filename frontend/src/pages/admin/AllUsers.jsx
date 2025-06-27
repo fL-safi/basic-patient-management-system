@@ -71,7 +71,7 @@ const AllUsers = () => {
   // Handle successful registration
   const handleRegistrationSuccess = () => {
     // Refresh the data
-    fetchData();
+    // fetchData();
   };
 
     // ADD THESE DELETE HANDLERS

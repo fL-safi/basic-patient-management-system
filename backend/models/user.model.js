@@ -52,6 +52,14 @@ const userSchema = new mongoose.Schema(
       ],
       required: true,
     },
+    
+    // Add the isDefaultPassword flag
+    isDefaultPassword: {
+      type: Boolean,
+      default: function() {
+        return this.role !== "admin"; // Only set to true for non-admin roles
+      },
+    },
 
     lastLogin: {
       type: Date,
