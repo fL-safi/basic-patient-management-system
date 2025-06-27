@@ -118,3 +118,33 @@ export const deleteUserByRoleAndId = async (role, id) => {
     throw error;
   }
 };
+
+export const getStocksData = async () => {
+  try {
+    const response = await axiosInstance.get('/inventory/stock');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching stock data:', error);
+    throw error;
+  }
+};
+
+export const addToStock = async (stockData) => {
+  try {
+    const response = await axiosInstance.post('/inventory/add-to-stock', stockData);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding stock:', error);
+    throw error;
+  }
+};
+
+export const getAllStocksData = async () => {
+  try {
+    const response = await axiosInstance.get('/inventory/all-stocks');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all stocks data:', error);
+    throw error;
+  }
+};

@@ -23,6 +23,8 @@ import RoleProfile from "./pages/admin/RoleProfile";
 
 import AccountStatusRoute from "./components/AccountStatusRoute";
 import AccountInactive from "./components/AccountInactive";
+import Stocks from "./pages/inventory/Stocks";
+import AllStocks from "./pages/inventory/AllStocks";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -512,6 +514,29 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/pharmacist_inventory/inventory-management"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["pharmacist_inventory"]}>
+                  <Stocks />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/pharmacist_inventory/all-stocks"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["pharmacist_inventory"]}>
+                  <AllStocks />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/pharmacist_inventory/patients"
             element={
@@ -538,19 +563,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/pharmacist_inventory/inventory-management"
-            element={
-              <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={["pharmacist_inventory"]}>
-                  <GenericPage
-                    title="Inventory Management Page"
-                    role="pharmacist_inventory"
-                  />
-                </RoleProtectedRoute>
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="/pharmacist_inventory/reports"
             element={
