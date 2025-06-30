@@ -26,6 +26,7 @@ import AccountInactive from "./components/AccountInactive";
 import Stocks from "./pages/inventory/Stocks";
 import AllStocks from "./pages/inventory/AllStocks";
 import DefaultPasswordModal from "./components/DefaultPasswordModal";
+import InventroyAdminDashboard from "./pages/inventory/InventroyAdminDashboard";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -521,7 +522,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["pharmacist_inventory"]}>
-                  <GenericPage title="Dashboard" role="pharmacist_inventory" />
+                  <InventroyAdminDashboard />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }

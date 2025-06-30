@@ -22,7 +22,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import SummaryCard from "../components/dashboard/SummaryCard";
-import LineChart from "../components/dashboard/LineChartComponent";
+import LineChartComponent from "../components/dashboard/LineChartComponent";
 import BarChart from "../components/dashboard/BarChartComponent";
 import PieChartComponent from "../components/dashboard/PieChartComponent";
 import RecentAppointments from "../components/dashboard/RecentAppointments";
@@ -202,7 +202,7 @@ const DashboardPage = () => {
             </div>
           </div>
           <div className="h-80">
-            <LineChart data={appointmentData} theme={theme} />
+            <LineChartComponent data={appointmentData} theme={theme} />
           </div>
         </motion.div>
 
