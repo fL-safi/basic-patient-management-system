@@ -15,7 +15,7 @@ const InventoryAdminDashboard = () => {
   const [dateRange, setDateRange] = useState("this_month");
 
   return (
-    <div className="p-6">
+    <div className="p-6" style={{ minWidth: '65rem' }} >
       {/* Page Title */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
