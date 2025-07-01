@@ -329,3 +329,59 @@ export const allStocksList = async (req, res) => {
         });
     }
 };
+
+export const deleteStockById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Validate if ID is provided
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                message: "Stock ID is required"
+            });
+        }
+
+        // Find and delete the inventory item
+        const deletedItem = await Inventory.findByIdAndDelete(id);
+
+        if (!deletedItem) {
+            return res.status(404).json({
+                success: false,
+                message: "Stock item not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Stock batch deleted successfully`,
+            data: {
+                deletedItem: {
+                    id: deletedItem._id,
+                    medicineName: deletedItem.medicineName,
+                    strength: deletedItem.strength,
+                    form: deletedItem.form,
+                    batchNumber: deletedItem.batchNumber,
+                    stockLevel: deletedItem.stockLevel
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Error in deleteStockById:", error);
+        
+        // Handle invalid ObjectId format
+        if (error.name === 'CastError') {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid stock ID format"
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
