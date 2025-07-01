@@ -18,8 +18,9 @@ import {
   ArrowDownUp
 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
-import { getStocksData } from '../../api/api';
+import { getStocksData, deleteStockById } from '../../api/api';
 import AddStockModal from '../../components/inventory/AddStockModal';
+import ConfirmDeleteModal from '../../components/inventory/ConfirmDeleteModal';
 
 const Stocks = () => {
   const { theme } = useTheme();
@@ -29,6 +30,30 @@ const Stocks = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedStock, setSelectedStock] = useState(null);
+  
+  // Add these functions
+  const handleDeleteClick = (stock) => {
+    setSelectedStock(stock);
+    setDeleteModalOpen(true);
+  };
+  
+  const handleDeleteSuccess = (deletedStockId) => {
+    setStockData(prev => ({
+      ...prev,
+      data: {
+        ...prev.data,
+        items: prev.data.items.filter(item => item._id !== deletedStockId),
+        summary: {
+          ...prev.data.summary,
+          totalBatches: prev.data.summary.totalBatches - 1
+        }
+      }
+    }));
+    setDeleteModalOpen(false);
+  };
 
     const handleStockAdded = () => {
     fetchData(); // Refresh stock data
@@ -379,9 +404,16 @@ const Stocks = () => {
                         <button className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
                           <Edit className="w-4 h-4 text-green-500" />
                         </button>
-                        <button className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
+                        {/* <button className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}>
                           <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
+                        </button> */}
+                                                <button 
+  title="Delete"
+  onClick={() => handleDeleteClick(item)}
+  className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+>
+  <Trash2 className="w-4 h-4 text-red-500" />
+</button>
                       </div>
                     </td>
                   </tr>
@@ -427,6 +459,14 @@ const Stocks = () => {
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleStockAdded}
       />
+
+      <ConfirmDeleteModal
+  isOpen={deleteModalOpen}
+  onClose={() => setDeleteModalOpen(false)}
+  stockItem={selectedStock}
+  onSuccess={handleDeleteSuccess}
+/>
+
     </div>
   );
 };

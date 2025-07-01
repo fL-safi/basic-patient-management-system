@@ -161,3 +161,13 @@ export const getAllStocksData = async () => {
   }
 };
 
+
+export const deleteStockById = async (stockId) => {
+  try {
+    const response = await axiosInstance.delete(`/inventory/stock/${stockId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting stock:', error);
+    throw error;
+  }
+};
