@@ -301,7 +301,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["admin"]}>
-                  <GenericPage title="Inventory Management Page" role="admin" />
+                  <AllStocks />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }
