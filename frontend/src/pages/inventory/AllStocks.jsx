@@ -13,7 +13,8 @@ import {
   Gauge,
   BarChart2,
   ArrowDownUp,
-  Layers
+  Layers,
+  DollarSign
 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { getAllStocksData } from '../../api/api';
@@ -54,11 +55,23 @@ const AllStocks = () => {
 
   // Apply sorting
   const getSortedItems = () => {
-    if (!stockData?.data?.items || !sortConfig.key) return stockData?.data?.items;
+    if (!stockData?.data?.medicines || !sortConfig.key) return stockData?.data?.medicines;
     
-    return [...stockData.data.items].sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
+    return [...stockData.data.medicines].sort((a, b) => {
+      let aValue = a[sortConfig.key];
+      let bValue = b[sortConfig.key];
+      
+      // Handle nested properties
+      if (sortConfig.key === 'totalQuantity') {
+        aValue = a.totalQuantity;
+        bValue = b.totalQuantity;
+      } else if (sortConfig.key === 'avgPrice') {
+        aValue = a.avgPrice;
+        bValue = b.avgPrice;
+      } else if (sortConfig.key === 'totalValue') {
+        aValue = a.totalValue;
+        bValue = b.totalValue;
+      }
       
       if (aValue < bValue) {
         return sortConfig.direction === 'ascending' ? -1 : 1;
@@ -76,8 +89,8 @@ const AllStocks = () => {
     const searchLower = searchTerm.toLowerCase();
     return (
       item.medicineName.toLowerCase().includes(searchLower) ||
-      (item.billID && item.billID.toLowerCase().includes(searchLower)) ||
-      item.form.toLowerCase().includes(searchLower)
+      item.batches.some(batch => batch.billID.toLowerCase().includes(searchLower)) ||
+      item.batches.some(batch => batch.batchNumber.toLowerCase().includes(searchLower))
     );
   }) || [];
 
@@ -98,18 +111,17 @@ const AllStocks = () => {
       bgColor: 'bg-orange-500 bg-opacity-20 border-orange-500'
     },
     {
-      title: 'Total Batches',
-      value: stockData?.data?.summary?.totalBatches || 0,
+      title: 'Near expire stock',
+      value: 0,
       icon: Layers,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500 bg-opacity-20 border-purple-500'
     },
     {
-      title: 'Avg. Stock',
-      value: stockData?.data?.items?.length 
-        ? Math.round(stockData.data.items.reduce((sum, item) => sum + item.totalStockLevel, 0) / stockData.data.items.length)
-        : 0,
-      icon: BarChart2,
+      title: 'Total Value',
+      value: stockData?.data?.summary?.totalInventoryValue ? 
+        `Rs.${stockData.data.summary.totalInventoryValue.toLocaleString()}` : '$0',
+      icon: DollarSign,
       color: 'text-emerald-500',
       bgColor: 'bg-emerald-500 bg-opacity-20 border-emerald-500'
     }
@@ -197,7 +209,7 @@ const AllStocks = () => {
               Medicine Stock Summary
             </h2>
             <p className={`${theme.textMuted}`}>
-              View aggregated stock levels grouped by medicine and form
+              View aggregated stock levels grouped by medicine across all batches
             </p>
           </div>
 
@@ -207,7 +219,7 @@ const AllStocks = () => {
               <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
               <input
                 type="text"
-                placeholder="Search medicines..."
+                placeholder="Search medicines, batch numbers, or bill IDs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
@@ -225,25 +237,34 @@ const AllStocks = () => {
                     onClick={() => requestSort('medicineName')}
                   >
                     <div className={`flex items-center ${theme.textPrimary}`}>
-                      <span className={`${theme.textMuted} tracking-wider`}>Medicine</span>
+                      <span className={`${theme.textMuted} tracking-wider`}>Medicine Name</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
                   </th>
                   <th 
                     className="px-6 py-3 text-center text-xs font-medium cursor-pointer"
-                    onClick={() => requestSort('form')}
-                  >
-                    <div className={`flex items-center ${theme.textPrimary} justify-center`}>
-                      <span className={`${theme.textMuted} tracking-wider`}>Form</span>
-                      <ArrowDownUp className="w-3 h-3 ml-1" />
-                    </div>
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-center text-xs font-medium cursor-pointer"
-                    onClick={() => requestSort('totalStockLevel')}
+                    onClick={() => requestSort('totalQuantity')}
                   >
                     <div className={`flex items-center ${theme.textPrimary} justify-center`}>
                       <span className={`${theme.textMuted} tracking-wider`}>Total Stock</span>
+                      <ArrowDownUp className="w-3 h-3 ml-1" />
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-center text-xs font-medium cursor-pointer"
+                    onClick={() => requestSort('avgPrice')}
+                  >
+                    <div className={`flex items-center ${theme.textPrimary} justify-center`}>
+                      <span className={`${theme.textMuted} tracking-wider`}>Avg. Price</span>
+                      <ArrowDownUp className="w-3 h-3 ml-1" />
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-center text-xs font-medium cursor-pointer"
+                    onClick={() => requestSort('totalValue')}
+                  >
+                    <div className={`flex items-center ${theme.textPrimary} justify-center`}>
+                      <span className={`${theme.textMuted} tracking-wider`}>Total Value</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
                   </th>
@@ -265,23 +286,23 @@ const AllStocks = () => {
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
                   </th>
-                  <th 
+                  {/* <th 
                     className="px-6 py-3 text-center text-xs font-medium cursor-pointer"
-                    onClick={() => requestSort('billID')}
+                    onClick={() => requestSort('reorderLevel')}
                   >
                     <div className={`flex items-center ${theme.textPrimary} justify-center`}>
-                      <span className={`${theme.textMuted} tracking-wider`}>Latest Bill ID</span>
+                      <span className={`${theme.textMuted} tracking-wider`}>Reorder Level</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
-                  </th>
+                  </th> */}
                   <th className={`px-6 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}>
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredItems.map((item) => (
-                  <tr key={item.medicineName + item.form} className={`${theme.borderSecondary} border-b hover:bg-opacity-50 ${theme.cardSecondary} transition-colors`}>
+                {filteredItems.map((item, index) => (
+                  <tr key={`${item.medicineName}-${index}`} className={`${theme.borderSecondary} border-b hover:bg-opacity-50 ${theme.cardSecondary} transition-colors`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className={`w-10 h-10 rounded-full ${theme.cardSecondary} flex items-center justify-center mr-3`}>
@@ -291,70 +312,76 @@ const AllStocks = () => {
                           <div className={`font-medium ${theme.textPrimary}`}>
                             {item.medicineName}
                           </div>
+                          {/* <div className={`text-sm ${theme.textMuted}`}>
+                            {item.batches.length} batch{item.batches.length !== 1 ? 'es' : ''}
+                          </div> */}
                         </div>
                       </div>
-                    </td>
-                    <td className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}>
-                      <span className="capitalize">{item.form}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col items-center">
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-1">
                           <div 
                             className={`h-2 rounded-full ${
-                              item.totalStockLevel > 100 
+                              item.totalQuantity > item.reorderLevel * 5
                                 ? 'bg-emerald-500' 
-                                : item.totalStockLevel > 50 
+                                : item.totalQuantity > item.reorderLevel * 2
                                   ? 'bg-amber-500' 
                                   : 'bg-red-500'
                             }`}
-                            style={{ width: `${Math.min(100, (item.totalStockLevel / 200) * 100)}%` }}
+                            style={{ width: `${Math.min(100, (item.totalQuantity / (item.reorderLevel * 10)) * 100)}%` }}
                           ></div>
                         </div>
                         <span className={`text-xs ${
-                          item.totalStockLevel > 100 
+                          item.totalQuantity > item.reorderLevel * 5
                             ? 'text-emerald-500' 
-                            : item.totalStockLevel > 50 
+                            : item.totalQuantity > item.reorderLevel * 2
                               ? 'text-amber-500' 
                               : 'text-red-500'
                         }`}>
-                          {item.totalStockLevel} units
+                          {item.totalQuantity} units
                         </span>
                       </div>
                     </td>
                     <td className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}>
+                      ${item.avgPrice.toFixed(2)}
+                    </td>
+                    <td className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}>
+                      ${item.totalValue.toLocaleString()}
+                    </td>
+                    <td className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}>
                       <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                        <span>{item.batchCount} batches</span>
+                        <span>{item.batchCount} batch{item.batchCount !== 1 ? 'es' : ''}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         item.status === 'In Stock'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                       }`}>
                         {item.status}
                       </span>
                     </td>
-                    <td className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}>
-                      {item.billID || 'N/A'}
-                    </td>
+                    {/* <td className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}>
+                      {item.reorderLevel} units
+                    </td> */}
                     <td className="px-6 py-4">
                       <div className="flex justify-center items-center space-x-2">
                         <button 
-                          title="View Details"
+                          title="View Batches"
                           className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
                         >
                           <Eye className="w-4 h-4 text-blue-500" />
                         </button>
                         <button 
-                          title="Edit"
+                          title="Edit Medicine"
                           className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
                         >
                           <Edit className="w-4 h-4 text-green-500" />
                         </button>
                         <button 
-                          title="Delete"
+                          title="Delete Medicine"
                           className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />

@@ -301,6 +301,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["admin"]}>
+                  <Stocks />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/all-stocks"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin"]}>
                   <AllStocks />
                 </RoleProtectedRoute>
               </ProtectedRoute>

@@ -131,19 +131,9 @@ export const deleteUserByRoleAndId = async (role, id) => {
   }
 };
 
-export const getStocksData = async () => {
-  try {
-    const response = await axiosInstance.get('/inventory/stock');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching stock data:', error);
-    throw error;
-  }
-};
-
 export const addToStock = async (stockData) => {
   try {
-    const response = await axiosInstance.post('/inventory/add-to-stock', stockData);
+    const response = await axiosInstance.post('/inventory/add-batch', stockData);
     return response.data;
   } catch (error) {
     console.error('Error adding stock:', error);
@@ -151,9 +141,21 @@ export const addToStock = async (stockData) => {
   }
 };
 
+
+export const getStocksData = async () => {
+  try {
+    const response = await axiosInstance.get('/inventory/batches');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching stock data:', error);
+    throw error;
+  }
+};
+
+
 export const getAllStocksData = async () => {
   try {
-    const response = await axiosInstance.get('/inventory/all-stocks');
+    const response = await axiosInstance.get('/inventory/all-medicines');
     return response.data;
   } catch (error) {
     console.error('Error fetching all stocks data:', error);
@@ -164,7 +166,7 @@ export const getAllStocksData = async () => {
 
 export const deleteStockById = async (stockId) => {
   try {
-    const response = await axiosInstance.delete(`/inventory/stock/${stockId}`);
+    const response = await axiosInstance.delete(`/inventory/batch/${stockId}`);
     return response.data;
   } catch (error) {
     console.error('Error deleting stock:', error);

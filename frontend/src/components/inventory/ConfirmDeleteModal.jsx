@@ -63,9 +63,9 @@ const ConfirmDeleteModal = ({ isOpen, onClose, stockItem, onSuccess }) => {
           <h3 className={`text-lg font-semibold ${theme.textPrimary} mb-2`}>
             Are you sure you want to delete this stock batch?
           </h3>
-          <p className={`text-sm ${theme.textMuted}`}>
+          {/* <p className={`text-sm ${theme.textMuted}`}>
             This action is permanent and cannot be undone
-          </p>
+          </p> */}
         </div>
 
         {/* Stock Information */}
@@ -76,16 +76,16 @@ const ConfirmDeleteModal = ({ isOpen, onClose, stockItem, onSuccess }) => {
             </div>
             <div className="flex-1">
               <h4 className={`font-semibold ${theme.textPrimary}`}>
-                {stockItem.medicineName} {stockItem.strength}
+                Batch: {stockItem.batchNumber}
               </h4>
-              <p className={`text-sm ${theme.textMuted}`}>
+              {/* <p className={`text-sm ${theme.textMuted}`}>
                 Form: <span className="capitalize">{stockItem.form}</span>
               </p>
               <p className={`text-sm ${theme.textSecondary}`}>
                 Batch: {stockItem.batchNumber}
-              </p>
+              </p> */}
             </div>
-            <div className="text-right">
+            {/* <div className="text-right">
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                 stockItem.stockLevel > 50
                   ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -95,7 +95,7 @@ const ConfirmDeleteModal = ({ isOpen, onClose, stockItem, onSuccess }) => {
               }`}>
                 {stockItem.stockLevel} units
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -113,7 +113,7 @@ const ConfirmDeleteModal = ({ isOpen, onClose, stockItem, onSuccess }) => {
             <ul className="text-sm text-red-700 dark:text-red-300 mt-2 space-y-1">
               <li>• This stock batch will be permanently deleted</li>
               <li>• The stock level will be reduced accordingly</li>
-              <li>• This action cannot be undone</li>
+              <li>• This action is permanent and cannot be undone</li>
             </ul>
           </div>
         </motion.div>
@@ -131,7 +131,7 @@ const ConfirmDeleteModal = ({ isOpen, onClose, stockItem, onSuccess }) => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-4 pt-6">
+        <div className="flex justify-end space-x-4 pt-2">
           <button
             type="button"
             onClick={handleClose}

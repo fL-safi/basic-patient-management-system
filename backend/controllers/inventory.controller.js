@@ -1,101 +1,82 @@
 import { Inventory } from "../models/inventory.model.js";
+import mongoose from "mongoose";
 
 export const addToStock = async (req, res) => {
     try {
         const {
-            medicineName,
-            strength,
-            form,
             batchNumber,
-            quantity, // New stock to add
-            expiryDate,
-            price, // Selling price
-            buyingCost,
-            dateOfPurchase,
             billID,
-            reorderLevel
+            medicines, // Array of medicine objects
+            overallPrice
         } = req.body;
 
         // Validate required fields
-        if (!medicineName || !strength || !form || !batchNumber || !quantity || 
-            !expiryDate || !price || !buyingCost || !dateOfPurchase || !billID || !reorderLevel) {
+        if (!batchNumber || !billID || !medicines || !Array.isArray(medicines) || medicines.length === 0 || !overallPrice) {
             return res.status(400).json({
                 success: false,
-                message: "All fields are required"
+                message: "All fields are required. Medicines must be a non-empty array."
             });
         }
 
-        // Validate quantity is positive
-        if (quantity <= 0) {
+        // Validate each medicine in the array
+        for (const medicine of medicines) {
+            const { medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel } = medicine;
+            
+            if (!medicineName || !quantity || !price || !expiryDate || !dateOfPurchase || reorderLevel === undefined) {
+                return res.status(400).json({
+                    success: false,
+                    message: "All medicine fields are required: medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel"
+                });
+            }
+
+            if (quantity <= 0 || price <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Quantity and price must be greater than 0"
+                });
+            }
+
+            // Calculate total amount for each medicine
+            medicine.totalAmount = quantity * price;
+        }
+
+        // Check if batch already exists
+        const existingBatch = await Inventory.findOne({ batchNumber });
+
+        if (existingBatch) {
             return res.status(400).json({
                 success: false,
-                message: "Quantity must be greater than 0"
+                message: "Batch number already exists. Please use a different batch number."
             });
         }
 
-        // Validate form enum
-        const validForms = ["tablet", "syrup", "ointment", "injection"];
-        if (!validForms.includes(form)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid form. Must be one of: tablet, syrup, ointment, injection"
-            });
-        }
-
-        // Check if item with same details already exists
-        const existingItem = await Inventory.findOne({
-            medicineName,
-            strength,
-            form,
-            batchNumber
+        // Create new batch
+        const newBatch = new Inventory({
+            batchNumber,
+            billID,
+            medicines,
+            overallPrice,
+            createdBy: req.user.id // Assuming user info is available from auth middleware
         });
 
-        if (existingItem) {
-            // Update existing item - add to stock level
-            existingItem.stockLevel += parseInt(quantity);
-            
-            // Update other fields (in case they've changed)
-            existingItem.expiryDate = expiryDate;
-            existingItem.price = price;
-            existingItem.buyingCost = buyingCost;
-            existingItem.dateOfPurchase = dateOfPurchase;
-            existingItem.billID = billID;
-            existingItem.reorderLevel = reorderLevel;
+        await newBatch.save();
 
-            await existingItem.save();
-
-            return res.status(200).json({
-                success: true,
-                message: `Stock updated successfully. Added ${quantity} units. New stock level: ${existingItem.stockLevel}`,
-                data: existingItem
-            });
-        } else {
-            // Create new inventory item
-            const newInventoryItem = new Inventory({
-                medicineName,
-                strength,
-                form,
-                batchNumber,
-                stockLevel: parseInt(quantity), // Set initial stock level to quantity
-                expiryDate,
-                price,
-                buyingCost,
-                dateOfPurchase,
-                billID,
-                reorderLevel
-            });
-
-            await newInventoryItem.save();
-
-            return res.status(201).json({
-                success: true,
-                message: `New inventory item created successfully with ${quantity} units`,
-                data: newInventoryItem
-            });
-        }
+        return res.status(201).json({
+            success: true,
+            message: `New batch created successfully with ${medicines.length} medicines`,
+            data: newBatch
+        });
 
     } catch (error) {
         console.error("Error in addToStock:", error);
+        
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: "Batch number already exists"
+            });
+        }
+
         return res.status(500).json({
             success: false,
             message: "Internal server error",
@@ -110,8 +91,6 @@ export const stockList = async (req, res) => {
             page = 1,
             limit = 10,
             search = "",
-            form = "",
-            lowStock = false,
             sortBy = "createdAt",
             sortOrder = "desc"
         } = req.query;
@@ -119,23 +98,13 @@ export const stockList = async (req, res) => {
         // Build search query
         const searchQuery = {};
 
-        // Text search across multiple fields
+        // Text search across batch number, bill ID, or medicine names
         if (search) {
             searchQuery.$or = [
-                { medicineName: { $regex: search, $options: "i" } },
-                { strength: { $regex: search, $options: "i" } },
-                { batchNumber: { $regex: search, $options: "i" } }
+                { batchNumber: { $regex: search, $options: "i" } },
+                { billID: { $regex: search, $options: "i" } },
+                { "medicines.medicineName": { $regex: search, $options: "i" } }
             ];
-        }
-
-        // Filter by form
-        if (form) {
-            searchQuery.form = form;
-        }
-
-        // Filter for low stock items
-        if (lowStock === "true") {
-            searchQuery.$expr = { $lte: ["$stockLevel", "$reorderLevel"] };
         }
 
         // Build sort object
@@ -146,11 +115,12 @@ export const stockList = async (req, res) => {
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
         // Execute query with pagination
-        const [inventoryItems, totalCount] = await Promise.all([
+        const [batches, totalCount] = await Promise.all([
             Inventory.find(searchQuery)
                 .sort(sortObj)
                 .skip(skip)
                 .limit(parseInt(limit))
+                .populate('createdBy', 'name email')
                 .lean(),
             Inventory.countDocuments(searchQuery)
         ]);
@@ -160,18 +130,29 @@ export const stockList = async (req, res) => {
         const hasNextPage = parseInt(page) < totalPages;
         const hasPrevPage = parseInt(page) > 1;
 
-        // Add status to each item
-        const enrichedItems = inventoryItems.map(item => ({
-            ...item,
-            status: item.stockLevel <= item.reorderLevel ? "Low Stock" : "In Stock",
-            isExpired: new Date(item.expiryDate) < new Date(),
-            daysToExpiry: Math.ceil((new Date(item.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))
-        }));
+        // Add status and additional info to each batch
+        const enrichedBatches = batches.map(batch => {
+            const totalMedicines = batch.medicines.length;
+            const totalQuantity = batch.medicines.reduce((sum, med) => sum + med.quantity, 0);
+            const lowStockMedicines = batch.medicines.filter(med => med.quantity <= med.reorderLevel).length;
+            const expiredMedicines = batch.medicines.filter(med => new Date(med.expiryDate) < new Date()).length;
+
+            return {
+                ...batch,
+                summary: {
+                    totalMedicines,
+                    totalQuantity,
+                    lowStockMedicines,
+                    expiredMedicines,
+                    batchStatus: lowStockMedicines > 0 ? "Has Low Stock" : expiredMedicines > 0 ? "Has Expired Items" : "Good"
+                }
+            };
+        });
 
         return res.status(200).json({
             success: true,
             data: {
-                items: enrichedItems,
+                batches: enrichedBatches,
                 pagination: {
                     currentPage: parseInt(page),
                     totalPages,
@@ -181,9 +162,10 @@ export const stockList = async (req, res) => {
                     hasPrevPage
                 },
                 summary: {
-                    totalItems: totalCount,
-                    lowStockItems: enrichedItems.filter(item => item.status === "Low Stock").length,
-                    expiredItems: enrichedItems.filter(item => item.isExpired).length
+                    totalBatches: totalCount,
+                    totalMedicines: enrichedBatches.reduce((sum, batch) => sum + batch.summary.totalMedicines, 0),
+                    batchesWithLowStock: enrichedBatches.filter(batch => batch.summary.lowStockMedicines > 0).length,
+                    batchesWithExpiredItems: enrichedBatches.filter(batch => batch.summary.expiredMedicines > 0).length
                 }
             }
         });
@@ -204,72 +186,68 @@ export const allStocksList = async (req, res) => {
             page = 1,
             limit = 10,
             search = "",
-            form = "",
             sortBy = "medicineName",
             sortOrder = "asc"
         } = req.query;
 
-        // Build aggregation pipeline
+        // Build aggregation pipeline to flatten medicines across all batches
         const pipeline = [];
 
-        // Match stage for initial filtering
-        const matchStage = {};
-        
-        // Text search across medicine name
-        if (search) {
-            matchStage.medicineName = { $regex: search, $options: "i" };
-        }
+        // Unwind medicines array to treat each medicine as a separate document
+        pipeline.push({ $unwind: "$medicines" });
 
-        // Filter by form
-        if (form) {
-            matchStage.form = form;
+        // Match stage for filtering
+        const matchStage = {};
+        if (search) {
+            matchStage.$or = [
+                { "medicines.medicineName": { $regex: search, $options: "i" } },
+                { batchNumber: { $regex: search, $options: "i" } },
+                { billID: { $regex: search, $options: "i" } }
+            ];
         }
 
         if (Object.keys(matchStage).length > 0) {
             pipeline.push({ $match: matchStage });
         }
 
-        // Group by medicine name and form to aggregate batches
+        // Group by medicine name to aggregate quantities across batches
         pipeline.push({
             $group: {
-                _id: {
-                    medicineName: "$medicineName",
-                    form: "$form"
-                },
-                totalStockLevel: { $sum: "$stockLevel" },
+                _id: "$medicines.medicineName",
+                totalQuantity: { $sum: "$medicines.quantity" },
+                totalValue: { $sum: "$medicines.totalAmount" },
                 batches: {
                     $push: {
                         batchNumber: "$batchNumber",
-                        stockLevel: "$stockLevel",
                         billID: "$billID",
-                        expiryDate: "$expiryDate",
-                        price: "$price",
-                        buyingCost: "$buyingCost"
+                        quantity: "$medicines.quantity",
+                        price: "$medicines.price",
+                        expiryDate: "$medicines.expiryDate",
+                        dateOfPurchase: "$medicines.dateOfPurchase",
+                        reorderLevel: "$medicines.reorderLevel",
+                        totalAmount: "$medicines.totalAmount"
                     }
                 },
-                // Get the most recent billID (you might want to adjust this logic)
-                latestBillID: { $last: "$billID" },
-                // Get minimum reorder level across all batches
-                minReorderLevel: { $min: "$reorderLevel" },
-                // Count total batches
+                avgPrice: { $avg: "$medicines.price" },
+                minReorderLevel: { $min: "$medicines.reorderLevel" },
                 batchCount: { $sum: 1 }
             }
         });
 
-        // Project to reshape the output
+        // Project to reshape output
         pipeline.push({
             $project: {
                 _id: 0,
-                medicineName: "$_id.medicineName",
-                form: "$_id.form",
-                totalStockLevel: 1,
+                medicineName: "$_id",
+                totalQuantity: 1,
+                totalValue: 1,
+                avgPrice: { $round: ["$avgPrice", 2] },
                 batchCount: 1,
                 batches: 1,
-                billID: "$latestBillID",
                 reorderLevel: "$minReorderLevel",
                 status: {
                     $cond: {
-                        if: { $lte: ["$totalStockLevel", "$minReorderLevel"] },
+                        if: { $lte: ["$totalQuantity", "$minReorderLevel"] },
                         then: "Low Stock",
                         else: "In Stock"
                     }
@@ -282,17 +260,17 @@ export const allStocksList = async (req, res) => {
         sortObj[sortBy] = sortOrder === "asc" ? 1 : -1;
         pipeline.push({ $sort: sortObj });
 
-        // Execute aggregation to get total count
+        // Get total count
         const countPipeline = [...pipeline, { $count: "total" }];
         const countResult = await Inventory.aggregate(countPipeline);
         const totalCount = countResult.length > 0 ? countResult[0].total : 0;
 
-        // Add pagination to main pipeline
+        // Add pagination
         const skip = (parseInt(page) - 1) * parseInt(limit);
         pipeline.push({ $skip: skip });
         pipeline.push({ $limit: parseInt(limit) });
 
-        // Execute main aggregation
+        // Execute aggregation
         const medicines = await Inventory.aggregate(pipeline);
 
         // Calculate pagination info
@@ -303,7 +281,7 @@ export const allStocksList = async (req, res) => {
         return res.status(200).json({
             success: true,
             data: {
-                items: medicines,
+                medicines,
                 pagination: {
                     currentPage: parseInt(page),
                     totalPages,
@@ -315,7 +293,8 @@ export const allStocksList = async (req, res) => {
                 summary: {
                     totalMedicines: totalCount,
                     lowStockMedicines: medicines.filter(item => item.status === "Low Stock").length,
-                    totalBatches: medicines.reduce((sum, item) => sum + item.batchCount, 0)
+                    totalBatches: medicines.reduce((sum, item) => sum + item.batchCount, 0),
+                    totalInventoryValue: medicines.reduce((sum, item) => sum + item.totalValue, 0)
                 }
             }
         });
@@ -338,31 +317,30 @@ export const deleteStockById = async (req, res) => {
         if (!id) {
             return res.status(400).json({
                 success: false,
-                message: "Stock ID is required"
+                message: "Batch ID is required"
             });
         }
 
-        // Find and delete the inventory item
-        const deletedItem = await Inventory.findByIdAndDelete(id);
+        // Find and delete the batch
+        const deletedBatch = await Inventory.findByIdAndDelete(id);
 
-        if (!deletedItem) {
+        if (!deletedBatch) {
             return res.status(404).json({
                 success: false,
-                message: "Stock item not found"
+                message: "Batch not found"
             });
         }
 
         return res.status(200).json({
             success: true,
-            message: `Stock batch deleted successfully`,
+            message: `Batch deleted successfully`,
             data: {
-                deletedItem: {
-                    id: deletedItem._id,
-                    medicineName: deletedItem.medicineName,
-                    strength: deletedItem.strength,
-                    form: deletedItem.form,
-                    batchNumber: deletedItem.batchNumber,
-                    stockLevel: deletedItem.stockLevel
+                deletedBatch: {
+                    id: deletedBatch._id,
+                    batchNumber: deletedBatch.batchNumber,
+                    billID: deletedBatch.billID,
+                    medicineCount: deletedBatch.medicines.length,
+                    overallPrice: deletedBatch.overallPrice
                 }
             }
         });
@@ -370,14 +348,75 @@ export const deleteStockById = async (req, res) => {
     } catch (error) {
         console.error("Error in deleteStockById:", error);
         
-        // Handle invalid ObjectId format
         if (error.name === 'CastError') {
             return res.status(400).json({
                 success: false,
-                message: "Invalid stock ID format"
+                message: "Invalid batch ID format"
             });
         }
 
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
+
+// Additional function to delete individual medicine from a batch
+export const deleteMedicineFromBatch = async (req, res) => {
+    try {
+        const { batchId, medicineId } = req.params;
+
+        if (!batchId || !medicineId) {
+            return res.status(400).json({
+                success: false,
+                message: "Batch ID and Medicine ID are required"
+            });
+        }
+
+        const batch = await Inventory.findById(batchId);
+        if (!batch) {
+            return res.status(404).json({
+                success: false,
+                message: "Batch not found"
+            });
+        }
+
+        const medicineIndex = batch.medicines.findIndex(med => med._id.toString() === medicineId);
+        if (medicineIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: "Medicine not found in this batch"
+            });
+        }
+
+        // Remove the medicine from the batch
+        const removedMedicine = batch.medicines.splice(medicineIndex, 1)[0];
+        
+        // Update overall price
+        batch.overallPrice -= removedMedicine.totalAmount;
+        
+        // If no medicines left, delete the entire batch
+        if (batch.medicines.length === 0) {
+            await Inventory.findByIdAndDelete(batchId);
+            return res.status(200).json({
+                success: true,
+                message: "Medicine removed and batch deleted as it was empty",
+                data: { removedMedicine }
+            });
+        }
+
+        await batch.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Medicine removed from batch successfully",
+            data: { removedMedicine, updatedBatch: batch }
+        });
+
+    } catch (error) {
+        console.error("Error in deleteMedicineFromBatch:", error);
         return res.status(500).json({
             success: false,
             message: "Internal server error",
