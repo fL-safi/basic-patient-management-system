@@ -1,5 +1,4 @@
-// AddStockModal.jsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "../../hooks/useTheme";
 import Modal from "../UI/Modal";
@@ -14,7 +13,9 @@ import {
   FileDigit,
   ChevronDown,
   Trash2,
-  List
+  List,
+  AlertCircle,
+  Box
 } from "lucide-react";
 import { MEDICINES } from "../../constants/selectOptions";
 import { addToStock } from "../../api/api";
@@ -56,6 +57,29 @@ const AddStockModal = ({ isOpen, onClose, onSuccess }) => {
                              parseInt(currentMedicine.quantity) > 0 &&
                              currentMedicine.price && 
                              parseFloat(currentMedicine.price) > 0;
+
+  // Calculate total medicine prices
+  const totalMedicinePrice = useMemo(() => {
+    return medicines.reduce((total, medicine) => {
+      return total + (parseFloat(medicine.price) * parseInt(medicine.quantity));
+    }, 0);
+  }, [medicines]);
+
+  // Calculate total quantity
+  const totalQuantity = useMemo(() => {
+    return medicines.reduce((total, medicine) => {
+      return total + parseInt(medicine.quantity);
+    }, 0);
+  }, [medicines]);
+
+  // Calculate price mismatch
+  const priceDifference = useMemo(() => {
+    if (!batchDetails.overallPrice) return 0;
+    return Math.abs(totalMedicinePrice - parseFloat(batchDetails.overallPrice));
+  }, [totalMedicinePrice, batchDetails.overallPrice]);
+
+  const hasPriceMismatch = priceDifference > 1000;
+  const isOver = parseFloat(batchDetails.overallPrice) < totalMedicinePrice;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -516,9 +540,9 @@ const AddStockModal = ({ isOpen, onClose, onSuccess }) => {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-center">{medicine.quantity}</td>
-                          <td className="px-4 py-3 text-center">{medicine.price.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-center">${medicine.price.toFixed(2)}</td>
                           <td className="px-4 py-3 text-center font-medium">
-                            {(medicine.quantity * medicine.price).toFixed(2)}
+                            ${(medicine.quantity * medicine.price).toFixed(2)}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <button
@@ -542,6 +566,62 @@ const AddStockModal = ({ isOpen, onClose, onSuccess }) => {
                 </table>
               </div>
             </div>
+
+            {/* Summary Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}>
+                <div className="flex items-center">
+                  <Hash className="w-5 h-5 text-blue-500 mr-2" />
+                  <div>
+                    <p className={`text-sm ${theme.textMuted}`}>Total Quantity</p>
+                    <p className="text-xl font-bold">{totalQuantity} units</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}>
+                <div className="flex items-center">
+                  <DollarSign className="w-5 h-5 text-green-500 mr-2" />
+                  <div>
+                    <p className={`text-sm ${theme.textMuted}`}>Total Medicines Price</p>
+                    <p className="text-xl font-bold">${totalMedicinePrice.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}>
+                <div className="flex items-center">
+                  <Box className="w-5 h-5 text-purple-500 mr-2" />
+                  <div>
+                    <p className={`text-sm ${theme.textMuted}`}>Batch Overall Price</p>
+                    <p className="text-xl font-bold">
+                      ${batchDetails.overallPrice ? parseFloat(batchDetails.overallPrice).toFixed(2) : '0.00'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Price Mismatch Warning */}
+            {batchDetails.overallPrice && medicines.length > 0 && hasPriceMismatch && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className={`p-4 rounded-lg border ${isOver ? 'border-red-500 bg-red-500 bg-opacity-10' : 'border-yellow-500 bg-yellow-500 bg-opacity-10'} flex items-center`}
+              >
+                <AlertCircle className={`w-5 h-5 ${isOver ? 'text-red-500' : 'text-yellow-500'} mr-2`} />
+                <div>
+                  <p className={`${isOver ? 'text-red-700 dark:text-red-300' : 'text-yellow-700 dark:text-yellow-300'} font-medium`}>
+                    Price Mismatch Detected!
+                  </p>
+                  <p className="text-sm">
+                    {isOver
+                      ? `Total medicine prices ($${totalMedicinePrice.toFixed(2)}) exceed batch overall price ($${parseFloat(batchDetails.overallPrice).toFixed(2)}) by $${priceDifference.toFixed(2)}`
+                      : `Batch overall price ($${parseFloat(batchDetails.overallPrice).toFixed(2)}) exceeds total medicine prices ($${totalMedicinePrice.toFixed(2)}) by $${priceDifference.toFixed(2)}`}
+                  </p>
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
 
