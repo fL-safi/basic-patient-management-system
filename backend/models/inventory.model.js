@@ -1,58 +1,72 @@
 import mongoose from "mongoose";
 
+// Schema for individual medicines within a batch
+const batchMedicineSchema = new mongoose.Schema({
+  medicineName: { 
+    type: String,
+    required: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  price: { // Selling price per unit
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  expiryDate: {
+    type: Date,
+    required: true,
+  },
+  dateOfPurchase: {
+    type: Date,
+    required: true,
+  },
+  reorderLevel: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  totalAmount: {
+    type: Number,
+    required: true,
+    min: 0,
+  }
+}, { _id: true });
+
+// Main inventory schema for batch management
 const inventorySchema = new mongoose.Schema(
   {
-    medicineName: { 
-      type: String,
-      required: true,
-    },
-    strength: {
-      type: String,
-      required: true,
-    },
-    form: {
-      type: String,
-      enum: ["tablet", "syrup", "ointment", "injection"],
-      required: true,
-    },
     batchNumber: {
       type: String,
       required: true,
+      unique: true,
     },
-    stockLevel: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
-    expiryDate: {
-      type: Date,
-      required: true,
-    },
-    price: { // This will be the selling price
-      type: Number,
-      required: true,
-    },
-    buyingCost: { // New field
-      type: Number,
-      required: true,
-    },
-    dateOfPurchase: { // New field
-      type: Date,
-      required: true,
-    },
-    billID: { // New field
+    billID: {
       type: String,
       required: true,
     },
-    reorderLevel: {
+    medicines: [batchMedicineSchema], // Array of medicines in this batch
+    overallPrice: {
       type: Number,
       required: true,
+      min: 0,
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    }
   },
   { timestamps: true }
 );
 
-// Create a compound index for efficient querying
-inventorySchema.index({ medicineName: 1, strength: 1, form: 1, batchNumber: 1 });
+// Create indexes for efficient querying
+inventorySchema.index({ batchNumber: 1 });
+inventorySchema.index({ billID: 1 });
+inventorySchema.index({ "medicines.medicineName": 1 });
+inventorySchema.index({ createdAt: -1 });
 
 export const Inventory = mongoose.model("Inventory", inventorySchema);

@@ -35,6 +35,7 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
     admin: [
       { icon: Users, label: 'Users', path: '/user-management', color: 'text-green-500' },
       { icon: Box, label: 'Inventory', path: '/inventory-management', color: 'text-yellow-500' },
+      { icon: Pill, label: 'Stocks', path: '/all-stocks', color: 'text-teal-600' },
       { icon: Calendar, label: 'Schedule', path: '/appointments', color: 'text-purple-500' },
       { icon: FileText, label: 'Reports', path: '/reports', color: 'text-orange-500' },
       { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },

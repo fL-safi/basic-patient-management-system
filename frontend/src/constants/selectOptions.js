@@ -14,26 +14,99 @@ export const SPECIALITIES = [
 ];
 
 export const MEDICINES = [
-  "Paracetamol", "Ibuprofen", "Aspirin", "Amoxicillin", "Omeprazole", 
-  "Metformin", "Atorvastatin", "Lisinopril", "Levothyroxine", "Albuterol",
-  "Gabapentin", "Hydrochlorothiazide", "Sertraline", "Simvastatin", "Losartan",
-  "Metoprolol", "Amlodipine", "Pantoprazole", "Escitalopram", "Fluoxetine",
-  "Tramadol", "Diazepam", "Prednisone", "Cetirizine", "Loratadine",
-  "Ciprofloxacin", "Azithromycin", "Clonazepam", "Duloxetine", "Trazodone",
-  "Warfarin", "Insulin Glargine", "Furosemide", "Carvedilol", "Venlafaxine",
-  "Morphine", "Oxycodone", "Hydrocodone", "Codeine", "Naproxen",
-  "Diclofenac", "Celecoxib", "Meloxicam", "Cyclobenzaprine", "Baclofen",
-  "Tizanidine", "Methotrexate", "Allopurinol", "Colchicine", "Propranolol",
-  "Diltiazem", "Verapamil", "Digoxin", "Spironolactone", "Fentanyl",
-  "Hydromorphone", "Methylphenidate", "Adderall", "Dextroamphetamine", "Lorazepam",
-  "Alprazolam", "Clonidine", "Quetiapine", "Aripiprazole", "Risperidone",
-  "Olanzapine", "Haloperidol", "Lithium", "Lamotrigine", "Topiramate",
-  "Valproic Acid", "Phenytoin", "Carbamazepine", "Levetiracetam", "Memantine",
-  "Donepezil", "Rivastigmine", "Galantamine", "Tamsulosin", "Finasteride",
-  "Sildenafil", "Tadalafil", "Vardenafil", "Metronidazole", "Doxycycline",
-  "Cephalexin", "Clindamycin", "Vancomycin", "Fluconazole", "Acyclovir",
-  "Valacyclovir", "Oseltamivir", "Montelukast", "Fluticasone", "Salbutamol",
-  "Budesonide", "Formoterol", "Tiotropium", "Ranolazine", "Nitroglycerin"
+  // Paracetamol variants
+  "Paracetamol 500mg Tab",
+  "Paracetamol 250mg Tab",
+  "Paracetamol 120mg/5ml Syp",
+  "Paracetamol 80mg Drop",
+  
+  // Ibuprofen variants
+  "Ibuprofen 400mg Tab",
+  "Ibuprofen 200mg Tab",
+  "Ibuprofen 100mg/5ml Syp",
+  
+  // Aspirin variants
+  "Aspirin 75mg Tab",
+  "Aspirin 300mg Tab",
+  
+  // Amoxicillin variants
+  "Amoxicillin 500mg Tab",
+  "Amoxicillin 250mg Tab",
+  "Amoxicillin 125mg/5ml Syp",
+  "Amoxicillin 250mg/5ml Syp",
+  
+  // Omeprazole variants
+  "Omeprazole 20mg Tab",
+  "Omeprazole 40mg Tab",
+  
+  // Metformin variants
+  "Metformin 500mg Tab",
+  "Metformin 850mg Tab",
+  "Metformin 1000mg Tab",
+  
+  // Insulin variants
+  "Insulin Glargine 100IU/ml Inj",
+  "Insulin Regular 100IU/ml Inj",
+  
+  // Antibiotics
+  "Ciprofloxacin 500mg Tab",
+  "Ciprofloxacin 250mg Tab",
+  "Azithromycin 500mg Tab",
+  "Azithromycin 250mg Tab",
+  "Doxycycline 100mg Tab",
+  "Cephalexin 500mg Tab",
+  
+  // Respiratory medications
+  "Albuterol 2.5mg/3ml Inj",
+  "Salbutamol 100mcg Inj",
+  "Montelukast 10mg Tab",
+  "Fluticasone 50mcg Drop",
+  
+  // Cardiovascular medications
+  "Atorvastatin 20mg Tab",
+  "Atorvastatin 40mg Tab",
+  "Lisinopril 10mg Tab",
+  "Lisinopril 20mg Tab",
+  "Metoprolol 50mg Tab",
+  "Amlodipine 5mg Tab",
+  "Amlodipine 10mg Tab",
+  
+  // Antidepressants
+  "Sertraline 50mg Tab",
+  "Sertraline 100mg Tab",
+  "Fluoxetine 20mg Tab",
+  "Escitalopram 10mg Tab",
+  
+  // Pain medications
+  "Tramadol 50mg Tab",
+  "Diclofenac 50mg Tab",
+  "Naproxen 500mg Tab",
+  "Morphine 10mg/ml Inj",
+  
+  // Topical medications
+  "Diclofenac 1% Ointment",
+  "Hydrocortisone 1% Ointment",
+  "Clotrimazole 1% Ointment",
+  
+  // Diabetes medications
+  "Metformin 500mg Tab",
+  "Glipizide 5mg Tab",
+  "Insulin Lispro 100IU/ml Inj",
+  
+  // Antifungal
+  "Fluconazole 150mg Tab",
+  "Ketoconazole 200mg Tab",
+  
+  // Vitamins and supplements
+  "Vitamin D3 60000IU Tab",
+  "Vitamin B12 1000mcg Tab",
+  "Calcium Carbonate 500mg Tab",
+  "Iron Sulfate 325mg Tab",
+  
+  // Eye drops
+  "Timolol 0.5% Drop",
+  "Latanoprost 0.005% Drop",
+  "Ciprofloxacin 0.3% Drop",
 ];
 
 export const GENDERS = [
