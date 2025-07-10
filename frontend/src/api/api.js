@@ -173,3 +173,25 @@ export const deleteStockById = async (stockId) => {
     throw error;
   }
 };
+
+// Get batch by ID
+export const getBatchById = async (batchId) => {
+  try {
+    const response = await axiosInstance.get(`/inventory/batch/${batchId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching batch:", error);
+    throw error;
+  }
+};
+
+// Update batch by ID
+export const updateBatchById = async (batchId, updateData) => {
+  try {
+    const response = await axiosInstance.put(`/inventory/batch/${batchId}`, updateData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating batch:", error);
+    throw error;
+  }
+};

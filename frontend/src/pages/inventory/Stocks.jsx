@@ -23,6 +23,8 @@ import { useTheme } from "../../hooks/useTheme";
 import { getStocksData, deleteStockById } from "../../api/api";
 import AddStockModal from "../../components/inventory/AddStockModal";
 import ConfirmDeleteModal from "../../components/inventory/ConfirmDeleteModal";
+import EditStockModal from "../../components/inventory/EditStockModal";
+
 import formatDate from "../../utils/date.js";
 import { useAuthStore } from "../../store/authStore";
 
@@ -45,6 +47,9 @@ const Stocks = () => {
   const [expandedBatches, setExpandedBatches] = useState({});
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+const [editingBatchId, setEditingBatchId] = useState(null);
+  
 
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
@@ -421,7 +426,7 @@ const Stocks = () => {
                         <td className="px-2 py-4 text-center">
                           <button
                             onClick={() => toggleBatchExpansion(batch._id)}
-                            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                            className={`${theme.textPrimary} p-1 rounded-full `}
                           >
                             {expandedBatches[batch._id] ? (
                               <ChevronUp className="w-4 h-4" />
@@ -499,11 +504,20 @@ const Stocks = () => {
                               >
                                 <Eye className="w-4 h-4 text-blue-500" />
                               </button>
-                              <button
+                              {/* <button
                                 className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
                               >
                                 <Edit className="w-4 h-4 text-green-500" />
-                              </button>
+                              </button> */}
+                              <button
+  className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+  onClick={() => {
+    setEditingBatchId(batch._id);
+    setIsEditModalOpen(true);
+  }}
+>
+  <Edit className="w-4 h-4 text-green-500" />
+</button>
                               <button
                                 title="Delete Batch"
                                 onClick={() => handleDeleteClick(batch)}
@@ -527,19 +541,19 @@ const Stocks = () => {
                                     <tr
                                       className={`${theme.borderSecondary} border-b`}
                                     >
-                                      <th className={`px-4 py-2 text-left text-sm font-medium ${theme.textSecondary}`} >
+                                      <th className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`} >
                                         Medicine
                                       </th>
-                                      <th className={`px-4 py-2 text-left text-sm font-medium ${theme.textSecondary}`}>
+                                      <th className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}>
                                         Quantity
                                       </th>
-                                      <th className={`px-4 py-2 text-left text-sm font-medium ${theme.textSecondary}`}>
+                                      <th className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}>
                                         Unit Price
                                       </th>
-                                      <th className={`px-4 py-2 text-left text-sm font-medium ${theme.textSecondary}`}>
+                                      <th className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}>
                                         Total Price
                                       </th>
-                                      <th className={`px-4 py-2 text-left text-sm font-medium ${theme.textSecondary}`}>
+                                      <th className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}>
                                         Status
                                       </th>
                                     </tr>
@@ -600,32 +614,18 @@ const Stocks = () => {
                                     
                                     {/* Batch Total Row */}
                                     <tr className={`${theme.borderSecondary} border-t font-semibold`}>
-                                      <td className="px-4 py-3 text-right">
+                                      <td className={`${theme.textPrimary} px-4 py-3 text-right`} >
                                         Batch Total:
                                       </td>
-                                      <td className="px-4 py-3 text-center">
+                                      <td className={`${theme.textPrimary} px-4 py-3 text-center`}>
                                         {batch.summary.totalQuantity} units
                                       </td>
                                       <td className="px-4 py-3"></td>
-                                      <td className="px-4 py-3 text-center">
+                                      <td className={`${theme.textPrimary} px-4 py-3 text-center`}>
                                         ${totalMedicinePrice}
                                       </td>
-                                      <td className="px-4 py-3 text-center">
+                                      <td className={`${theme.textPrimary} px-4 py-3 text-center`}>
                                         ${batch.overallPrice}
-                                        {/* {hasPriceMismatch && (
-                                          <div className="mt-1 flex items-center justify-center">
-                                            <div className="relative group inline-flex">
-                                              <div className={`p-1 rounded-full ${mismatchText} bg-opacity-20`}>
-                                                <AlertCircle className={`w-4 h-4 ${mismatchText}`} />
-                                              </div>
-                                              <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs p-2 rounded w-64 z-10 left-1/2 transform -translate-x-1/2 bottom-full mb-2">
-                                                {isOver 
-                                                  ? `Total medicine prices ($${totalMedicinePrice}) exceed overall price ($${batch.overallPrice}) by $${priceDifference}`
-                                                  : `Overall price ($${batch.overallPrice}) exceeds total medicine prices ($${totalMedicinePrice}) by $${priceDifference}`}
-                                              </div>
-                                            </div>
-                                          </div>
-                                        )} */}
                                       </td>
                                     </tr>
                                   </tbody>
@@ -685,6 +685,15 @@ const Stocks = () => {
         stockItem={selectedStock}
         onSuccess={handleDeleteSuccess}
       />
+
+<EditStockModal
+  isOpen={isEditModalOpen}
+  onClose={() => setIsEditModalOpen(false)}
+  batchId={editingBatchId}
+  onSuccess={fetchData}
+/>
+
+
     </div>
   );
 };

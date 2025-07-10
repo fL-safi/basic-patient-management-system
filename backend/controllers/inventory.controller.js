@@ -363,19 +363,148 @@ export const deleteStockById = async (req, res) => {
     }
 };
 
-// Additional function to delete individual medicine from a batch
-export const deleteMedicineFromBatch = async (req, res) => {
+export const updateBatchById = async (req, res) => {
     try {
-        const { batchId, medicineId } = req.params;
+        const { id } = req.params;
+        const updateData = req.body;
 
-        if (!batchId || !medicineId) {
+        // Validate if ID is provided
+        if (!id) {
             return res.status(400).json({
                 success: false,
-                message: "Batch ID and Medicine ID are required"
+                message: "Batch ID is required"
             });
         }
 
-        const batch = await Inventory.findById(batchId);
+        // Check if batch exists
+        const existingBatch = await Inventory.findById(id);
+        if (!existingBatch) {
+            return res.status(404).json({
+                success: false,
+                message: "Batch not found"
+            });
+        }
+
+        // If batchNumber is being updated, check for uniqueness
+        if (updateData.batchNumber && updateData.batchNumber !== existingBatch.batchNumber) {
+            const batchExists = await Inventory.findOne({ 
+                batchNumber: updateData.batchNumber,
+                _id: { $ne: id } // Exclude current batch
+            });
+            
+            if (batchExists) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Batch number already exists. Please use a different batch number."
+                });
+            }
+        }
+
+        // Validate medicines array if provided
+        if (updateData.medicines) {
+            if (!Array.isArray(updateData.medicines)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Medicines must be an array"
+                });
+            }
+
+            // Validate each medicine in the array
+            for (const medicine of updateData.medicines) {
+                const { medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel } = medicine;
+                
+                if (!medicineName || !quantity || !price || !expiryDate || !dateOfPurchase || reorderLevel === undefined) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "All medicine fields are required: medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel"
+                    });
+                }
+
+                if (quantity <= 0 || price <= 0) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Quantity and price must be greater than 0"
+                    });
+                }
+
+                // Calculate total amount for each medicine
+                medicine.totalAmount = quantity * price;
+            }
+        }
+
+        // Validate other numeric fields if provided
+        if (updateData.overallPrice !== undefined && updateData.overallPrice < 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Overall price must be greater than or equal to 0"
+            });
+        }
+
+        // Update the batch with partial data
+        const updatedBatch = await Inventory.findByIdAndUpdate(
+            id,
+            updateData,
+            { 
+                new: true, // Return updated document
+                runValidators: true // Run schema validators
+            }
+        ).populate('createdBy', 'name email');
+
+        return res.status(200).json({
+            success: true,
+            message: "Batch updated successfully",
+            data: updatedBatch
+        });
+
+    } catch (error) {
+        console.error("Error in updateBatchById:", error);
+        
+        if (error.name === 'CastError') {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid batch ID format"
+            });
+        }
+
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: "Batch number already exists"
+            });
+        }
+
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                success: false,
+                message: "Validation error",
+                error: error.message
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
+
+// Get batch by ID
+export const getBatchById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Validate if ID is provided
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                message: "Batch ID is required"
+            });
+        }
+
+        // Find the batch by ID
+        const batch = await Inventory.findById(id).populate('createdBy', 'name email');
+        
         if (!batch) {
             return res.status(404).json({
                 success: false,
@@ -383,40 +512,22 @@ export const deleteMedicineFromBatch = async (req, res) => {
             });
         }
 
-        const medicineIndex = batch.medicines.findIndex(med => med._id.toString() === medicineId);
-        if (medicineIndex === -1) {
-            return res.status(404).json({
-                success: false,
-                message: "Medicine not found in this batch"
-            });
-        }
-
-        // Remove the medicine from the batch
-        const removedMedicine = batch.medicines.splice(medicineIndex, 1)[0];
-        
-        // Update overall price
-        batch.overallPrice -= removedMedicine.totalAmount;
-        
-        // If no medicines left, delete the entire batch
-        if (batch.medicines.length === 0) {
-            await Inventory.findByIdAndDelete(batchId);
-            return res.status(200).json({
-                success: true,
-                message: "Medicine removed and batch deleted as it was empty",
-                data: { removedMedicine }
-            });
-        }
-
-        await batch.save();
-
         return res.status(200).json({
             success: true,
-            message: "Medicine removed from batch successfully",
-            data: { removedMedicine, updatedBatch: batch }
+            message: "Batch retrieved successfully",
+            data: batch
         });
 
     } catch (error) {
-        console.error("Error in deleteMedicineFromBatch:", error);
+        console.error("Error in getBatchById:", error);
+        
+        if (error.name === 'CastError') {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid batch ID format"
+            });
+        }
+
         return res.status(500).json({
             success: false,
             message: "Internal server error",
