@@ -438,7 +438,7 @@ const AllUsers = () => {
        {/* Tab Content */}
        <div className="p-6">
          {/* Tab Header with Add Button */}
-         <div className=" flex flex-col sm:flex-row gap-5 justify-between items-start mb-6">
+         <div className="flex flex-col sm:flex-row gap-5 justify-between items-start mb-6">
            <div >
              <h2 className={`text-2xl font-bold ${theme.textPrimary} mb-2`}>
                {getTabTitle(activeTab).title}

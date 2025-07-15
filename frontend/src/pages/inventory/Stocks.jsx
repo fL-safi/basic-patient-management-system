@@ -289,7 +289,7 @@ const [editingBatchId, setEditingBatchId] = useState(null);
       >
         <div className="p-6">
           {/* Header with Add Button */}
-          <div className="flex justify-between items-start mb-6">
+          <div className="flex flex-col sm:flex-row gap-5 justify-between items-start mb-6">
             <div>
               <h2 className={`text-2xl font-bold ${theme.textPrimary} mb-2`}>
                 Medicine Stock - Batch View
@@ -478,7 +478,7 @@ const [editingBatchId, setEditingBatchId] = useState(null);
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-6 py-4 min-w-40 text-center">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${
                               batch.summary.batchStatus === "Good"

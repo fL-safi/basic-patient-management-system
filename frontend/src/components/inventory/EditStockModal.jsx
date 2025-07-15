@@ -565,11 +565,11 @@ const EditStockModal = ({ isOpen, onClose, batchId, onSuccess }) => {
                   <table className="w-full">
                     <thead className={`${theme.cardSecondary}`}>
                       <tr>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Medicine</th>
-                        <th className="px-4 py-3 text-center text-sm font-medium">Quantity</th>
-                        <th className="px-4 py-3 text-center text-sm font-medium">Price</th>
-                        <th className="px-4 py-3 text-center text-sm font-medium">Total</th>
-                        <th className="px-4 py-3 text-center text-sm font-medium">Actions</th>
+                        <th className={`px-4 py-3 text-left text-sm font-medium ${theme.textPrimary}`}>Medicine</th>
+                        <th className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}>Quantity</th>
+                        <th className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}>Price</th>
+                        <th className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}>Total</th>
+                        <th className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -577,17 +577,17 @@ const EditStockModal = ({ isOpen, onClose, batchId, onSuccess }) => {
                         medicines.map((medicine, index) => (
                           <tr key={index} className={`${index % 2 === 0 ? theme.card : theme.cardSecondary} border-b ${theme.borderSecondary}`}>
                             <td className="px-4 py-3">
-                              <div className="flex items-center">
+                              <div className={`flex items-center ${theme.textPrimary}`}>
                                 <Pill className="w-4 h-4 text-emerald-500 mr-2" />
                                 <span>{medicine.medicineName}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-center">{medicine.quantity}</td>
-                            <td className="px-4 py-3 text-center">${medicine.price}</td>
-                            <td className="px-4 py-3 text-center font-medium">
+                            <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>{medicine.quantity}</td>
+                            <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>${medicine.price}</td>
+                            <td className={`px-4 py-3 text-center ${theme.textPrimary} font-medium`}>
                               ${(parseFloat(medicine.price) * parseInt(medicine.quantity)).toFixed(2)}
                             </td>
-                            <td className="px-4 py-3 text-center">
+                            <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>
                               <button
                                 type="button"
                                 onClick={() => removeMedicine(index)}
@@ -600,7 +600,7 @@ const EditStockModal = ({ isOpen, onClose, batchId, onSuccess }) => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="5" className="text-center py-4 text-gray-500">
+                          <td colSpan="5" className={`text-center py-4 ${theme.textPrimary}`}>
                             No medicines added yet
                           </td>
                         </tr>
@@ -617,7 +617,7 @@ const EditStockModal = ({ isOpen, onClose, batchId, onSuccess }) => {
                     <Hash className="w-5 h-5 text-blue-500 mr-2" />
                     <div>
                       <p className={`text-sm ${theme.textMuted}`}>Total Quantity</p>
-                      <p className="text-xl font-bold">{totalQuantity} units</p>
+                      <p className={`text-xl font-bold ${theme.textPrimary}`}>{totalQuantity} units</p>
                     </div>
                   </div>
                 </div>
@@ -627,7 +627,7 @@ const EditStockModal = ({ isOpen, onClose, batchId, onSuccess }) => {
                     <DollarSign className="w-5 h-5 text-green-500 mr-2" />
                     <div>
                       <p className={`text-sm ${theme.textMuted}`}>Total Medicines Price</p>
-                      <p className="text-xl font-bold">${totalMedicinePrice.toFixed(2)}</p>
+                      <p className={`text-xl font-bold ${theme.textPrimary}`}>${totalMedicinePrice.toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
@@ -637,7 +637,7 @@ const EditStockModal = ({ isOpen, onClose, batchId, onSuccess }) => {
                     <Box className="w-5 h-5 text-purple-500 mr-2" />
                     <div>
                       <p className={`text-sm ${theme.textMuted}`}>Batch Overall Price</p>
-                      <p className="text-xl font-bold">
+                      <p className={`text-xl font-bold ${theme.textPrimary}`}>
                         ${batchDetails.overallPrice ? parseFloat(batchDetails.overallPrice).toFixed(2) : '0.00'}
                       </p>
                     </div>
@@ -657,7 +657,7 @@ const EditStockModal = ({ isOpen, onClose, batchId, onSuccess }) => {
                     <p className={`${isOver ? 'text-red-700 dark:text-red-300' : 'text-yellow-700 dark:text-yellow-300'} font-medium`}>
                       Price Mismatch Detected!
                     </p>
-                    <p className="text-sm">
+                    <p className={`text-sm ${theme.textPrimary}`}>
                       {isOver
                         ? `Total medicine prices ($${totalMedicinePrice.toFixed(2)}) exceed batch overall price ($${parseFloat(batchDetails.overallPrice).toFixed(2)}) by $${priceDifference.toFixed(2)}`
                         : `Batch overall price ($${parseFloat(batchDetails.overallPrice).toFixed(2)}) exceeds total medicine prices ($${totalMedicinePrice.toFixed(2)}) by $${priceDifference.toFixed(2)}`}
