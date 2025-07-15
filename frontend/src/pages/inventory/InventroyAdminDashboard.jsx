@@ -15,14 +15,14 @@ const InventoryAdminDashboard = () => {
   const [dateRange, setDateRange] = useState("this_month");
 
   return (
-    <div className="p-6" style={{ minWidth: '65rem' }} >
+    <div className="p-6" >
       {/* Page Title */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-6"
       >
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row gap-5 justify-between items-start">
           <div>
             <h1 className={`text-3xl font-bold ${theme.textPrimary} mb-1`}>
               Inventory Dashboard
