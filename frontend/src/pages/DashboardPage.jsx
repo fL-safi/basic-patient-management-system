@@ -123,7 +123,7 @@ const DashboardPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="mb-6"
       >
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row gap-5 justify-between items-start">
           <div>
             <h1 className={`text-3xl font-bold ${theme.textPrimary} mb-1`}>
               Clinic Dashboard

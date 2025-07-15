@@ -233,7 +233,7 @@ const AllUsers = () => {
             </div>
           </td>
           <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>{user.gender}</td>
-          <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>
+          <td className={`px-6 py-4 text-sm min-w-48 ${theme.textSecondary}`}>
             <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
               {user.speciality}
             </span>
@@ -253,7 +253,7 @@ const AllUsers = () => {
               )}
             </div>
           </td>
-          <td className="px-6 py-4">
+          <td className="px-6 py-4 ">
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
               user.isActive 
                 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
@@ -318,7 +318,7 @@ const AllUsers = () => {
             {user.isActive ? 'Active' : 'Inactive'}
           </span>
         </td>
-        <td className={`px-6 py-4 text-sm ${theme.textSecondary}`}>
+        <td className={`px-6 py-4 text-sm ${theme.textSecondary} min-w-48`}>
           {user.lastLogin ? formatDateTime(user.lastLogin) : 'Never'}
         </td>
         <td className="px-6 py-4">
@@ -411,7 +411,7 @@ const AllUsers = () => {
        className={`${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl ${theme.border} border`}
      >
        {/* Tab Headers */}
-       <div className={`flex flex-wrap ${theme.borderSecondary} border-b`}>
+       <div className={`flex flex-wrap ${theme.borderSecondary} border-b `}>
          {tabs.map((tab) => (
            <button
              key={tab.id}
@@ -438,8 +438,8 @@ const AllUsers = () => {
        {/* Tab Content */}
        <div className="p-6">
          {/* Tab Header with Add Button */}
-         <div className="flex justify-between items-start mb-6">
-           <div>
+         <div className=" flex flex-col sm:flex-row gap-5 justify-between items-start mb-6">
+           <div >
              <h2 className={`text-2xl font-bold ${theme.textPrimary} mb-2`}>
                {getTabTitle(activeTab).title}
              </h2>
