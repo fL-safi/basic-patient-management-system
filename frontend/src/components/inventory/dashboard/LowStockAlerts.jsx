@@ -29,7 +29,7 @@ const LowStockAlerts = ({ theme }) => {
 
   return (
     <div className={`p-6 ${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl ${theme.border} border`}>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row gap-5 justify-between mb-6">
         <div>
           <h2 className={`text-xl font-semibold ${theme.textPrimary} mb-1`}>
             Low Stock Alerts
