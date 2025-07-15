@@ -668,7 +668,7 @@ const UserRegistrationModal = ({ isOpen, onClose, role, onSuccess }) => {
           )}
 
           {/* Submit Button */}
-          <div className="flex justify-end space-x-4 pt-6">
+          <div className="flex flex-col-reverse sm:flex-row gap-5 justify-end pt-6">
             <button
               type="button"
               onClick={handleClose}
