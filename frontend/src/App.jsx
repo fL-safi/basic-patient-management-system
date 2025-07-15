@@ -81,11 +81,11 @@ function App() {
   const { isCheckingAuth, checkAuth, isAuthenticated, user } = useAuthStore();
   const { initializeTheme } = useThemeStore();
   const { theme } = useTheme();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Changed default to false
   const [sidebarMiniMode, setSidebarMiniMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-    const [showDefaultPasswordModal, setShowDefaultPasswordModal] = useState(false);
-
+  const [showDefaultPasswordModal, setShowDefaultPasswordModal] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -95,8 +95,12 @@ function App() {
   // Handle responsive behavior
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1024) {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      
+      if (mobile) {
         setSidebarOpen(false);
+        setSidebarMiniMode(false); // No mini mode on mobile
       } else {
         setSidebarOpen(true);
       }
@@ -107,22 +111,13 @@ function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated && user && user.isDefaultPassword) {
       setShowDefaultPasswordModal(true);
     } else {
       setShowDefaultPasswordModal(false);
     }
   }, [isAuthenticated, user]);
-
-  useEffect(() => {
-    const handleOpenSidebar = () => {
-      setSidebarOpen(true);
-    };
-
-    window.addEventListener("openSidebar", handleOpenSidebar);
-    return () => window.removeEventListener("openSidebar", handleOpenSidebar);
-  }, []);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -133,59 +128,68 @@ function App() {
   };
 
   const toggleSidebarMiniMode = () => {
-    setSidebarMiniMode(!sidebarMiniMode);
+    if (!isMobile) {
+      setSidebarMiniMode(!sidebarMiniMode);
+    }
+  };
+
+  // Handle clicking outside sidebar on mobile
+  const handleOverlayClick = () => {
+    if (isMobile) {
+      closeSidebar();
+    }
   };
 
   if (isCheckingAuth) return <LoadingSpinner />;
 
+  const isAuthenticatedWithActiveAccount = isAuthenticated && user && user.isActive !== false;
+
   return (
-    <div
-      className={`min-h-screen bg-gradient-to-br ${theme.primary} relative overflow-hidden`}
-    >
-      {/* {isAuthenticated && (
-        <Header sidebarOpen={sidebarOpen} sidebarMiniMode={sidebarMiniMode} />
-      )}
-
-      {isAuthenticated && (
-        <Sidebar
-          isOpen={sidebarOpen}
-          isMiniMode={sidebarMiniMode}
-          onToggleMiniMode={toggleSidebarMiniMode}
-          onClose={closeSidebar}
-        />
-      )} */}
-
-      {/* Only show header and sidebar for authenticated users with active accounts */}
-      {isAuthenticated && user && user.isActive !== false && (
-        <Header sidebarOpen={sidebarOpen} sidebarMiniMode={sidebarMiniMode} />
-      )}
-
-      {isAuthenticated && user && user.isActive !== false && (
-        <Sidebar
-          isOpen={sidebarOpen}
-          isMiniMode={sidebarMiniMode}
-          onToggleMiniMode={toggleSidebarMiniMode}
-          onClose={closeSidebar}
+    <div className={`min-h-screen bg-gradient-to-br ${theme.primary} relative overflow-hidden`}>
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={handleOverlayClick}
         />
       )}
 
-      <div
-        className={`${
-          isAuthenticated && user && user.isActive
-            ? "pt-16 transition-all duration-300"
-            : ""
-        } flex items-center justify-center ${
-          isAuthenticated && user && user.isActive
-            ? `min-h-[calc(100vh-4rem)] ${
-                sidebarOpen && window.innerWidth >= 1024
-                  ? sidebarMiniMode
-                    ? "lg:ml-16"
-                    : "lg:ml-72"
-                  : ""
-              }`
-            : "min-h-screen"
-        }`}
-      >
+      {/* Header */}
+      {isAuthenticatedWithActiveAccount && (
+        <Header 
+          sidebarOpen={sidebarOpen} 
+          sidebarMiniMode={sidebarMiniMode}
+          onToggleSidebar={toggleSidebar}
+          isMobile={isMobile}
+        />
+      )}
+
+      {/* Sidebar */}
+      {isAuthenticatedWithActiveAccount && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          isMiniMode={sidebarMiniMode && !isMobile}
+          onToggleMiniMode={toggleSidebarMiniMode}
+          onClose={closeSidebar}
+          isMobile={isMobile}
+        />
+      )}
+
+      {/* Main Content */}
+      <main className={`
+        ${isAuthenticatedWithActiveAccount ? 'pt-16' : 'pt-0'}
+        ${isAuthenticatedWithActiveAccount && !isMobile ? 'transition-all duration-300' : ''}
+        ${isAuthenticatedWithActiveAccount && sidebarOpen && !isMobile 
+          ? sidebarMiniMode 
+            ? 'lg:pl-16' 
+            : 'lg:pl-72'
+          : ''
+        }
+        ${isAuthenticatedWithActiveAccount ? 'px-4 lg:px-8' : ''}
+        ${isAuthenticatedWithActiveAccount ? 'min-h-[calc(100vh-4rem)]' : 'min-h-screen'}
+        flex items-center justify-center
+      `}>
+        <div className="w-full max-w-7xl">
         <Routes>
           {/* Account Inactive Route - No protection needed, just the component */}
           <Route path="/account-inactive" element={<AccountInactive />} />
@@ -617,7 +621,8 @@ function App() {
           {/* Catch all routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </div>
+              </div>
+      </main>
       <Toaster />
 
       <DefaultPasswordModal 

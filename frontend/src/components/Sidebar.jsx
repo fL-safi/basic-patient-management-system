@@ -20,7 +20,7 @@ import { useTheme } from '../hooks/useTheme';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
-const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
+const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose, isMobile }) => {
   const { theme } = useTheme();
   const location = useLocation();
   const { user } = useAuthStore();
@@ -39,30 +39,27 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
       { icon: Calendar, label: 'Schedule', path: '/appointments', color: 'text-purple-500' },
       { icon: FileText, label: 'Reports', path: '/reports', color: 'text-orange-500' },
       { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
-
-
-
-      // { icon: Box, label: 'Inventory Management', path: '/inventory-management', color: 'text-yellow-500' }
     ],
     doctor: [
       { icon: Stethoscope, label: 'Consultations', path: '/consultations', color: 'text-teal-500' },
       { icon: Calendar, label: 'Schedule', path: '/appointments', color: 'text-purple-500' },
       { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
-
     ],
     pharmacist_dispenser: [
       { icon: ShoppingCart, label: 'Prescriptions', path: '/prescriptions', color: 'text-purple-600' },
       { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
-
     ],
     pharmacist_inventory: [
       { icon: Box, label: 'Inventory', path: '/inventory-management', color: 'text-teal-600' },
       { icon: Pill, label: 'Stocks', path: '/all-stocks', color: 'text-purple-600' },
       { icon: FileText, label: 'Reports', path: '/reports', color: 'text-orange-500' },
       { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
-
     ],
-    receptionist: []
+    receptionist: [
+      { icon: Calendar, label: 'Appointments', path: '/appointments', color: 'text-purple-500' },
+      { icon: FileText, label: 'Reports', path: '/reports', color: 'text-orange-500' },
+      { icon: Settings, label: 'Settings', path: '/settings', color: 'text-gray-500' },
+    ]
   };
 
   // Get role-specific menu items
@@ -85,22 +82,34 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
 
   const isActiveRoute = (path) => location.pathname === path;
 
-  const sidebarWidth = isMiniMode ? 'w-16' : 'w-72';
+  // Determine sidebar width based on mode and device
+  const getSidebarWidth = () => {
+    if (isMobile) return 'w-72'; // Full width on mobile
+    return isMiniMode ? 'w-16' : 'w-72';
+  };
+
+  const sidebarWidth = getSidebarWidth();
+
+  const onClickSideBarItem = () => {
+    if(isMobile){
+      onClose()
+    } 
+  }
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ x: isMiniMode ? -64 : -288 }}
+          initial={{ x: isMobile ? -288 : (isMiniMode ? -64 : -288) }}
           animate={{ x: 0 }}
-          exit={{ x: isMiniMode ? -64 : -288 }}
+          exit={{ x: isMobile ? -288 : (isMiniMode ? -64 : -288) }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className={`fixed left-0 top-0 h-full ${sidebarWidth} ${theme.cardOpacity} backdrop-filter backdrop-blur-lg ${theme.border} border-r z-50 overflow-hidden flex flex-col`}
+          className={`fixed left-0 top-0 h-full ${sidebarWidth} ${theme.cardOpacity} backdrop-filter backdrop-blur-lg ${theme.border} border-r ${isMobile ? 'z-50' : 'z-45'} overflow-hidden flex flex-col`}
         >
           {/* Sidebar Header with Logo */}
           <div className={`flex items-center justify-between p-4 border-b ${theme.borderSecondary} min-h-[64px]`}>
             <div className="flex items-center space-x-2">
-              {isMiniMode ? (
+              {(isMiniMode && !isMobile) ? (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -130,6 +139,18 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
                 </motion.div>
               )}
             </div>
+
+            {/* Close button for mobile */}
+            {isMobile && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onClose}
+                className={`p-2 rounded-lg ${theme.cardSecondary} ${theme.textMuted} hover:${theme.textSecondary} transition-colors duration-200`}
+              >
+                <X className="w-5 h-5" />
+              </motion.button>
+            )}
           </div>
 
           {/* Navigation Menu */}
@@ -148,15 +169,13 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
                 >
                   <Link
                     to={item.path}
-                    onClick={() => {
-                      if (window.innerWidth < 1024) onClose();
-                    }}
+                    onClick={onClickSideBarItem} // Close sidebar on item click for mobile
                     className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 ${
                       isActive ? `${theme.cardSecondary} ${theme.textSecondary} shadow-md` : `${theme.textMuted} hover:${theme.cardSecondary} hover:${theme.textSecondary}`
-                    } ${isMiniMode ? 'justify-center' : ''}`}
+                    } ${(isMiniMode && !isMobile) ? 'justify-center' : ''}`}
                   >
                     <Icon className={`w-5 h-5 ${isActive ? item.color : ''} transition-colors duration-200 flex-shrink-0`} />
-                    {!isMiniMode && (
+                    {(!isMiniMode || isMobile) && (
                       <motion.span 
                         initial={{ opacity: 0, width: 0 }} 
                         animate={{ opacity: 1, width: 'auto' }} 
@@ -167,31 +186,26 @@ const Sidebar = ({ isOpen, isMiniMode, onToggleMiniMode, onClose }) => {
                       </motion.span>
                     )}
                   </Link>
-
-                  {/* Tooltip for mini mode */}
-                  {/* {isMiniMode && (
-                    <div className={`absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 top-1/2 transform -translate-y-1/2`}>
-                      {item.label}
-                    </div>
-                  )} */}
                 </motion.div>
               );
             })}
           </nav>
 
-          {/* Sidebar Footer - Toggle Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ delay: 0.3 }}
-            className={`p-4 border-t ${theme.borderSecondary} cursor-pointer flex justify-center items-center`}
-            onClick={onToggleMiniMode}
-          >
-            <div className={`p-3 ${theme.cardSecondary} ${theme.textPrimary} rounded-lg text-center w-16 flex justify-center items-center`}>
-              <ChevronRight className={`w-4 h-4 ${isMiniMode ? 'rotate-180' : ''}`} />
-            </div>
-          </motion.div>
+          {/* Sidebar Footer - Toggle Button (Desktop only) */}
+          {!isMobile && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ delay: 0.3 }}
+              className={`p-4 border-t ${theme.borderSecondary} cursor-pointer flex justify-center items-center`}
+              onClick={onToggleMiniMode}
+            >
+              <div className={`p-3 ${theme.cardSecondary} ${theme.textPrimary} rounded-lg text-center w-16 flex justify-center items-center hover:bg-opacity-70 transition-colors duration-200`}>
+                <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${isMiniMode ? 'rotate-180' : ''}`} />
+              </div>
+            </motion.div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>
