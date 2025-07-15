@@ -8,12 +8,13 @@ import {
   KeyRound,
   LogOut,
   ChevronDown,
+  Menu,
 } from "lucide-react";
 import { useTheme } from "../hooks/useTheme";
 import { useAuthStore } from "../store/authStore";
 import UpdatePasswordModal from "./auth/UpdatePasswordModal";
 
-const Header = ({ sidebarOpen, sidebarMiniMode }) => {
+const Header = ({ sidebarOpen, sidebarMiniMode, onToggleSidebar, isMobile }) => {
   const { isDarkMode, toggleTheme, theme } = useTheme();
   const { user, logout } = useAuthStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -35,8 +36,10 @@ const Header = ({ sidebarOpen, sidebarMiniMode }) => {
         return "bg-green-500 bg-opacity-20 text-green-400";
       case "pharmacist_dispenser":
         return "bg-purple-500 bg-opacity-20 text-purple-400";
+      case "pharmacist_inventory":
+        return "bg-teal-500 bg-opacity-20 text-teal-400";
       default:
-        return "bg-teal-900 bg-opacity-20 text-teal-900";
+        return "bg-gray-500 bg-opacity-20 text-gray-400";
     }
   };
 
@@ -52,16 +55,23 @@ const Header = ({ sidebarOpen, sidebarMiniMode }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Calculate header left margin based on sidebar state
-  const getHeaderStyle = () => {
-    if (
-      typeof window !== "undefined" &&
-      window.innerWidth >= 1024 &&
-      sidebarOpen
-    ) {
-      return sidebarMiniMode ? "lg:ml-16" : "lg:ml-72";
+  // Calculate header positioning based on sidebar state
+  const getHeaderClasses = () => {
+    let classes = `fixed top-0 right-0 ${theme.cardOpacity} backdrop-filter backdrop-blur-lg ${theme.border} border-b z-40 transition-all duration-300`;
+    
+    if (isMobile) {
+      // On mobile, header spans full width
+      classes += ' left-0';
+    } else {
+      // On desktop, adjust header position based on sidebar state
+      if (sidebarOpen) {
+        classes += sidebarMiniMode ? ' left-16' : ' left-72';
+      } else {
+        classes += ' left-0';
+      }
     }
-    return "";
+    
+    return classes;
   };
 
   return (
@@ -70,15 +80,38 @@ const Header = ({ sidebarOpen, sidebarMiniMode }) => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className={`fixed top-0 right-0 left-0 ${
-          theme.cardOpacity
-        } backdrop-filter backdrop-blur-lg ${
-          theme.border
-        } border-b z-40 transition-all duration-300 ${getHeaderStyle()}`}
+        className={getHeaderClasses()}
       >
         <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-end items-center h-16">
-            {/* Navigation & Actions */}
+          <div className="flex justify-between items-center h-16">
+            {/* Left side - Mobile menu button and logo */}
+            <div className="flex items-center space-x-4">
+              {isMobile && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onToggleSidebar}
+                  className={`p-2 rounded-lg ${theme.cardSecondary} ${theme.border} border ${theme.textMuted} hover:${theme.textSecondary} transition-colors duration-200`}
+                  aria-label="Toggle sidebar"
+                >
+                  <Menu className="w-5 h-5" />
+                </motion.button>
+              )}
+
+              {/* Mobile Logo - only show when sidebar is closed */}
+              {isMobile && !sidebarOpen && (
+                <div className="flex items-center space-x-2">
+                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${theme.gradient} flex items-center justify-center text-white font-bold text-sm`}>
+                    H
+                  </div>
+                  <h2 className={`text-lg font-bold bg-gradient-to-r ${theme.gradient} text-transparent bg-clip-text`}>
+                    Healthway
+                  </h2>
+                </div>
+              )}
+            </div>
+
+            {/* Right side - Navigation & Actions */}
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Role Badge */}
               {user && (
@@ -87,7 +120,7 @@ const Header = ({ sidebarOpen, sidebarMiniMode }) => {
                     user.role
                   )}`}
                 >
-                  {user.role?.charAt(0).toUpperCase() + user.role?.slice(1)}
+                  {user.role?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>
               )}
 
