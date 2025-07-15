@@ -318,7 +318,7 @@ const AllStocks = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 min-w-28">
                       <div className="flex flex-col items-center">
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-1">
                           <div 
@@ -349,12 +349,12 @@ const AllStocks = () => {
                     <td className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}>
                       ${item.totalValue.toLocaleString()}
                     </td>
-                    <td className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}>
+                    <td className={`px-6 py-4 text-center min-w-40 text-sm ${theme.textSecondary}`}>
                       <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                         <span>{item.batchCount} batch{item.batchCount !== 1 ? 'es' : ''}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-6 py-4 min-w-36 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         item.status === 'In Stock'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
