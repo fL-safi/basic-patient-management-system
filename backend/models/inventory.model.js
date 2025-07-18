@@ -54,6 +54,11 @@ const inventorySchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    miscellaneousAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

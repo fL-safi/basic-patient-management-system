@@ -27,6 +27,7 @@ import Stocks from "./pages/inventory/Stocks";
 import AllStocks from "./pages/inventory/AllStocks";
 import DefaultPasswordModal from "./components/DefaultPasswordModal";
 import InventroyAdminDashboard from "./pages/inventory/InventroyAdminDashboard";
+import AddBatch from "./pages/inventory/AddBatch";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -306,6 +307,16 @@ function App() {
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["admin"]}>
                   <Stocks />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-batch"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin", "pharmacist_inventory"]}>
+                  <AddBatch />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }

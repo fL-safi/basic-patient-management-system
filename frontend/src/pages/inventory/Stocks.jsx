@@ -48,8 +48,8 @@ const Stocks = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-const [editingBatchId, setEditingBatchId] = useState(null);
-  
+  const [editingBatchId, setEditingBatchId] = useState(null);
+  const [allBatches, setAllBatches] = useState([]);
 
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
@@ -105,6 +105,17 @@ const [editingBatchId, setEditingBatchId] = useState(null);
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Inside fetchData after setting allStockData:
+  useEffect(() => {
+    if (allStockData && allStockData.data?.batches) {
+      const batches = allStockData.data.batches.map((batch) => ({
+        batchNumber: batch.batchNumber,
+        billID: batch.billID,
+      }));
+      setAllBatches(batches);
+    }
+  }, [allStockData]);
 
   const handleAddStock = () => {
     setIsModalOpen(true);
@@ -326,6 +337,7 @@ const [editingBatchId, setEditingBatchId] = useState(null);
           </div>
 
           {/* Table */}
+          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -411,12 +423,17 @@ const [editingBatchId, setEditingBatchId] = useState(null);
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredAndSortedBatches.map((batch) => {
                   // Calculate total medicine price
-                  const totalMedicinePrice = calculateTotalMedicinePrice(batch.medicines);
-                  const priceDifference = Math.abs(totalMedicinePrice - batch.overallPrice);
-                  const hasPriceMismatch = priceDifference > 1000;
-                  const isOver = batch.overallPrice < totalMedicinePrice;
-                  const mismatchText = isOver ? 'text-red-500' : 'text-yellow-500';
-                  
+                  const totalMedicinePrice = calculateTotalMedicinePrice(
+                    batch.medicines
+                  );
+                  const hasMiscAmount = batch.miscellaneousAmount !== 0;
+                  const miscAmountSign =
+                    batch.miscellaneousAmount > 0 ? "+" : "-";
+                  const miscAmountColor =
+                    batch.miscellaneousAmount > 0
+                      ? "text-yellow-500"
+                      : "text-red-500";
+
                   return (
                     <React.Fragment key={batch._id}>
                       {/* Batch Row */}
@@ -443,7 +460,9 @@ const [editingBatchId, setEditingBatchId] = useState(null);
                               <Layers className="w-5 h-5 text-blue-500" />
                             </div>
                             <div>
-                              <div className={`font-medium ${theme.textPrimary}`}>
+                              <div
+                                className={`font-medium ${theme.textPrimary}`}
+                              >
                                 {batch.batchNumber}
                               </div>
                             </div>
@@ -463,16 +482,23 @@ const [editingBatchId, setEditingBatchId] = useState(null);
                           className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}
                         >
                           <div className="flex items-center justify-center">
-                            ${batch.overallPrice}
-                            {hasPriceMismatch && (
+                            PKR {batch.overallPrice}
+                            {hasMiscAmount && (
                               <div className="ml-2 relative group inline-flex">
-                                <div className={`p-1 rounded-full ${mismatchText} bg-opacity-20`}>
-                                  <AlertCircle className={`w-4 h-4 ${mismatchText}`} />
+                                <div
+                                  className={`p-1 rounded-full ${miscAmountColor} bg-opacity-20`}
+                                >
+                                  <AlertCircle
+                                    className={`w-4 h-4 ${miscAmountColor}`}
+                                  />
                                 </div>
                                 <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs p-2 rounded w-64 z-10 left-1/2 transform -translate-x-1/2 bottom-full mb-2">
-                                  {isOver 
-                                    ? `Total medicine prices ($${totalMedicinePrice}) exceed overall price ($${batch.overallPrice}) by $${priceDifference}`
-                                    : `Overall price ($${batch.overallPrice}) exceeds total medicine prices ($${totalMedicinePrice}) by $${priceDifference}`}
+                                  Miscellaneous Amount: Rs.
+                                  {batch.miscellaneousAmount}
+                                  <br />
+                                  {batch.miscellaneousAmount > 0
+                                    ? `Added to total price`
+                                    : `Deducted from total price`}
                                 </div>
                               </div>
                             )}
@@ -504,20 +530,15 @@ const [editingBatchId, setEditingBatchId] = useState(null);
                               >
                                 <Eye className="w-4 h-4 text-blue-500" />
                               </button>
-                              {/* <button
+                              <button
                                 className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+                                onClick={() => {
+                                  setEditingBatchId(batch._id);
+                                  setIsEditModalOpen(true);
+                                }}
                               >
                                 <Edit className="w-4 h-4 text-green-500" />
-                              </button> */}
-                              <button
-  className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
-  onClick={() => {
-    setEditingBatchId(batch._id);
-    setIsEditModalOpen(true);
-  }}
->
-  <Edit className="w-4 h-4 text-green-500" />
-</button>
+                              </button>
                               <button
                                 title="Delete Batch"
                                 onClick={() => handleDeleteClick(batch)}
@@ -533,7 +554,10 @@ const [editingBatchId, setEditingBatchId] = useState(null);
                       {/* Medicine Details - Expanded View */}
                       {expandedBatches[batch._id] && (
                         <tr className={`${theme.primary}`}>
-                          <td colSpan={isAdmin ? "9" : "8"} className="px-6 py-4">
+                          <td
+                            colSpan={isAdmin ? "9" : "8"}
+                            className="px-6 py-4"
+                          >
                             <div className="ml-10">
                               <div className="overflow-x-auto">
                                 <table className="min-w-full">
@@ -541,19 +565,29 @@ const [editingBatchId, setEditingBatchId] = useState(null);
                                     <tr
                                       className={`${theme.borderSecondary} border-b`}
                                     >
-                                      <th className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`} >
+                                      <th
+                                        className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}
+                                      >
                                         Medicine
                                       </th>
-                                      <th className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}>
+                                      <th
+                                        className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}
+                                      >
                                         Quantity
                                       </th>
-                                      <th className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}>
+                                      <th
+                                        className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}
+                                      >
                                         Unit Price
                                       </th>
-                                      <th className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}>
+                                      <th
+                                        className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}
+                                      >
                                         Total Price
                                       </th>
-                                      <th className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}>
+                                      <th
+                                        className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}
+                                      >
                                         Status
                                       </th>
                                     </tr>
@@ -588,11 +622,15 @@ const [editingBatchId, setEditingBatchId] = useState(null);
                                             </span>
                                           </div>
                                         </td>
-                                        <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>
-                                          ${medicine.price}
+                                        <td
+                                          className={`px-4 py-3 text-center ${theme.textPrimary}`}
+                                        >
+                                          Rs. {medicine.price}
                                         </td>
-                                        <td className={`px-4 py-3 text-center font-semibold ${theme.textPrimary}`}>
-                                          ${medicine.totalAmount}
+                                        <td
+                                          className={`px-4 py-3 text-center font-semibold ${theme.textPrimary}`}
+                                        >
+                                          Rs. {medicine.totalAmount}
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                           <span
@@ -611,22 +649,65 @@ const [editingBatchId, setEditingBatchId] = useState(null);
                                         </td>
                                       </tr>
                                     ))}
-                                    
-                                    {/* Batch Total Row */}
-                                    <tr className={`${theme.borderSecondary} border-t font-semibold`}>
-                                      <td className={`${theme.textPrimary} px-4 py-3 text-right`} >
+
+                                    {/* Subtotal Row */}
+                                    <tr
+                                      className={`${theme.borderSecondary} border-t font-semibold`}
+                                    >
+                                      <td
+                                        className={`${theme.textPrimary} px-4 py-3 text-right`}
+                                        colSpan="3"
+                                      >
+                                        Subtotal (Medicines):
+                                      </td>
+                                      <td
+                                        className={`${theme.textPrimary} px-4 py-3 text-center`}
+                                      >
+                                        Rs. {totalMedicinePrice}
+                                      </td>
+                                      <td></td>
+                                    </tr>
+
+                                    {/* Miscellaneous Amount Row */}
+                                    {hasMiscAmount && (
+                                      <tr
+                                        className={`${theme.borderSecondary} border-t`}
+                                      >
+                                        <td
+                                          className={`${theme.textPrimary} px-4 py-3 text-right`}
+                                          colSpan="3"
+                                        >
+                                          Miscellaneous Amount:
+                                        </td>
+                                        <td
+                                          className={`${miscAmountColor} px-4 py-3 text-center font-semibold`}
+                                        >
+                                          {miscAmountSign}Rs.
+                                          {Math.abs(batch.miscellaneousAmount)}
+                                        </td>
+                                        <td></td>
+                                      </tr>
+                                    )}
+
+                                    {/* Overall Total Row */}
+                                    <tr
+                                      className={`${theme.borderSecondary} border-t font-semibold`}
+                                    >
+                                      <td
+                                        className={`${theme.textPrimary} px-4 py-3 text-right`}
+                                        colSpan="3"
+                                      >
                                         Batch Total:
                                       </td>
-                                      <td className={`${theme.textPrimary} px-4 py-3 text-center`}>
-                                        {batch.summary.totalQuantity} units
+
+                                      <td
+                                        className={`${theme.textPrimary} px-4 py-3 text-center`}
+                                      >
+                                        PKR {batch.overallPrice}
                                       </td>
-                                      <td className="px-4 py-3"></td>
-                                      <td className={`${theme.textPrimary} px-4 py-3 text-center`}>
-                                        ${totalMedicinePrice}
-                                      </td>
-                                      <td className={`${theme.textPrimary} px-4 py-3 text-center`}>
-                                        ${batch.overallPrice}
-                                      </td>
+                                      <td
+                                        className={`${theme.textPrimary} px-4 py-3 text-center`}
+                                      ></td>
                                     </tr>
                                   </tbody>
                                 </table>
@@ -677,6 +758,7 @@ const [editingBatchId, setEditingBatchId] = useState(null);
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleStockAdded}
+        existingBatches={allBatches}
       />
 
       <ConfirmDeleteModal
@@ -686,14 +768,12 @@ const [editingBatchId, setEditingBatchId] = useState(null);
         onSuccess={handleDeleteSuccess}
       />
 
-<EditStockModal
-  isOpen={isEditModalOpen}
-  onClose={() => setIsEditModalOpen(false)}
-  batchId={editingBatchId}
-  onSuccess={fetchData}
-/>
-
-
+      {/* <EditStockModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        batchId={editingBatchId}
+        onSuccess={fetchData}
+      /> */}
     </div>
   );
 };
