@@ -7,7 +7,8 @@ export const addToStock = async (req, res) => {
             batchNumber,
             billID,
             medicines, // Array of medicine objects
-            overallPrice
+            overallPrice,
+            miscellaneousAmount = 0 // Add support for miscellaneous amount
         } = req.body;
 
         // Validate required fields
@@ -15,6 +16,14 @@ export const addToStock = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required. Medicines must be a non-empty array."
+            });
+        }
+
+        // Validate miscellaneous amount
+        if (miscellaneousAmount < 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Miscellaneous amount cannot be negative"
             });
         }
 
@@ -40,6 +49,20 @@ export const addToStock = async (req, res) => {
             medicine.totalAmount = quantity * price;
         }
 
+        // Calculate total medicines price
+        const totalMedicinesPrice = medicines.reduce((sum, medicine) => sum + medicine.totalAmount, 0);
+        
+        // Validate price matching with miscellaneous amount
+        const totalWithMiscellaneous = totalMedicinesPrice + miscellaneousAmount;
+        const priceDifference = Math.abs(totalWithMiscellaneous - overallPrice);
+        
+        if (priceDifference > 0.01) { // Allow small floating point tolerance
+            return res.status(400).json({
+                success: false,
+                message: `Total medicines price (${totalMedicinesPrice}) plus miscellaneous amount (${miscellaneousAmount}) must equal overall price (${overallPrice})`
+            });
+        }
+
         // Check if batch already exists
         const existingBatch = await Inventory.findOne({ batchNumber });
 
@@ -56,6 +79,7 @@ export const addToStock = async (req, res) => {
             billID,
             medicines,
             overallPrice,
+            miscellaneousAmount,
             createdBy: req.user.id // Assuming user info is available from auth middleware
         });
 
@@ -63,7 +87,7 @@ export const addToStock = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: `New batch created successfully with ${medicines.length} medicines`,
+            message: `New batch created successfully with ${medicines.length} medicines${miscellaneousAmount > 0 ? ' and miscellaneous amount' : ''}`,
             data: newBatch
         });
 
@@ -134,6 +158,7 @@ export const stockList = async (req, res) => {
         const enrichedBatches = batches.map(batch => {
             const totalMedicines = batch.medicines.length;
             const totalQuantity = batch.medicines.reduce((sum, med) => sum + med.quantity, 0);
+            const totalMedicinesPrice = batch.medicines.reduce((sum, med) => sum + med.totalAmount, 0);
             const lowStockMedicines = batch.medicines.filter(med => med.quantity <= med.reorderLevel).length;
             const expiredMedicines = batch.medicines.filter(med => new Date(med.expiryDate) < new Date()).length;
 
@@ -142,6 +167,8 @@ export const stockList = async (req, res) => {
                 summary: {
                     totalMedicines,
                     totalQuantity,
+                    totalMedicinesPrice,
+                    miscellaneousAmount: batch.miscellaneousAmount || 0,
                     lowStockMedicines,
                     expiredMedicines,
                     batchStatus: lowStockMedicines > 0 ? "Has Low Stock" : expiredMedicines > 0 ? "Has Expired Items" : "Good"
@@ -164,6 +191,7 @@ export const stockList = async (req, res) => {
                 summary: {
                     totalBatches: totalCount,
                     totalMedicines: enrichedBatches.reduce((sum, batch) => sum + batch.summary.totalMedicines, 0),
+                    totalMiscellaneousAmount: enrichedBatches.reduce((sum, batch) => sum + batch.summary.miscellaneousAmount, 0),
                     batchesWithLowStock: enrichedBatches.filter(batch => batch.summary.lowStockMedicines > 0).length,
                     batchesWithExpiredItems: enrichedBatches.filter(batch => batch.summary.expiredMedicines > 0).length
                 }
@@ -432,12 +460,35 @@ export const updateBatchById = async (req, res) => {
             }
         }
 
+        // Validate miscellaneous amount if provided
+        if (updateData.miscellaneousAmount !== undefined && updateData.miscellaneousAmount < 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Miscellaneous amount cannot be negative"
+            });
+        }
+
         // Validate other numeric fields if provided
         if (updateData.overallPrice !== undefined && updateData.overallPrice < 0) {
             return res.status(400).json({
                 success: false,
                 message: "Overall price must be greater than or equal to 0"
             });
+        }
+
+        // If both medicines and miscellaneous amount are being updated, validate total
+        if (updateData.medicines && updateData.overallPrice !== undefined) {
+            const totalMedicinesPrice = updateData.medicines.reduce((sum, medicine) => sum + medicine.totalAmount, 0);
+            const miscellaneousAmount = updateData.miscellaneousAmount || 0;
+            const totalWithMiscellaneous = totalMedicinesPrice + miscellaneousAmount;
+            const priceDifference = Math.abs(totalWithMiscellaneous - updateData.overallPrice);
+            
+            if (priceDifference > 0.01) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Total medicines price (${totalMedicinesPrice}) plus miscellaneous amount (${miscellaneousAmount}) must equal overall price (${updateData.overallPrice})`
+                });
+            }
         }
 
         // Update the batch with partial data

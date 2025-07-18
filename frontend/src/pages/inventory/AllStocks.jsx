@@ -344,10 +344,10 @@ const AllStocks = () => {
                       </div>
                     </td>
                     <td className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}>
-                      ${item.avgPrice.toFixed(2)}
+                      PKR {item.avgPrice.toFixed(2)}
                     </td>
                     <td className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}>
-                      ${item.totalValue.toLocaleString()}
+                      PRK {item.totalValue.toLocaleString()}
                     </td>
                     <td className={`px-6 py-4 text-center min-w-40 text-sm ${theme.textSecondary}`}>
                       <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">

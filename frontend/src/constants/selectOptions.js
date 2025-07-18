@@ -14,6 +14,9 @@ export const SPECIALITIES = [
 ];
 
 export const MEDICINES = [
+
+  "MISCELLANEOUS",
+
   // Paracetamol variants
   "Paracetamol 500mg Tab",
   "Paracetamol 250mg Tab",
