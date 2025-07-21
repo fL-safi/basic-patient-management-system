@@ -27,6 +27,8 @@ import AddStockModal from "../../components/inventory/AddStockModal";
 import ConfirmDeleteModal from "../../components/inventory/ConfirmDeleteModal";
 import UpdateBatch from "./UpdateBatch.jsx";
 import Modal from "../../components/UI/Modal.jsx";
+import { useNavigate } from "react-router-dom";
+
 
 import formatDate from "../../utils/date.js";
 import { useAuthStore } from "../../store/authStore";
@@ -68,6 +70,8 @@ const Stocks = () => {
       [batchId]: !prev[batchId],
     }));
   };
+    const navigate = useNavigate();
+  
 
   const handleDeleteClick = (batch) => {
     setSelectedStock(batch);
@@ -685,10 +689,7 @@ const Stocks = () => {
                               </button>
                               <button
                                 className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
-                                onClick={() => {
-                                  setEditingBatchId(batch._id);
-                                  setIsEditModalOpen(true);
-                                }}
+                              onClick={() => navigate(`/update-batch/${batch._id}`)}
                               >
                                 <Edit className="w-4 h-4 text-green-500" />
                               </button>
