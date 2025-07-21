@@ -10,6 +10,8 @@ import authRoutes from "./routes/auth.route.js";
 import adminRoutes from "./routes/admin.route.js";
 import patientRoutes from "./routes/patient.route.js"
 import inventoryRoutes from "./routes/inventory.route.js"
+import uploadRouter from './routes/upload.route.js';
+
 
 dotenv.config();
 
@@ -35,6 +37,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/patients", patientRoutes)
 app.use("/api/inventory", inventoryRoutes)
+
+// Use upload router
+app.use('/api/upload', uploadRouter);
 
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "/frontend/dist")));

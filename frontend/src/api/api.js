@@ -195,3 +195,21 @@ export const updateBatchById = async (batchId, updateData) => {
     throw error;
   }
 };
+
+// Add to api.js
+export const uploadImage = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await axiosInstance.post('/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data.url;
+  } catch (error) {
+    console.error('Image upload error:', error);
+    throw error;
+  }
+};

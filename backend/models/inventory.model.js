@@ -59,6 +59,10 @@ const inventorySchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+        attachments: {
+      type: [String], // Array of Cloudinary URLs
+      default: [],
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

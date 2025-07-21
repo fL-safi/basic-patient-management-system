@@ -25,7 +25,7 @@ const AddBatch = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const { batchDetails } = location.state || {};
+  const { batchDetails, attachments = [] } = location.state || {};
 
   const { user } = useAuthStore();
 
@@ -48,6 +48,7 @@ const AddBatch = () => {
     if (!batchDetails) {
       navigate("/inventory-management");
     }
+    console.log(attachments)
   }, [batchDetails, navigate]);
 
   // Determine redirect path based on user role
@@ -191,6 +192,7 @@ const AddBatch = () => {
         billID: batchDetails.billID,
         overallPrice: parseFloat(batchDetails.overallPrice),
         miscellaneousAmount: miscellaneousAmount,
+        attachments,
         medicines: medicines.map((medicine) => ({
           medicineName: medicine.medicineName,
           quantity: medicine.quantity,
