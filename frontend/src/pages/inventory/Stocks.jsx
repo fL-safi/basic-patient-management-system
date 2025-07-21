@@ -18,13 +18,14 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
-  ChevronLeft, ChevronRight
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
 import { getStocksData, deleteStockById } from "../../api/api";
 import AddStockModal from "../../components/inventory/AddStockModal";
 import ConfirmDeleteModal from "../../components/inventory/ConfirmDeleteModal";
-import EditStockModal from "../../components/inventory/EditStockModal";
+import UpdateBatch from "../../components/inventory/UpdateBatch.jsx";
 import Modal from "../../components/UI/Modal.jsx";
 
 import formatDate from "../../utils/date.js";
@@ -53,9 +54,9 @@ const Stocks = () => {
   const [editingBatchId, setEditingBatchId] = useState(null);
   const [allBatches, setAllBatches] = useState([]);
 
-const [attachmentModalOpen, setAttachmentModalOpen] = useState(false);
-const [selectedAttachments, setSelectedAttachments] = useState([]);
-const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
+  const [attachmentModalOpen, setAttachmentModalOpen] = useState(false);
+  const [selectedAttachments, setSelectedAttachments] = useState([]);
+  const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
 
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
@@ -642,36 +643,38 @@ const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
                             {batch.summary.batchStatus}
                           </span>
                         </td>
-<td 
-  className="px-6 py-4 text-center cursor-pointer"
-  onClick={() => {
-    if (batch.attachments?.length) {
-      setSelectedAttachments(batch.attachments);
-      setCurrentAttachmentIndex(0);
-      setAttachmentModalOpen(true);
-    }
-  }}
->
-  {batch.attachments?.length ? (
-    <div className="flex justify-center -space-x-2">
-      {batch.attachments.slice(0, 2).map((url, idx) => (
-        <img 
-          key={idx}
-          src={url}
-          className="w-8 h-8 rounded-full object-cover border-2 border-white"
-          alt={`Attachment ${idx+1}`}
-        />
-      ))}
-      {batch.attachments.length > 2 && (
-        <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-medium">
-          +{batch.attachments.length - 2}
-        </div>
-      )}
-    </div>
-  ) : (
-    <span className="text-gray-400 text-sm">No attachment</span>
-  )}
-</td>
+                        <td
+                          className="px-6 py-4 text-center cursor-pointer"
+                          onClick={() => {
+                            if (batch.attachments?.length) {
+                              setSelectedAttachments(batch.attachments);
+                              setCurrentAttachmentIndex(0);
+                              setAttachmentModalOpen(true);
+                            }
+                          }}
+                        >
+                          {batch.attachments?.length ? (
+                            <div className="flex justify-center -space-x-2">
+                              {batch.attachments.slice(0, 2).map((url, idx) => (
+                                <img
+                                  key={idx}
+                                  src={url}
+                                  className="w-8 h-8 rounded-full object-cover border-2 border-white"
+                                  alt={`Attachment ${idx + 1}`}
+                                />
+                              ))}
+                              {batch.attachments.length > 2 && (
+                                <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-medium">
+                                  +{batch.attachments.length - 2}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">
+                              No attachment
+                            </span>
+                          )}
+                        </td>
                         {isAdmin && (
                           <td className="px-6 py-4">
                             <div className="flex justify-center items-center space-x-2">
@@ -918,82 +921,79 @@ const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
         onSuccess={handleDeleteSuccess}
       />
 
-{/* Add this with other modals */}
-<Modal
-  isOpen={attachmentModalOpen}
-  onClose={() => setAttachmentModalOpen(false)}
-  title="Batch Attachments"
-  subtitle={`${currentAttachmentIndex + 1} of ${selectedAttachments.length}`}
->
-  <div className="relative w-full h-96 flex items-center justify-center">
-    {selectedAttachments.length > 0 ? (
-      <>
-        <img 
-          src={selectedAttachments[currentAttachmentIndex]} 
-          alt={`Attachment ${currentAttachmentIndex + 1}`}
-          className="max-w-full max-h-full object-contain"
-        />
-        
-        {/* Navigation buttons */}
-        {selectedAttachments.length > 1 && (
-          <>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentAttachmentIndex((prev) => 
-                  (prev - 1 + selectedAttachments.length) % selectedAttachments.length
-                );
-              }}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentAttachmentIndex((prev) => 
-                  (prev + 1) % selectedAttachments.length
-                );
-              }}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </>
-        )}
-        
-        {/* Dots indicator */}
-        {selectedAttachments.length > 1 && (
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
-            {selectedAttachments.map((_, index) => (
-              <button
-                key={index}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentAttachmentIndex(index);
-                }}
-                className={`w-3 h-3 rounded-full ${
-                  index === currentAttachmentIndex 
-                    ? 'bg-blue-500' 
-                    : 'bg-gray-300'
-                }`}
+      {/* Add this with other modals */}
+      <Modal
+        isOpen={attachmentModalOpen}
+        onClose={() => setAttachmentModalOpen(false)}
+        title="Batch Attachments"
+        subtitle={`${currentAttachmentIndex + 1} of ${
+          selectedAttachments.length
+        }`}
+      >
+        <div className="relative w-full h-96 flex items-center justify-center">
+          {selectedAttachments.length > 0 ? (
+            <>
+              <img
+                src={selectedAttachments[currentAttachmentIndex]}
+                alt={`Attachment ${currentAttachmentIndex + 1}`}
+                className="max-w-full max-h-full object-contain"
               />
-            ))}
-          </div>
-        )}
-      </>
-    ) : (
-      <div className="text-gray-500">No attachments to display</div>
-    )}
-  </div>
-</Modal>
 
-      {/* <EditStockModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        batchId={editingBatchId}
-        onSuccess={fetchData}
-      /> */}
+              {/* Navigation buttons */}
+              {selectedAttachments.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentAttachmentIndex(
+                        (prev) =>
+                          (prev - 1 + selectedAttachments.length) %
+                          selectedAttachments.length
+                      );
+                    }}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentAttachmentIndex(
+                        (prev) => (prev + 1) % selectedAttachments.length
+                      );
+                    }}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Dots indicator */}
+              {selectedAttachments.length > 1 && (
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
+                  {selectedAttachments.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentAttachmentIndex(index);
+                      }}
+                      className={`w-3 h-3 rounded-full ${
+                        index === currentAttachmentIndex
+                          ? "bg-blue-500"
+                          : "bg-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-gray-500">No attachments to display</div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };

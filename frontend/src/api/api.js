@@ -196,7 +196,6 @@ export const updateBatchById = async (batchId, updateData) => {
   }
 };
 
-// Add to api.js
 export const uploadImage = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
