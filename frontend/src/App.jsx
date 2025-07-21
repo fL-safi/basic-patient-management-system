@@ -28,7 +28,7 @@ import AllStocks from "./pages/inventory/AllStocks";
 import DefaultPasswordModal from "./components/DefaultPasswordModal";
 import InventroyAdminDashboard from "./pages/inventory/InventroyAdminDashboard";
 import AddBatch from "./pages/inventory/AddBatch";
-import UpdateBatch from "./components/inventory/UpdateBatch";
+import UpdateBatch from "./pages/inventory/UpdateBatch";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
