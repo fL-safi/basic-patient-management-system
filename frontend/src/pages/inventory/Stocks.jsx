@@ -25,7 +25,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { getStocksData, deleteStockById } from "../../api/api";
 import AddStockModal from "../../components/inventory/AddStockModal";
 import ConfirmDeleteModal from "../../components/inventory/ConfirmDeleteModal";
-import UpdateBatch from "../../components/inventory/UpdateBatch.jsx";
+import UpdateBatch from "./UpdateBatch.jsx";
 import Modal from "../../components/UI/Modal.jsx";
 
 import formatDate from "../../utils/date.js";
