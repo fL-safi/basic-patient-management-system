@@ -323,7 +323,7 @@ function App() {
             }
           />
           <Route
-            path="/update-batch"
+            path="/update-batch/:batchId"
             element={
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["admin"]}>
