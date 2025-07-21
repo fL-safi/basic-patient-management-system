@@ -8,6 +8,7 @@ export const addToStock = async (req, res) => {
             billID,
             medicines, // Array of medicine objects
             overallPrice,
+            attachments = [],
             miscellaneousAmount = 0 // Add support for miscellaneous amount
         } = req.body;
 
@@ -80,6 +81,7 @@ export const addToStock = async (req, res) => {
             medicines,
             overallPrice,
             miscellaneousAmount,
+            attachments,
             createdBy: req.user.id // Assuming user info is available from auth middleware
         });
 

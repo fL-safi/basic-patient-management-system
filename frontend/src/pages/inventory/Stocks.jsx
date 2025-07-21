@@ -18,12 +18,14 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
 import { getStocksData, deleteStockById } from "../../api/api";
 import AddStockModal from "../../components/inventory/AddStockModal";
 import ConfirmDeleteModal from "../../components/inventory/ConfirmDeleteModal";
 import EditStockModal from "../../components/inventory/EditStockModal";
+import Modal from "../../components/UI/Modal.jsx";
 
 import formatDate from "../../utils/date.js";
 import { useAuthStore } from "../../store/authStore";
@@ -50,6 +52,10 @@ const Stocks = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingBatchId, setEditingBatchId] = useState(null);
   const [allBatches, setAllBatches] = useState([]);
+
+const [attachmentModalOpen, setAttachmentModalOpen] = useState(false);
+const [selectedAttachments, setSelectedAttachments] = useState([]);
+const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
 
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
@@ -244,6 +250,133 @@ const Stocks = () => {
     );
   }
 
+  const AttachmentsModal = ({
+    isOpen,
+    onClose,
+    attachments,
+    currentIndex,
+    setCurrentIndex,
+  }) => {
+    const { theme } = useTheme();
+
+    const handlePrev = () => {
+      setCurrentIndex(
+        (prev) => (prev - 1 + attachments.length) % attachments.length
+      );
+    };
+
+    const handleNext = () => {
+      setCurrentIndex((prev) => (prev + 1) % attachments.length);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div
+          className={`${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl ${theme.border} border max-w-4xl w-full max-h-[90vh] flex flex-col`}
+        >
+          <div className="flex justify-between items-center p-4 border-b">
+            <h3 className={`text-xl font-semibold ${theme.textPrimary}`}>
+              Batch Attachments
+            </h3>
+            <button
+              onClick={onClose}
+              className={`p-2 rounded-full ${theme.cardSecondary} hover:opacity-75`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div className="relative flex-1 flex items-center justify-center p-8">
+            {attachments.length > 1 && (
+              <button
+                onClick={handlePrev}
+                className={`absolute left-4 z-10 p-2 rounded-full ${theme.cardSecondary} hover:opacity-75`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+            )}
+
+            <div className="w-full h-full flex items-center justify-center">
+              <img
+                src={attachments[currentIndex]}
+                className="max-w-full max-h-[60vh] object-contain"
+                alt={`Attachment ${currentIndex + 1}`}
+              />
+            </div>
+
+            {attachments.length > 1 && (
+              <button
+                onClick={handleNext}
+                className={`absolute right-4 z-10 p-2 rounded-full ${theme.cardSecondary} hover:opacity-75`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          <div className="p-4 flex justify-center items-center">
+            {attachments.length > 1 && (
+              <div className="flex space-x-2">
+                {attachments.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx)}
+                    className={`w-3 h-3 rounded-full ${
+                      idx === currentIndex
+                        ? "bg-blue-500"
+                        : `${theme.cardSecondary}`
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-6">
       {/* Page Title */}
@@ -399,17 +532,9 @@ const Stocks = () => {
                     Status
                   </th>
                   <th
-                    className="px-6 py-3 text-center text-xs font-medium cursor-pointer"
-                    onClick={() => requestSort("createdAt")}
+                    className={`px-6 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}
                   >
-                    <div
-                      className={`flex items-center ${theme.textPrimary} justify-center`}
-                    >
-                      <span className={`${theme.textMuted} tracking-wider`}>
-                        Created At
-                      </span>
-                      <ArrowDownUp className="w-3 h-3 ml-1" />
-                    </div>
+                    Attachments
                   </th>
                   {isAdmin && (
                     <th
@@ -517,11 +642,36 @@ const Stocks = () => {
                             {batch.summary.batchStatus}
                           </span>
                         </td>
-                        <td
-                          className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}
-                        >
-                          {formatDate(batch.createdAt)}
-                        </td>
+<td 
+  className="px-6 py-4 text-center cursor-pointer"
+  onClick={() => {
+    if (batch.attachments?.length) {
+      setSelectedAttachments(batch.attachments);
+      setCurrentAttachmentIndex(0);
+      setAttachmentModalOpen(true);
+    }
+  }}
+>
+  {batch.attachments?.length ? (
+    <div className="flex justify-center -space-x-2">
+      {batch.attachments.slice(0, 2).map((url, idx) => (
+        <img 
+          key={idx}
+          src={url}
+          className="w-8 h-8 rounded-full object-cover border-2 border-white"
+          alt={`Attachment ${idx+1}`}
+        />
+      ))}
+      {batch.attachments.length > 2 && (
+        <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-medium">
+          +{batch.attachments.length - 2}
+        </div>
+      )}
+    </div>
+  ) : (
+    <span className="text-gray-400 text-sm">No attachment</span>
+  )}
+</td>
                         {isAdmin && (
                           <td className="px-6 py-4">
                             <div className="flex justify-center items-center space-x-2">
@@ -767,6 +917,76 @@ const Stocks = () => {
         stockItem={selectedStock}
         onSuccess={handleDeleteSuccess}
       />
+
+{/* Add this with other modals */}
+<Modal
+  isOpen={attachmentModalOpen}
+  onClose={() => setAttachmentModalOpen(false)}
+  title="Batch Attachments"
+  subtitle={`${currentAttachmentIndex + 1} of ${selectedAttachments.length}`}
+>
+  <div className="relative w-full h-96 flex items-center justify-center">
+    {selectedAttachments.length > 0 ? (
+      <>
+        <img 
+          src={selectedAttachments[currentAttachmentIndex]} 
+          alt={`Attachment ${currentAttachmentIndex + 1}`}
+          className="max-w-full max-h-full object-contain"
+        />
+        
+        {/* Navigation buttons */}
+        {selectedAttachments.length > 1 && (
+          <>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentAttachmentIndex((prev) => 
+                  (prev - 1 + selectedAttachments.length) % selectedAttachments.length
+                );
+              }}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentAttachmentIndex((prev) => 
+                  (prev + 1) % selectedAttachments.length
+                );
+              }}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </>
+        )}
+        
+        {/* Dots indicator */}
+        {selectedAttachments.length > 1 && (
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
+            {selectedAttachments.map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentAttachmentIndex(index);
+                }}
+                className={`w-3 h-3 rounded-full ${
+                  index === currentAttachmentIndex 
+                    ? 'bg-blue-500' 
+                    : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </>
+    ) : (
+      <div className="text-gray-500">No attachments to display</div>
+    )}
+  </div>
+</Modal>
 
       {/* <EditStockModal
         isOpen={isEditModalOpen}

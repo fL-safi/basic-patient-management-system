@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../hooks/useTheme";
 import Modal from "../UI/Modal";
@@ -9,7 +9,10 @@ import {
   Banknote,
   FileDigit,
   List,
+  Trash2,
+  Paperclip,
 } from "lucide-react";
+import { uploadImage } from "../../api/api";
 
 const AddStockModal = ({ isOpen, onClose, existingBatches }) => {
   const { theme } = useTheme();
@@ -19,6 +22,10 @@ const AddStockModal = ({ isOpen, onClose, existingBatches }) => {
     billID: "",
     overallPrice: "",
   });
+
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const [validationError, setValidationError] = useState("");
 
@@ -31,6 +38,26 @@ const AddStockModal = ({ isOpen, onClose, existingBatches }) => {
   const handleBatchInputChange = (e) => {
     const { name, value } = e.target;
     setBatchDetails((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAttachmentChange = async (e) => {
+    const files = Array.from(e.target.files);
+    setUploading(true);
+
+    try {
+      const uploadPromises = files.map((file) => uploadImage(file));
+      const urls = await Promise.all(uploadPromises);
+      setAttachments((prev) => [...prev, ...urls]);
+    } catch (error) {
+      console.error("Attachment upload failed:", error);
+      setValidationError("Failed to upload attachments");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleNext = () => {
@@ -70,7 +97,7 @@ const AddStockModal = ({ isOpen, onClose, existingBatches }) => {
       setValidationError("Bill ID already exists");
     } else {
       // If no duplicates, proceed
-      navigate("/add-batch", { state: { batchDetails } });
+      navigate("/add-batch", { state: { batchDetails, attachments } });
       onClose();
     }
   };
@@ -98,48 +125,25 @@ const AddStockModal = ({ isOpen, onClose, existingBatches }) => {
           </div>
         )}
 
-        {/* Batch Number */}
-        <div>
-          <label
-            className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
-          >
-            Batch Number *
-          </label>
-          <div className="relative">
-            <Barcode
-              className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
-            />
-            <input
-              type="text"
-              name="batchNumber"
-              value={batchDetails.batchNumber}
-              onChange={handleBatchInputChange}
-              className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-              placeholder="Enter batch number"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Bill ID and Overall Price */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Batch Number */}
           <div>
             <label
               className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
             >
-              Cheque number *
+              Batch Number *
             </label>
             <div className="relative">
-              <FileDigit
+              <Barcode
                 className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
               />
               <input
                 type="text"
-                name="billID"
-                value={batchDetails.billID}
+                name="batchNumber"
+                value={batchDetails.batchNumber}
                 onChange={handleBatchInputChange}
                 className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                placeholder="Enter bill ID"
+                placeholder="Enter batch number"
                 required
               />
             </div>
@@ -168,6 +172,81 @@ const AddStockModal = ({ isOpen, onClose, existingBatches }) => {
               />
             </div>
           </div>
+        </div>
+
+        {/* Bill ID and Overall Price */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+            >
+              Cheque number *
+            </label>
+            <div className="relative">
+              <FileDigit
+                className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+              />
+              <input
+                type="text"
+                name="billID"
+                value={batchDetails.billID}
+                onChange={handleBatchInputChange}
+                className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                placeholder="Enter bill ID"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Attachments Section */}
+          <div>
+            <label
+              className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+            >
+              Attachments (Optional)
+            </label>
+            <div className="relative">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAttachmentChange}
+                multiple
+                accept="image/*"
+                className="hidden"
+              />
+              <Paperclip
+                className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current.click()}
+                className={`w-full px-10 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200 text-left`}
+                disabled={uploading}
+              >
+                {uploading ? "Uploading..." : "Select Attachments"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Preview attachments */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {attachments.map((url, index) => (
+            <div key={index} className="relative group">
+              <img
+                src={url}
+                alt={`Attachment ${index}`}
+                className="h-16 w-16 object-cover rounded-md"
+              />
+              <button
+                type="button"
+                onClick={() => removeAttachment(index)}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
         </div>
 
         {/* Navigation Buttons */}
