@@ -556,7 +556,7 @@ export const getBatchById = async (req, res) => {
         }
 
         // Find the batch by ID
-        const batch = await Inventory.findById(id).populate('createdBy', 'name email');
+        const batch = await Inventory.findById(id).populate('createdBy', 'name email username');
         
         if (!batch) {
             return res.status(404).json({
