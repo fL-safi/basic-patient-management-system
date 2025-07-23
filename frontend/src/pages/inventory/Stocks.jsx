@@ -22,6 +22,7 @@ import ConfirmDeleteModal from "../../components/inventory/ConfirmDeleteModal";
 import { useNavigate } from "react-router-dom";
 import formatDate from "../../utils/date.js";
 import { useAuthStore } from "../../store/authStore";
+import Pagination from "../../components/UI/Pagination.jsx";
 
 const Stocks = () => {
   const { theme } = useTheme();
@@ -37,6 +38,10 @@ const Stocks = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
   const [allBatches, setAllBatches] = useState([]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+const [itemsPerPage, setItemsPerPage] = useState(2);
+const [paginationData, setPaginationData] = useState(null);
 
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
@@ -69,22 +74,29 @@ const Stocks = () => {
     setIsModalOpen(false);
   };
 
-  // Fetch ALL stock data from API (no pagination)
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const data = await getStocksData();
-      setAllStockData(data);
-    } catch (err) {
-      setError("Failed to fetch inventory data");
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchData = async (
+  page = currentPage,
+  limit = itemsPerPage,
+  search = searchTerm
+) => {
+  try {
+    setLoading(true);
+    const data = await getStocksData(page, limit, search);
+    setAllStockData(data);
+    setPaginationData(data.data.pagination);
+  } catch (err) {
+    setError("Failed to fetch inventory data");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+useEffect(() => {
+  fetchData(currentPage, itemsPerPage, searchTerm);
+}, [currentPage, itemsPerPage]);
+
+const batches = allStockData?.data?.batches || [];
+
 
   // Inside fetchData after setting allStockData:
   useEffect(() => {
@@ -532,6 +544,23 @@ const Stocks = () => {
             </div>
           )}
         </div>
+
+{paginationData && batches.length > 0 && (
+  <Pagination
+    currentPage={paginationData.currentPage}
+    totalPages={paginationData.totalPages}
+    totalItems={paginationData.totalItems}
+    itemsPerPage={paginationData.itemsPerPage}
+    hasNextPage={paginationData.hasNextPage}
+    hasPrevPage={paginationData.hasPrevPage}
+    onPageChange={(page) => setCurrentPage(page)}
+    onLimitChange={(limit) => {
+      setItemsPerPage(limit);
+      setCurrentPage(1);
+    }}
+  />
+)}
+
       </motion.div>
 
       {/* Modals */}

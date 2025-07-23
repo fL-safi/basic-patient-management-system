@@ -142,16 +142,21 @@ export const addToStock = async (stockData) => {
 };
 
 
-export const getStocksData = async () => {
+export const getStocksData = async (page = 1, limit = 50, search = "") => {
   try {
-    const response = await axiosInstance.get('/inventory/batches');
+    const response = await axiosInstance.get('/inventory/batches', {
+      params: {
+        page,
+        limit,
+        search
+      }
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching stock data:', error);
     throw error;
   }
 };
-
 
 export const getAllStocksData = async (page = 1, limit = 50, search = '', sortBy = 'medicineName', sortOrder = 'asc') => {
   try {
