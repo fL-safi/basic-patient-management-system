@@ -57,6 +57,14 @@ const UpdateBatch = () => {
       ? "/pharmacist_inventory/inventory-management"
       : "/inventory-management";
 
+  // Determine submit redirect path based on user role
+  const submitRedirectPath =
+    user?.role === "admin"
+      ? `/admin/inventory-management/${batchId}`
+      : user?.role === "pharmacist_inventory"
+      ? `/pharmacist_inventory/inventory-management/${batchId}`
+      : "/inventory-management";
+
   // Fetch batch data on component mount
   useEffect(() => {
     const fetchBatchData = async () => {

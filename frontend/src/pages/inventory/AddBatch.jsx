@@ -48,7 +48,6 @@ const AddBatch = () => {
     if (!batchDetails) {
       navigate("/inventory-management");
     }
-    console.log(attachments)
   }, [batchDetails, navigate]);
 
   // Determine redirect path based on user role

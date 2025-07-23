@@ -12,31 +12,16 @@ import {
   Trash2,
   Box,
   Gauge,
-  CalendarCheck,
-  BarChart2,
   ArrowDownUp,
   Layers,
-  ChevronDown,
-  ChevronUp,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
 import { getStocksData, deleteStockById } from "../../api/api";
 import AddStockModal from "../../components/inventory/AddStockModal";
 import ConfirmDeleteModal from "../../components/inventory/ConfirmDeleteModal";
-import UpdateBatch from "./UpdateBatch.jsx";
-import Modal from "../../components/UI/Modal.jsx";
 import { useNavigate } from "react-router-dom";
-
-
 import formatDate from "../../utils/date.js";
 import { useAuthStore } from "../../store/authStore";
-
-// Helper function to calculate total medicine price
-const calculateTotalMedicinePrice = (medicines) => {
-  return medicines.reduce((total, medicine) => total + medicine.totalAmount, 0);
-};
 
 const Stocks = () => {
   const { theme } = useTheme();
@@ -49,29 +34,13 @@ const Stocks = () => {
     key: "createdAt",
     direction: "desc",
   });
-  const [expandedBatches, setExpandedBatches] = useState({});
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingBatchId, setEditingBatchId] = useState(null);
   const [allBatches, setAllBatches] = useState([]);
-
-  const [attachmentModalOpen, setAttachmentModalOpen] = useState(false);
-  const [selectedAttachments, setSelectedAttachments] = useState([]);
-  const [currentAttachmentIndex, setCurrentAttachmentIndex] = useState(0);
 
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
-
-  // Toggle batch expansion
-  const toggleBatchExpansion = (batchId) => {
-    setExpandedBatches((prev) => ({
-      ...prev,
-      [batchId]: !prev[batchId],
-    }));
-  };
-    const navigate = useNavigate();
-  
+  const navigate = useNavigate();
 
   const handleDeleteClick = (batch) => {
     setSelectedStock(batch);
@@ -156,17 +125,13 @@ const Stocks = () => {
       batches = batches.filter(
         (batch) =>
           batch.batchNumber.toLowerCase().includes(lowerSearch) ||
-          batch.billID.toLowerCase().includes(lowerSearch) ||
-          batch.medicines.some((med) =>
-            med.medicineName.toLowerCase().includes(lowerSearch)
-          )
+          batch.billID.toLowerCase().includes(lowerSearch)
       );
     }
 
     // Apply sorting
     if (sortConfig.key) {
       batches.sort((a, b) => {
-        // Handle nested properties
         let aValue, bValue;
 
         if (sortConfig.key === "summary.totalMedicines") {
@@ -255,133 +220,6 @@ const Stocks = () => {
     );
   }
 
-  const AttachmentsModal = ({
-    isOpen,
-    onClose,
-    attachments,
-    currentIndex,
-    setCurrentIndex,
-  }) => {
-    const { theme } = useTheme();
-
-    const handlePrev = () => {
-      setCurrentIndex(
-        (prev) => (prev - 1 + attachments.length) % attachments.length
-      );
-    };
-
-    const handleNext = () => {
-      setCurrentIndex((prev) => (prev + 1) % attachments.length);
-    };
-
-    if (!isOpen) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-        <div
-          className={`${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl ${theme.border} border max-w-4xl w-full max-h-[90vh] flex flex-col`}
-        >
-          <div className="flex justify-between items-center p-4 border-b">
-            <h3 className={`text-xl font-semibold ${theme.textPrimary}`}>
-              Batch Attachments
-            </h3>
-            <button
-              onClick={onClose}
-              className={`p-2 rounded-full ${theme.cardSecondary} hover:opacity-75`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-
-          <div className="relative flex-1 flex items-center justify-center p-8">
-            {attachments.length > 1 && (
-              <button
-                onClick={handlePrev}
-                className={`absolute left-4 z-10 p-2 rounded-full ${theme.cardSecondary} hover:opacity-75`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-            )}
-
-            <div className="w-full h-full flex items-center justify-center">
-              <img
-                src={attachments[currentIndex]}
-                className="max-w-full max-h-[60vh] object-contain"
-                alt={`Attachment ${currentIndex + 1}`}
-              />
-            </div>
-
-            {attachments.length > 1 && (
-              <button
-                onClick={handleNext}
-                className={`absolute right-4 z-10 p-2 rounded-full ${theme.cardSecondary} hover:opacity-75`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          <div className="p-4 flex justify-center items-center">
-            {attachments.length > 1 && (
-              <div className="flex space-x-2">
-                {attachments.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentIndex(idx)}
-                    className={`w-3 h-3 rounded-full ${
-                      idx === currentIndex
-                        ? "bg-blue-500"
-                        : `${theme.cardSecondary}`
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="p-6">
       {/* Page Title */}
@@ -395,13 +233,12 @@ const Stocks = () => {
           Batch Inventory Management
         </h1>
         <p className={`${theme.textMuted}`}>
-          Manage medicine stock levels by batches, track expiry dates, and
-          monitor inventory health
+          Manage medicine stock levels by batches
         </p>
       </motion.div>
 
       {/* Summary Cards */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
@@ -427,7 +264,7 @@ const Stocks = () => {
             </div>
           </div>
         ))}
-      </motion.div>
+      </motion.div> */}
 
       {/* Main Content */}
       <motion.div
@@ -444,7 +281,7 @@ const Stocks = () => {
                 Medicine Stock - Batch View
               </h2>
               <p className={`${theme.textMuted}`}>
-                View and manage batches with expandable medicine details
+                View and manage medicine batches
               </p>
             </div>
             <motion.button
@@ -466,7 +303,7 @@ const Stocks = () => {
               />
               <input
                 type="text"
-                placeholder="Search batches, medicines, or bills..."
+                placeholder="Search batches or bills..."
                 value={searchTerm}
                 onChange={handleSearch}
                 className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
@@ -475,19 +312,17 @@ const Stocks = () => {
           </div>
 
           {/* Table */}
-          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className={`${theme.borderSecondary} border-b`}>
-                  <th className="w-8 px-2 py-3"></th>
                   <th
                     className="px-6 py-3 text-left text-xs font-medium cursor-pointer"
                     onClick={() => requestSort("batchNumber")}
                   >
                     <div className={`flex items-center ${theme.textPrimary}`}>
                       <span className={`${theme.textMuted} tracking-wider`}>
-                        Batch
+                        Batch Number
                       </span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -500,20 +335,7 @@ const Stocks = () => {
                       className={`flex items-center ${theme.textPrimary} justify-center`}
                     >
                       <span className={`${theme.textMuted} tracking-wider`}>
-                        Bill ID
-                      </span>
-                      <ArrowDownUp className="w-3 h-3 ml-1" />
-                    </div>
-                  </th>
-                  <th
-                    className="px-6 py-3 text-center text-xs font-medium cursor-pointer"
-                    onClick={() => requestSort("summary.totalQuantity")}
-                  >
-                    <div
-                      className={`flex items-center ${theme.textPrimary} justify-center`}
-                    >
-                      <span className={`${theme.textMuted} tracking-wider`}>
-                        Total Quantity
+                        Cheque Number
                       </span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -532,30 +354,40 @@ const Stocks = () => {
                     </div>
                   </th>
                   <th
-                    className={`px-6 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}
+                    className="px-6 py-3 text-center text-xs font-medium cursor-pointer"
+                    onClick={() => requestSort("createdAt")}
                   >
-                    Status
+                    <div
+                      className={`flex items-center ${theme.textPrimary} justify-center`}
+                    >
+                      <span className={`${theme.textMuted} tracking-wider`}>
+                        Created At
+                      </span>
+                      <ArrowDownUp className="w-3 h-3 ml-1" />
+                    </div>
+                  </th>
+                  <th
+                    className="px-6 py-3 text-center text-xs font-medium cursor-pointer"
+                    onClick={() => requestSort("updatedAt")}
+                  >
+                    <div
+                      className={`flex items-center ${theme.textPrimary} justify-center`}
+                    >
+                      <span className={`${theme.textMuted} tracking-wider`}>
+                        Updated At
+                      </span>
+                      <ArrowDownUp className="w-3 h-3 ml-1" />
+                    </div>
                   </th>
                   <th
                     className={`px-6 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}
                   >
-                    Attachments
+                    Actions
                   </th>
-                  {isAdmin && (
-                    <th
-                      className={`px-6 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}
-                    >
-                      Actions
-                    </th>
-                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredAndSortedBatches.map((batch) => {
-                  // Calculate total medicine price
-                  const totalMedicinePrice = calculateTotalMedicinePrice(
-                    batch.medicines
-                  );
                   const hasMiscAmount = batch.miscellaneousAmount !== 0;
                   const miscAmountSign =
                     batch.miscellaneousAmount > 0 ? "+" : "-";
@@ -565,312 +397,107 @@ const Stocks = () => {
                       : "text-red-500";
 
                   return (
-                    <React.Fragment key={batch._id}>
-                      {/* Batch Row */}
-                      <tr
-                        className={`${theme.borderSecondary} border-b hover:bg-opacity-50 ${theme.cardSecondary} transition-colors`}
-                      >
-                        <td className="px-2 py-4 text-center">
-                          <button
-                            onClick={() => toggleBatchExpansion(batch._id)}
-                            className={`${theme.textPrimary} p-1 rounded-full `}
+                    <tr
+                      key={batch._id}
+                      className={`${theme.borderSecondary} border-b hover:bg-opacity-50 ${theme.cardSecondary} transition-colors`}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div
+                            className={`w-10 h-10 rounded-full ${theme.cardSecondary} flex items-center justify-center mr-3`}
                           >
-                            {expandedBatches[batch._id] ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4" />
-                            )}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            <div
-                              className={`w-10 h-10 rounded-full ${theme.cardSecondary} flex items-center justify-center mr-3`}
-                            >
-                              <Layers className="w-5 h-5 text-blue-500" />
-                            </div>
-                            <div>
-                              <div
-                                className={`font-medium ${theme.textPrimary}`}
-                              >
-                                {batch.batchNumber}
-                              </div>
-                            </div>
+                            <Layers className="w-5 h-5 text-blue-500" />
                           </div>
-                        </td>
-                        <td
-                          className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}
-                        >
-                          {batch.billID}
-                        </td>
-                        <td
-                          className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}
-                        >
-                          {batch.summary.totalQuantity}
-                        </td>
-                        <td
-                          className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}
-                        >
-                          <div className="flex items-center justify-center">
-                            PKR {batch.overallPrice}
-                            {hasMiscAmount && (
-                              <div className="ml-2 relative group inline-flex">
-                                <div
-                                  className={`p-1 rounded-full ${miscAmountColor} bg-opacity-20`}
-                                >
-                                  <AlertCircle
-                                    className={`w-4 h-4 ${miscAmountColor}`}
-                                  />
-                                </div>
-                                <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs p-2 rounded w-64 z-10 left-1/2 transform -translate-x-1/2 bottom-full mb-2">
-                                  Miscellaneous Amount: Rs.
-                                  {batch.miscellaneousAmount}
-                                  <br />
-                                  {batch.miscellaneousAmount > 0
-                                    ? `Added to total price`
-                                    : `Deducted from total price`}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 min-w-40 text-center">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              batch.summary.batchStatus === "Good"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                : batch.summary.batchStatus === "Warning"
-                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                            }`}
-                          >
-                            {batch.summary.batchStatus}
-                          </span>
-                        </td>
-                        <td
-                          className="px-6 py-4 text-center cursor-pointer"
-                          onClick={() => {
-                            if (batch.attachments?.length) {
-                              setSelectedAttachments(batch.attachments);
-                              setCurrentAttachmentIndex(0);
-                              setAttachmentModalOpen(true);
+                          <div
+                          className="cursor-pointer"
+                            onClick={() =>
+                              navigate(
+                                `/${user.role}/inventory-management/${batch._id}`
+                              )
                             }
-                          }}
-                        >
-                          {batch.attachments?.length ? (
-                            <div className="flex justify-center -space-x-2">
-                              {batch.attachments.slice(0, 2).map((url, idx) => (
-                                <img
-                                  key={idx}
-                                  src={url}
-                                  className="w-8 h-8 rounded-full object-cover border-2 border-white"
-                                  alt={`Attachment ${idx + 1}`}
-                                />
-                              ))}
-                              {batch.attachments.length > 2 && (
-                                <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-medium">
-                                  +{batch.attachments.length - 2}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-gray-400 text-sm">
-                              No attachment
-                            </span>
-                          )}
-                        </td>
-                        {isAdmin && (
-                          <td className="px-6 py-4">
-                            <div className="flex justify-center items-center space-x-2">
-                              <button
-                                className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
-                              >
-                                <Eye className="w-4 h-4 text-blue-500" />
-                              </button>
-                              <button
-                                className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
-                              onClick={() => navigate(`/update-batch/${batch._id}`)}
-                              >
-                                <Edit className="w-4 h-4 text-green-500" />
-                              </button>
-                              <button
-                                title="Delete Batch"
-                                onClick={() => handleDeleteClick(batch)}
-                                className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
-                              >
-                                <Trash2 className="w-4 h-4 text-red-500" />
-                              </button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-
-                      {/* Medicine Details - Expanded View */}
-                      {expandedBatches[batch._id] && (
-                        <tr className={`${theme.primary}`}>
-                          <td
-                            colSpan={isAdmin ? "9" : "8"}
-                            className="px-6 py-4"
                           >
-                            <div className="ml-10">
-                              <div className="overflow-x-auto">
-                                <table className="min-w-full">
-                                  <thead>
-                                    <tr
-                                      className={`${theme.borderSecondary} border-b`}
-                                    >
-                                      <th
-                                        className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}
-                                      >
-                                        Medicine
-                                      </th>
-                                      <th
-                                        className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}
-                                      >
-                                        Quantity
-                                      </th>
-                                      <th
-                                        className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}
-                                      >
-                                        Unit Price
-                                      </th>
-                                      <th
-                                        className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}
-                                      >
-                                        Total Price
-                                      </th>
-                                      <th
-                                        className={`px-4 py-2 text-center text-sm font-medium ${theme.textSecondary}`}
-                                      >
-                                        Status
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {batch.medicines.map((medicine) => (
-                                      <tr
-                                        key={medicine._id}
-                                        className={`${theme.borderSecondary} border-b hover:bg-opacity-30 ${theme.cardSecondary}`}
-                                      >
-                                        <td className="px-4 py-3">
-                                          <div className="flex items-center">
-                                            <Pill className="w-4 h-4 text-emerald-500 mr-2" />
-                                            <span
-                                              className={`${theme.textPrimary}`}
-                                            >
-                                              {medicine.medicineName}
-                                            </span>
-                                          </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                          <div className="flex items-center justify-center">
-                                            <span
-                                              className={
-                                                medicine.quantity >
-                                                medicine.reorderLevel
-                                                  ? "text-green-500"
-                                                  : "text-red-500"
-                                              }
-                                            >
-                                              {medicine.quantity} units
-                                            </span>
-                                          </div>
-                                        </td>
-                                        <td
-                                          className={`px-4 py-3 text-center ${theme.textPrimary}`}
-                                        >
-                                          Rs. {medicine.price}
-                                        </td>
-                                        <td
-                                          className={`px-4 py-3 text-center font-semibold ${theme.textPrimary}`}
-                                        >
-                                          Rs. {medicine.totalAmount}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                          <span
-                                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                              medicine.quantity >
-                                              medicine.reorderLevel
-                                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                            }`}
-                                          >
-                                            {medicine.quantity >
-                                            medicine.reorderLevel
-                                              ? "In Stock"
-                                              : "Low Stock"}
-                                          </span>
-                                        </td>
-                                      </tr>
-                                    ))}
-
-                                    {/* Subtotal Row */}
-                                    <tr
-                                      className={`${theme.borderSecondary} border-t font-semibold`}
-                                    >
-                                      <td
-                                        className={`${theme.textPrimary} px-4 py-3 text-right`}
-                                        colSpan="3"
-                                      >
-                                        Subtotal (Medicines):
-                                      </td>
-                                      <td
-                                        className={`${theme.textPrimary} px-4 py-3 text-center`}
-                                      >
-                                        Rs. {totalMedicinePrice}
-                                      </td>
-                                      <td></td>
-                                    </tr>
-
-                                    {/* Miscellaneous Amount Row */}
-                                    {hasMiscAmount && (
-                                      <tr
-                                        className={`${theme.borderSecondary} border-t`}
-                                      >
-                                        <td
-                                          className={`${theme.textPrimary} px-4 py-3 text-right`}
-                                          colSpan="3"
-                                        >
-                                          Miscellaneous Amount:
-                                        </td>
-                                        <td
-                                          className={`${miscAmountColor} px-4 py-3 text-center font-semibold`}
-                                        >
-                                          {miscAmountSign}Rs.
-                                          {Math.abs(batch.miscellaneousAmount)}
-                                        </td>
-                                        <td></td>
-                                      </tr>
-                                    )}
-
-                                    {/* Overall Total Row */}
-                                    <tr
-                                      className={`${theme.borderSecondary} border-t font-semibold`}
-                                    >
-                                      <td
-                                        className={`${theme.textPrimary} px-4 py-3 text-right`}
-                                        colSpan="3"
-                                      >
-                                        Batch Total:
-                                      </td>
-
-                                      <td
-                                        className={`${theme.textPrimary} px-4 py-3 text-center`}
-                                      >
-                                        PKR {batch.overallPrice}
-                                      </td>
-                                      <td
-                                        className={`${theme.textPrimary} px-4 py-3 text-center`}
-                                      ></td>
-                                    </tr>
-                                  </tbody>
-                                </table>
+                            <div className={`font-medium ${theme.textPrimary}`}>
+                              {batch.batchNumber}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td
+                        className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
+                        {batch.billID}
+                      </td>
+                      <td
+                        className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
+                        <div className="flex items-center justify-center">
+                          PKR {batch.overallPrice}
+                          {hasMiscAmount && (
+                            <div className="ml-2 relative group inline-flex">
+                              <div
+                                className={`p-1 rounded-full ${miscAmountColor} bg-opacity-20`}
+                              >
+                                <AlertCircle
+                                  className={`w-4 h-4 ${miscAmountColor}`}
+                                />
+                              </div>
+                              <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs p-2 rounded w-64 z-10 left-1/2 transform -translate-x-1/2 bottom-full mb-2">
+                                Miscellaneous Amount: Rs.
+                                {batch.miscellaneousAmount}
+                                <br />
+                                {batch.miscellaneousAmount > 0
+                                  ? `Added to total price`
+                                  : `Deducted from total price`}
                               </div>
                             </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
+                          )}
+                        </div>
+                      </td>
+                      <td
+                        className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
+                        {formatDate(batch.createdAt)}
+                      </td>
+                      <td
+                        className={`px-6 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
+                        {formatDate(batch.updatedAt)}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex justify-center items-center space-x-2">
+                          <button
+                            className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+                            onClick={() =>
+                              navigate(
+                                `/${user.role}/inventory-management/${batch._id}`
+                              )
+                            }
+                          >
+                            <Eye className="w-4 h-4 text-blue-500" />
+                          </button>
+                          {isAdmin && (
+                            <button
+                              className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+                              onClick={() =>
+                                navigate(`/update-batch/${batch._id}`)
+                              }
+                            >
+                              <Edit className="w-4 h-4 text-green-500" />
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button
+                              title="Delete Batch"
+                              onClick={() => handleDeleteClick(batch)}
+                              className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -921,80 +548,6 @@ const Stocks = () => {
         stockItem={selectedStock}
         onSuccess={handleDeleteSuccess}
       />
-
-      {/* Add this with other modals */}
-      <Modal
-        isOpen={attachmentModalOpen}
-        onClose={() => setAttachmentModalOpen(false)}
-        title="Batch Attachments"
-        subtitle={`${currentAttachmentIndex + 1} of ${
-          selectedAttachments.length
-        }`}
-      >
-        <div className="relative w-full h-96 flex items-center justify-center">
-          {selectedAttachments.length > 0 ? (
-            <>
-              <img
-                src={selectedAttachments[currentAttachmentIndex]}
-                alt={`Attachment ${currentAttachmentIndex + 1}`}
-                className="max-w-full max-h-full object-contain"
-              />
-
-              {/* Navigation buttons */}
-              {selectedAttachments.length > 1 && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentAttachmentIndex(
-                        (prev) =>
-                          (prev - 1 + selectedAttachments.length) %
-                          selectedAttachments.length
-                      );
-                    }}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentAttachmentIndex(
-                        (prev) => (prev + 1) % selectedAttachments.length
-                      );
-                    }}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </>
-              )}
-
-              {/* Dots indicator */}
-              {selectedAttachments.length > 1 && (
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
-                  {selectedAttachments.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentAttachmentIndex(index);
-                      }}
-                      className={`w-3 h-3 rounded-full ${
-                        index === currentAttachmentIndex
-                          ? "bg-blue-500"
-                          : "bg-gray-300"
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-gray-500">No attachments to display</div>
-          )}
-        </div>
-      </Modal>
     </div>
   );
 };
