@@ -56,7 +56,6 @@ const AllStocks = () => {
     }
   };
 
-  // Replace your existing useEffect with this
   useEffect(() => {
     fetchData(currentPage, itemsPerPage);
   }, [currentPage, itemsPerPage]);
