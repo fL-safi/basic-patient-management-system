@@ -115,7 +115,7 @@ export const stockList = async (req, res) => {
     try {
         const {
             page = 1,
-            limit = 10,
+            limit = 1000,
             search = "",
             sortBy = "createdAt",
             sortOrder = "desc"
@@ -214,7 +214,7 @@ export const allStocksList = async (req, res) => {
     try {
         const {
             page = 1,
-            limit = 10,
+            limit = 1000,
             search = "",
             sortBy = "medicineName",
             sortOrder = "asc"
