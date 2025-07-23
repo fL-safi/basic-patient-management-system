@@ -40,7 +40,7 @@ const Stocks = () => {
   const [allBatches, setAllBatches] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
-const [itemsPerPage, setItemsPerPage] = useState(2);
+const [itemsPerPage, setItemsPerPage] = useState(50);
 const [paginationData, setPaginationData] = useState(null);
 
   const { user } = useAuthStore();
