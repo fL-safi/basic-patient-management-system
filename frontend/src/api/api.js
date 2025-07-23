@@ -153,9 +153,17 @@ export const getStocksData = async () => {
 };
 
 
-export const getAllStocksData = async () => {
+export const getAllStocksData = async (page = 1, limit = 50, search = '', sortBy = 'medicineName', sortOrder = 'asc') => {
   try {
-    const response = await axiosInstance.get('/inventory/all-medicines');
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      search,
+      sortBy,
+      sortOrder
+    });
+
+    const response = await axiosInstance.get(`/inventory/all-medicines?${params}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching all stocks data:', error);
