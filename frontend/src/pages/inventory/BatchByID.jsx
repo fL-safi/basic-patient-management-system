@@ -5,6 +5,7 @@ import {
   Pill,
   AlertCircle,
   CalendarX,
+  Users,
   Search,
   Plus,
   Eye,
@@ -267,6 +268,12 @@ const BatchByID = () => {
               <div className="flex items-center space-x-2">
                 <FileText className={`w-4 h-4 ${theme.textMuted}`} />
                 <span className={theme.textMuted}>Cheque Number: {batchData.billID}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Users className={`w-4 h-4 ${theme.textMuted}`} />
+                <span className={theme.textMuted}>
+                  Created By: {batchData.createdBy.username}
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <Calendar className={`w-4 h-4 ${theme.textMuted}`} />
