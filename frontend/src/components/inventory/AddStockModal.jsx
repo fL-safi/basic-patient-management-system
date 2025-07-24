@@ -90,11 +90,11 @@ const AddStockModal = ({ isOpen, onClose, existingBatches }) => {
 
     // Handle validation errors
     if (isBatchDuplicate && isBillDuplicate) {
-      setValidationError("Both batch number and bill ID already exist");
+      setValidationError("Both batch number and Cheque Number already exist");
     } else if (isBatchDuplicate) {
       setValidationError("Batch number already exists");
     } else if (isBillDuplicate) {
-      setValidationError("Bill ID already exists");
+      setValidationError("Cheque Number already exists");
     } else {
       // If no duplicates, proceed
       navigate("/add-batch", { state: { batchDetails, attachments } });
@@ -192,7 +192,7 @@ const AddStockModal = ({ isOpen, onClose, existingBatches }) => {
                 value={batchDetails.billID}
                 onChange={handleBatchInputChange}
                 className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                placeholder="Enter bill ID"
+                placeholder="Enter Cheque Number"
                 required
               />
             </div>
