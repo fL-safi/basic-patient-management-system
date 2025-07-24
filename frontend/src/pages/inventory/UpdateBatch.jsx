@@ -634,14 +634,6 @@ const UpdateBatch = () => {
                             <Pill className="w-4 h-4 text-emerald-500 mr-2" />
                             <div>
                               <span>{medicine.medicineName}</span>
-                              {/* Optional: Show medicine ID for debugging */}
-                              {process.env.NODE_ENV === "development" && (
-                                <span
-                                  className={`text-xs ${theme.textMuted} ml-2`}
-                                >
-                                  {medicine.medicineId}
-                                </span>
-                              )}
                             </div>
                           </div>
                         </td>
