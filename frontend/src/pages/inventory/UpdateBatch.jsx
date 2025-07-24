@@ -17,7 +17,12 @@ import {
   Box,
   DollarSign,
 } from "lucide-react";
-import { MEDICINES } from "../../constants/selectOptions";
+// Updated import to include helper functions
+import {
+  MEDICINES,
+  getMedicineById,
+  getMedicineByName,
+} from "../../constants/selectOptions";
 import { getBatchById, updateBatchById } from "../../api/api";
 import { useAuthStore } from "../../store/authStore";
 
@@ -43,7 +48,10 @@ const UpdateBatch = () => {
   });
   const [medicines, setMedicines] = useState([]);
   const [miscellaneousAmount, setMiscellaneousAmount] = useState(0);
+
+  // Updated currentMedicine state to include medicineId
   const [currentMedicine, setCurrentMedicine] = useState({
+    medicineId: null,
     medicineName: "",
     quantity: "",
     price: "",
@@ -65,7 +73,7 @@ const UpdateBatch = () => {
       ? `/pharmacist_inventory/inventory-management/${batchId}`
       : "/inventory-management";
 
-  // Fetch batch data on component mount
+  // Updated fetch batch data to handle medicine IDs
   useEffect(() => {
     const fetchBatchData = async () => {
       try {
@@ -79,12 +87,22 @@ const UpdateBatch = () => {
           overallPrice: batch.data.overallPrice,
         });
 
-        // Set medicines array
-        setMedicines(
-          Array.isArray(batch.data.medicines) ? batch.data.medicines : []
-        );
+        // Convert existing medicines to include IDs if they don't have them
+        const existingMedicines = Array.isArray(batch.data.medicines)
+          ? batch.data.medicines.map((medicine) => {
+              // If medicine doesn't have ID, find it by name
+              if (!medicine.medicineId) {
+                const foundMedicine = getMedicineByName(medicine.medicineName);
+                return {
+                  ...medicine,
+                  medicineId: foundMedicine ? foundMedicine.id : null,
+                };
+              }
+              return medicine;
+            })
+          : [];
 
-        // Set miscellaneous amount
+        setMedicines(existingMedicines);
         setMiscellaneousAmount(batch.data.miscellaneousAmount || 0);
       } catch (error) {
         setError("Failed to fetch batch data. Please try again.");
@@ -97,11 +115,14 @@ const UpdateBatch = () => {
     fetchBatchData();
   }, [batchId]);
 
+  // Updated medicine form validation to check for medicineId
   const isMedicineFormValid = useMemo(() => {
-    if (currentMedicine.medicineName === "MISCELLANEOUS") {
+    if (currentMedicine.medicineId === 1) {
+      // MISCELLANEOUS ID
       return true; // Miscellaneous doesn't need quantity/price validation
     }
     return (
+      currentMedicine.medicineId &&
       currentMedicine.medicineName &&
       currentMedicine.quantity &&
       parseInt(currentMedicine.quantity) > 0 &&
@@ -150,13 +171,14 @@ const UpdateBatch = () => {
 
   // Update miscellaneous amount when remaining amount changes
   useEffect(() => {
-    if (currentMedicine.medicineName === "MISCELLANEOUS") {
+    if (currentMedicine.medicineId === 1) {
+      // MISCELLANEOUS ID
       setCurrentMedicine((prev) => ({
         ...prev,
         price: remainingAmount.toFixed(2),
       }));
     }
-  }, [remainingAmount, currentMedicine.medicineName]);
+  }, [remainingAmount, currentMedicine.medicineId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -172,25 +194,39 @@ const UpdateBatch = () => {
     if (error) setError("");
   };
 
+  // Updated medicine selection handler to include ID
   const handleMedicineSelect = (medicine) => {
     setCurrentMedicine((prev) => ({
       ...prev,
-      medicineName: medicine,
-      quantity: medicine === "MISCELLANEOUS" ? "" : prev.quantity,
-      price:
-        medicine === "MISCELLANEOUS" ? remainingAmount.toFixed(2) : prev.price,
+      medicineId: medicine.id,
+      medicineName: medicine.name,
+      quantity: medicine.id === 1 ? "" : prev.quantity, // MISCELLANEOUS
+      price: medicine.id === 1 ? remainingAmount.toFixed(2) : prev.price,
     }));
     setShowMedicineDropdown(false);
     setSearchTerm("");
   };
 
+  // Updated add medicine function with duplicate checking
   const addMedicineToList = () => {
     if (!isMedicineFormValid) {
       setError("Please fill all required fields with valid values");
       return;
     }
 
-    if (currentMedicine.medicineName === "MISCELLANEOUS") {
+    // Check for duplicate medicine by ID
+    const existingMedicine = medicines.find(
+      (med) => med.medicineId === currentMedicine.medicineId
+    );
+    if (existingMedicine) {
+      setError(
+        "This medicine is already added to the list. Please select a different medicine or update the existing entry."
+      );
+      return;
+    }
+
+    if (currentMedicine.medicineId === 1) {
+      // MISCELLANEOUS
       const miscAmount = parseFloat(currentMedicine.price) || 0;
       setMiscellaneousAmount(miscAmount);
     } else {
@@ -210,6 +246,7 @@ const UpdateBatch = () => {
     }
 
     setCurrentMedicine({
+      medicineId: null,
       medicineName: "",
       quantity: "",
       price: "",
@@ -225,6 +262,7 @@ const UpdateBatch = () => {
     setMiscellaneousAmount(0);
   };
 
+  // Updated submit handler to include medicine IDs
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -251,6 +289,7 @@ const UpdateBatch = () => {
         overallPrice: parseFloat(batchDetails.overallPrice),
         miscellaneousAmount: miscellaneousAmount,
         medicines: medicines.map((medicine) => ({
+          medicineId: medicine.medicineId,
           medicineName: medicine.medicineName,
           quantity: medicine.quantity,
           price: medicine.price,
@@ -276,8 +315,8 @@ const UpdateBatch = () => {
     }
   };
 
-  const isMiscellaneousSelected =
-    currentMedicine.medicineName === "MISCELLANEOUS";
+  // Updated condition check for miscellaneous
+  const isMiscellaneousSelected = currentMedicine.medicineId === 1;
 
   if (loading) {
     return (
@@ -286,6 +325,7 @@ const UpdateBatch = () => {
       </div>
     );
   }
+
   if (!batchDetails) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -383,7 +423,7 @@ const UpdateBatch = () => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Medicine Name */}
+            {/* Medicine Name - Updated dropdown */}
             <div className="relative" ref={dropdownRef}>
               <label
                 className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
@@ -419,28 +459,31 @@ const UpdateBatch = () => {
                 </button>
               </div>
 
+              {/* Updated dropdown to use medicine objects */}
               {showMedicineDropdown && (
                 <div
                   className={`absolute z-10 w-full mt-1 max-h-60 overflow-auto rounded-md ${theme.card} shadow-lg ${theme.border} border`}
                 >
                   <ul>
                     {MEDICINES.filter((medicine) =>
-                      medicine.toLowerCase().includes(searchTerm.toLowerCase())
+                      medicine.name
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase())
                     )
                       .slice(0, 10)
-                      .map((medicine, index) => (
+                      .map((medicine) => (
                         <li
-                          key={index}
+                          key={medicine.id}
                           onClick={() => handleMedicineSelect(medicine)}
                           className={`px-4 py-2 cursor-pointer hover:${
                             theme.cardSecondary
                           } ${theme.textPrimary} ${
-                            medicine === "MISCELLANEOUS"
+                            medicine.name === "MISCELLANEOUS"
                               ? "bg-yellow-50 border-l-4 border-yellow-400"
                               : ""
                           }`}
                         >
-                          {medicine}
+                          {medicine.name}
                         </li>
                       ))}
                   </ul>
@@ -540,7 +583,7 @@ const UpdateBatch = () => {
             </button>
           </div>
 
-          {/* Medicines Table */}
+          {/* Medicines Table - No changes needed here as it displays existing data */}
           <div
             className={`${theme.card} rounded-lg overflow-hidden border ${theme.borderSecondary} mb-4`}
           >
@@ -579,7 +622,7 @@ const UpdateBatch = () => {
                   {medicines && medicines.length > 0 ? (
                     medicines.map((medicine, index) => (
                       <tr
-                        key={index}
+                        key={`${medicine.medicineId}-${index}`} // Updated key to use medicineId
                         className={`${
                           index % 2 === 0 ? theme.card : theme.cardSecondary
                         } border-b ${theme.borderSecondary}`}
@@ -589,7 +632,17 @@ const UpdateBatch = () => {
                             className={`flex items-center ${theme.textPrimary}`}
                           >
                             <Pill className="w-4 h-4 text-emerald-500 mr-2" />
-                            <span>{medicine.medicineName}</span>
+                            <div>
+                              <span>{medicine.medicineName}</span>
+                              {/* Optional: Show medicine ID for debugging */}
+                              {process.env.NODE_ENV === "development" && (
+                                <span
+                                  className={`text-xs ${theme.textMuted} ml-2`}
+                                >
+                                  (ID: {medicine.medicineId})
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td
@@ -635,6 +688,7 @@ const UpdateBatch = () => {
             </div>
           </div>
 
+          {/* Rest of the component remains the same */}
           {/* Miscellaneous Section */}
           {miscellaneousAmount > 0 && (
             <div

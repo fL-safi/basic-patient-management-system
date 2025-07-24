@@ -17,7 +17,11 @@ import {
   Box,
   DollarSign,
 } from "lucide-react";
-import { MEDICINES } from "../../constants/selectOptions";
+import {
+  MEDICINES,
+  getMedicineById,
+  getMedicineByName,
+} from "../../constants/selectOptions";
 import { addToStock } from "../../api/api";
 import { useAuthStore } from "../../store/authStore";
 
@@ -59,10 +63,12 @@ const AddBatch = () => {
       : "/inventory-management";
 
   const isMedicineFormValid = useMemo(() => {
-    if (currentMedicine.medicineName === "MISCELLANEOUS") {
-      return true; // Miscellaneous doesn't need quantity/price validation
+    if (currentMedicine.medicineId === 1) {
+      // MISCELLANEOUS ID
+      return true;
     }
     return (
+      currentMedicine.medicineId &&
       currentMedicine.medicineName &&
       currentMedicine.quantity &&
       parseInt(currentMedicine.quantity) > 0 &&
@@ -85,7 +91,8 @@ const AddBatch = () => {
 
   const remainingAmount = useMemo(() => {
     if (!batchDetails?.overallPrice) return 0;
-    const remaining = parseFloat(batchDetails.overallPrice) - totalMedicinePrice;
+    const remaining =
+      parseFloat(batchDetails.overallPrice) - totalMedicinePrice;
     return Math.max(0, remaining);
   }, [totalMedicinePrice, batchDetails]);
 
@@ -93,17 +100,23 @@ const AddBatch = () => {
 
   const priceDifference = useMemo(() => {
     if (!batchDetails?.overallPrice) return 0;
-    return Math.abs(totalWithMiscellaneous - parseFloat(batchDetails.overallPrice));
+    return Math.abs(
+      totalWithMiscellaneous - parseFloat(batchDetails.overallPrice)
+    );
   }, [totalWithMiscellaneous, batchDetails]);
 
   const hasPriceMismatch = priceDifference > 0.01;
-  const isPriceExceeded = totalWithMiscellaneous > parseFloat(batchDetails?.overallPrice || 0);
+  const isPriceExceeded =
+    totalWithMiscellaneous > parseFloat(batchDetails?.overallPrice || 0);
   const canAddBatch = !hasPriceMismatch && medicines.length > 0;
 
   // Update miscellaneous amount when remaining amount changes
   useEffect(() => {
     if (currentMedicine.medicineName === "MISCELLANEOUS") {
-      setCurrentMedicine(prev => ({ ...prev, price: remainingAmount.toFixed(2) }));
+      setCurrentMedicine((prev) => ({
+        ...prev,
+        price: remainingAmount.toFixed(2),
+      }));
     }
   }, [remainingAmount, currentMedicine.medicineName]);
 
@@ -114,12 +127,12 @@ const AddBatch = () => {
   };
 
   const handleMedicineSelect = (medicine) => {
-    setCurrentMedicine((prev) => ({ 
-      ...prev, 
-      medicineName: medicine,
-      // Reset other fields when selecting a medicine
-      quantity: medicine === "MISCELLANEOUS" ? "" : prev.quantity,
-      price: medicine === "MISCELLANEOUS" ? remainingAmount.toFixed(2) : prev.price
+    setCurrentMedicine((prev) => ({
+      ...prev,
+      medicineId: medicine.id,
+      medicineName: medicine.name,
+      quantity: medicine.id === 1 ? "" : prev.quantity, // MISCELLANEOUS
+      price: medicine.id === 1 ? remainingAmount.toFixed(2) : prev.price,
     }));
     setShowMedicineDropdown(false);
     setSearchTerm("");
@@ -131,7 +144,19 @@ const AddBatch = () => {
       return;
     }
 
-    if (currentMedicine.medicineName === "MISCELLANEOUS") {
+    // Check for duplicate medicine
+    const existingMedicine = medicines.find(
+      (med) => med.medicineId === currentMedicine.medicineId
+    );
+    if (existingMedicine) {
+      setError(
+        "This medicine is already added to the list. Please select a different medicine."
+      );
+      return;
+    }
+
+    if (currentMedicine.medicineId === 1) {
+      // MISCELLANEOUS
       const miscAmount = parseFloat(currentMedicine.price) || 0;
       setMiscellaneousAmount(miscAmount);
     } else {
@@ -151,6 +176,7 @@ const AddBatch = () => {
     }
 
     setCurrentMedicine({
+      medicineId: null,
       medicineName: "",
       quantity: "",
       price: "",
@@ -193,6 +219,7 @@ const AddBatch = () => {
         miscellaneousAmount: miscellaneousAmount,
         attachments,
         medicines: medicines.map((medicine) => ({
+          medicineId: medicine.medicineId,
           medicineName: medicine.medicineName,
           quantity: medicine.quantity,
           price: medicine.price,
@@ -218,7 +245,7 @@ const AddBatch = () => {
     }
   };
 
-  const isMiscellaneousSelected = currentMedicine.medicineName === "MISCELLANEOUS";
+  const isMiscellaneousSelected = currentMedicine.medicineId === 1;
 
   return (
     <div className={`${theme.background} min-h-screen p-6`}>
@@ -240,7 +267,9 @@ const AddBatch = () => {
 
         {/* Batch Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}>
+          <div
+            className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
+          >
             <div className="flex items-center">
               <Barcode className="w-5 h-5 text-blue-500 mr-2" />
               <div>
@@ -252,7 +281,9 @@ const AddBatch = () => {
             </div>
           </div>
 
-          <div className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}>
+          <div
+            className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
+          >
             <div className="flex items-center">
               <FileDigit className="w-5 h-5 text-green-500 mr-2" />
               <div>
@@ -264,7 +295,9 @@ const AddBatch = () => {
             </div>
           </div>
 
-          <div className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}>
+          <div
+            className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
+          >
             <div className="flex items-center">
               <Banknote className="w-5 h-5 text-purple-500 mr-2" />
               <div>
@@ -297,11 +330,15 @@ const AddBatch = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Medicine Name */}
             <div className="relative" ref={dropdownRef}>
-              <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+              >
                 Medicine Name *
               </label>
               <div className="relative">
-                <Pill className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                <Pill
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                />
                 <input
                   type="text"
                   name="medicineName"
@@ -328,21 +365,29 @@ const AddBatch = () => {
               </div>
 
               {showMedicineDropdown && (
-                <div className={`absolute z-10 w-full mt-1 max-h-60 overflow-auto rounded-md ${theme.card} shadow-lg ${theme.border} border`}>
+                <div
+                  className={`absolute z-10 w-full mt-1 max-h-60 overflow-auto rounded-md ${theme.card} shadow-lg ${theme.border} border`}
+                >
                   <ul>
                     {MEDICINES.filter((medicine) =>
-                      medicine.toLowerCase().includes(searchTerm.toLowerCase())
+                      medicine.name
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase())
                     )
                       .slice(0, 10)
-                      .map((medicine, index) => (
+                      .map((medicine) => (
                         <li
-                          key={index}
+                          key={medicine.id}
                           onClick={() => handleMedicineSelect(medicine)}
-                          className={`px-4 py-2 cursor-pointer hover:${theme.cardSecondary} ${theme.textPrimary} ${
-                            medicine === "MISCELLANEOUS" ? "bg-yellow-50 border-l-4 border-yellow-400" : ""
+                          className={`px-4 py-2 cursor-pointer hover:${
+                            theme.cardSecondary
+                          } ${theme.textPrimary} ${
+                            medicine.name === "MISCELLANEOUS"
+                              ? "bg-yellow-50 border-l-4 border-yellow-400"
+                              : ""
                           }`}
                         >
-                          {medicine}
+                          {medicine.name}
                         </li>
                       ))}
                   </ul>
@@ -353,11 +398,15 @@ const AddBatch = () => {
             {/* Conditional Fields */}
             {isMiscellaneousSelected ? (
               <div>
-                <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                >
                   Miscellaneous Amount *
                 </label>
                 <div className="relative">
-                  <DollarSign className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                  <DollarSign
+                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                  />
                   <input
                     type="number"
                     name="price"
@@ -377,11 +426,15 @@ const AddBatch = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+                  <label
+                    className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                  >
                     Price *
                   </label>
                   <div className="relative">
-                    <Banknote className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                    <Banknote
+                      className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                    />
                     <input
                       type="number"
                       name="price"
@@ -396,11 +449,15 @@ const AddBatch = () => {
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-medium ${theme.textSecondary} mb-2`}>
+                  <label
+                    className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                  >
                     Quantity *
                   </label>
                   <div className="relative">
-                    <Hash className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`} />
+                    <Hash
+                      className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                    />
                     <input
                       type="number"
                       name="quantity"
@@ -424,29 +481,43 @@ const AddBatch = () => {
               className={`flex items-center space-x-2 px-4 py-2 bg-gradient-to-r ${theme.buttonGradient} text-white font-medium rounded-lg shadow-lg ${theme.buttonGradientHover} transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               <Plus className="w-4 h-4" />
-              <span>{isMiscellaneousSelected ? "Add Miscellaneous" : "Add Medicine"}</span>
+              <span>
+                {isMiscellaneousSelected ? "Add Miscellaneous" : "Add Medicine"}
+              </span>
             </button>
           </div>
 
           {/* Medicines Table */}
-          <div className={`${theme.card} rounded-lg overflow-hidden border ${theme.borderSecondary} mb-4`}>
+          <div
+            className={`${theme.card} rounded-lg overflow-hidden border ${theme.borderSecondary} mb-4`}
+          >
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className={`${theme.cardSecondary}`}>
                   <tr>
-                    <th className={`px-4 py-3 text-left text-sm font-medium ${theme.textPrimary}`}>
+                    <th
+                      className={`px-4 py-3 text-left text-sm font-medium ${theme.textPrimary}`}
+                    >
                       Medicine
                     </th>
-                    <th className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}>
+                    <th
+                      className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}
+                    >
                       Quantity
                     </th>
-                    <th className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}>
+                    <th
+                      className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}
+                    >
                       Price
                     </th>
-                    <th className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}>
+                    <th
+                      className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}
+                    >
                       Total
                     </th>
-                    <th className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}>
+                    <th
+                      className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}
+                    >
                       Actions
                     </th>
                   </tr>
@@ -461,21 +532,31 @@ const AddBatch = () => {
                         } border-b ${theme.borderSecondary}`}
                       >
                         <td className="px-4 py-3">
-                          <div className={`flex items-center ${theme.textPrimary}`}>
+                          <div
+                            className={`flex items-center ${theme.textPrimary}`}
+                          >
                             <Pill className="w-4 h-4 text-emerald-500 mr-2" />
                             <span>{medicine.medicineName}</span>
                           </div>
                         </td>
-                        <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>
+                        <td
+                          className={`px-4 py-3 text-center ${theme.textPrimary}`}
+                        >
                           {medicine.quantity}
                         </td>
-                        <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>
+                        <td
+                          className={`px-4 py-3 text-center ${theme.textPrimary}`}
+                        >
                           PKR {medicine.price.toFixed(2)}
                         </td>
-                        <td className={`px-4 py-3 text-center ${theme.textPrimary} font-medium`}>
+                        <td
+                          className={`px-4 py-3 text-center ${theme.textPrimary} font-medium`}
+                        >
                           PKR {(medicine.quantity * medicine.price).toFixed(2)}
                         </td>
-                        <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>
+                        <td
+                          className={`px-4 py-3 text-center ${theme.textPrimary}`}
+                        >
                           <button
                             type="button"
                             onClick={() => removeMedicine(index)}
@@ -488,7 +569,10 @@ const AddBatch = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className={`text-center py-4 ${theme.textPrimary}`}>
+                      <td
+                        colSpan="5"
+                        className={`text-center py-4 ${theme.textPrimary}`}
+                      >
                         No medicines added yet
                       </td>
                     </tr>
@@ -500,12 +584,16 @@ const AddBatch = () => {
 
           {/* Miscellaneous Section */}
           {miscellaneousAmount > 0 && (
-            <div className={`${theme.card} rounded-lg border ${theme.borderSecondary} mb-8 p-4`}>
+            <div
+              className={`${theme.card} rounded-lg border ${theme.borderSecondary} mb-8 p-4`}
+            >
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
                   <DollarSign className="w-5 h-5 text-yellow-500 mr-2" />
                   <div>
-                    <p className={`text-sm ${theme.textMuted}`}>Miscellaneous Amount</p>
+                    <p className={`text-sm ${theme.textMuted}`}>
+                      Miscellaneous Amount
+                    </p>
                     <p className={`text-lg font-bold ${theme.textPrimary}`}>
                       PKR {miscellaneousAmount.toFixed(2)}
                     </p>
@@ -524,7 +612,9 @@ const AddBatch = () => {
 
           {/* Summary Section */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}>
+            <div
+              className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
+            >
               <div className="flex items-center">
                 <Hash className="w-5 h-5 text-blue-500 mr-2" />
                 <div>
@@ -536,11 +626,15 @@ const AddBatch = () => {
               </div>
             </div>
 
-            <div className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}>
+            <div
+              className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
+            >
               <div className="flex items-center">
                 <Banknote className="w-5 h-5 text-green-500 mr-2" />
                 <div>
-                  <p className={`text-sm ${theme.textMuted}`}>Medicines Total</p>
+                  <p className={`text-sm ${theme.textMuted}`}>
+                    Medicines Total
+                  </p>
                   <p className={`text-xl font-bold ${theme.textPrimary}`}>
                     PKR {totalMedicinePrice.toFixed(2)}
                   </p>
@@ -548,7 +642,9 @@ const AddBatch = () => {
               </div>
             </div>
 
-            <div className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}>
+            <div
+              className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
+            >
               <div className="flex items-center">
                 <DollarSign className="w-5 h-5 text-yellow-500 mr-2" />
                 <div>
@@ -560,7 +656,9 @@ const AddBatch = () => {
               </div>
             </div>
 
-            <div className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}>
+            <div
+              className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
+            >
               <div className="flex items-center">
                 <Box className="w-5 h-5 text-purple-500 mr-2" />
                 <div>
@@ -578,14 +676,19 @@ const AddBatch = () => {
 
           {/* Price Mismatch Warning */}
           {medicines.length > 0 && hasPriceMismatch && isPriceExceeded && (
-            <div className={`p-4 rounded-lg border border-red-500 bg-red-500 bg-opacity-10 flex items-center mb-8`}>
+            <div
+              className={`p-4 rounded-lg border border-red-500 bg-red-500 bg-opacity-10 flex items-center mb-8`}
+            >
               <AlertCircle className={`w-5 h-5 text-red-500 mr-2`} />
               <div>
                 <p className={`text-red-700 dark:text-red-300 font-medium`}>
                   Total medicine price has exceeded against this bill ID
                 </p>
                 <p className={`text-sm ${theme.textPrimary}`}>
-                  Grand total (PKR {totalWithMiscellaneous.toFixed(2)}) exceeds batch price (PKR {parseFloat(batchDetails?.overallPrice || 0).toFixed(2)}) by PKR {priceDifference.toFixed(2)}
+                  Grand total (PKR {totalWithMiscellaneous.toFixed(2)}) exceeds
+                  batch price (PKR{" "}
+                  {parseFloat(batchDetails?.overallPrice || 0).toFixed(2)}) by
+                  PKR {priceDifference.toFixed(2)}
                 </p>
               </div>
             </div>

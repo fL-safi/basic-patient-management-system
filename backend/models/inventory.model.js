@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 // Schema for individual medicines within a batch
 const batchMedicineSchema = new mongoose.Schema({
+  medicineId: {
+    type: Number,
+    required: true,
+  },
   medicineName: { 
     type: String,
     required: true,
@@ -59,7 +63,7 @@ const inventorySchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
-        attachments: {
+    attachments: {
       type: [String], // Array of Cloudinary URLs
       default: [],
     },
@@ -75,6 +79,7 @@ const inventorySchema = new mongoose.Schema(
 // Create indexes for efficient querying
 inventorySchema.index({ batchNumber: 1 });
 inventorySchema.index({ billID: 1 });
+inventorySchema.index({ "medicines.medicineId": 1 });
 inventorySchema.index({ "medicines.medicineName": 1 });
 inventorySchema.index({ createdAt: -1 });
 
