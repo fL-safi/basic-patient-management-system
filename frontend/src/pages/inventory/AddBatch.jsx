@@ -202,7 +202,7 @@ const AddBatch = () => {
 
     if (hasPriceMismatch) {
       if (isPriceExceeded) {
-        setError("Total medicine price has exceeded against this bill ID");
+        setError("Total medicine price has exceeded against this Cheque Number");
       }
       return;
     }
@@ -287,7 +287,7 @@ const AddBatch = () => {
             <div className="flex items-center">
               <FileDigit className="w-5 h-5 text-green-500 mr-2" />
               <div>
-                <p className={`text-sm ${theme.textMuted}`}>Bill ID</p>
+                <p className={`text-sm ${theme.textMuted}`}>Cheque Number</p>
                 <p className={`text-lg font-bold ${theme.textPrimary}`}>
                   {batchDetails?.billID}
                 </p>
@@ -682,7 +682,7 @@ const AddBatch = () => {
               <AlertCircle className={`w-5 h-5 text-red-500 mr-2`} />
               <div>
                 <p className={`text-red-700 dark:text-red-300 font-medium`}>
-                  Total medicine price has exceeded against this bill ID
+                  Total medicine price has exceeded against this Cheque Number
                 </p>
                 <p className={`text-sm ${theme.textPrimary}`}>
                   Grand total (PKR {totalWithMiscellaneous.toFixed(2)}) exceeds
