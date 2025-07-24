@@ -14,103 +14,111 @@ export const SPECIALITIES = [
 ];
 
 export const MEDICINES = [
-
-  "MISCELLANEOUS",
+  { id: 1, name: "MISCELLANEOUS" },
 
   // Paracetamol variants
-  "Paracetamol 500mg Tab",
-  "Paracetamol 250mg Tab",
-  "Paracetamol 120mg/5ml Syp",
-  "Paracetamol 80mg Drop",
+  { id: 2, name: "Paracetamol 500mg Tab" },
+  { id: 3, name: "Paracetamol 250mg Tab" },
+  { id: 4, name: "Paracetamol 120mg/5ml Syp" },
+  { id: 5, name: "Paracetamol 80mg Drop" },
   
   // Ibuprofen variants
-  "Ibuprofen 400mg Tab",
-  "Ibuprofen 200mg Tab",
-  "Ibuprofen 100mg/5ml Syp",
+  { id: 6, name: "Ibuprofen 400mg Tab" },
+  { id: 7, name: "Ibuprofen 200mg Tab" },
+  { id: 8, name: "Ibuprofen 100mg/5ml Syp" },
   
   // Aspirin variants
-  "Aspirin 75mg Tab",
-  "Aspirin 300mg Tab",
+  { id: 9, name: "Aspirin 75mg Tab" },
+  { id: 10, name: "Aspirin 300mg Tab" },
   
   // Amoxicillin variants
-  "Amoxicillin 500mg Tab",
-  "Amoxicillin 250mg Tab",
-  "Amoxicillin 125mg/5ml Syp",
-  "Amoxicillin 250mg/5ml Syp",
+  { id: 11, name: "Amoxicillin 500mg Tab" },
+  { id: 12, name: "Amoxicillin 250mg Tab" },
+  { id: 13, name: "Amoxicillin 125mg/5ml Syp" },
+  { id: 14, name: "Amoxicillin 250mg/5ml Syp" },
   
   // Omeprazole variants
-  "Omeprazole 20mg Tab",
-  "Omeprazole 40mg Tab",
+  { id: 15, name: "Omeprazole 20mg Tab" },
+  { id: 16, name: "Omeprazole 40mg Tab" },
   
   // Metformin variants
-  "Metformin 500mg Tab",
-  "Metformin 850mg Tab",
-  "Metformin 1000mg Tab",
+  { id: 17, name: "Metformin 500mg Tab" },
+  { id: 18, name: "Metformin 850mg Tab" },
+  { id: 19, name: "Metformin 1000mg Tab" },
   
   // Insulin variants
-  "Insulin Glargine 100IU/ml Inj",
-  "Insulin Regular 100IU/ml Inj",
+  { id: 20, name: "Insulin Glargine 100IU/ml Inj" },
+  { id: 21, name: "Insulin Regular 100IU/ml Inj" },
   
   // Antibiotics
-  "Ciprofloxacin 500mg Tab",
-  "Ciprofloxacin 250mg Tab",
-  "Azithromycin 500mg Tab",
-  "Azithromycin 250mg Tab",
-  "Doxycycline 100mg Tab",
-  "Cephalexin 500mg Tab",
+  { id: 22, name: "Ciprofloxacin 500mg Tab" },
+  { id: 23, name: "Ciprofloxacin 250mg Tab" },
+  { id: 24, name: "Azithromycin 500mg Tab" },
+  { id: 25, name: "Azithromycin 250mg Tab" },
+  { id: 26, name: "Doxycycline 100mg Tab" },
+  { id: 27, name: "Cephalexin 500mg Tab" },
   
   // Respiratory medications
-  "Albuterol 2.5mg/3ml Inj",
-  "Salbutamol 100mcg Inj",
-  "Montelukast 10mg Tab",
-  "Fluticasone 50mcg Drop",
+  { id: 28, name: "Albuterol 2.5mg/3ml Inj" },
+  { id: 29, name: "Salbutamol 100mcg Inj" },
+  { id: 30, name: "Montelukast 10mg Tab" },
+  { id: 31, name: "Fluticasone 50mcg Drop" },
   
   // Cardiovascular medications
-  "Atorvastatin 20mg Tab",
-  "Atorvastatin 40mg Tab",
-  "Lisinopril 10mg Tab",
-  "Lisinopril 20mg Tab",
-  "Metoprolol 50mg Tab",
-  "Amlodipine 5mg Tab",
-  "Amlodipine 10mg Tab",
+  { id: 32, name: "Atorvastatin 20mg Tab" },
+  { id: 33, name: "Atorvastatin 40mg Tab" },
+  { id: 34, name: "Lisinopril 10mg Tab" },
+  { id: 35, name: "Lisinopril 20mg Tab" },
+  { id: 36, name: "Metoprolol 50mg Tab" },
+  { id: 37, name: "Amlodipine 5mg Tab" },
+  { id: 38, name: "Amlodipine 10mg Tab" },
   
   // Antidepressants
-  "Sertraline 50mg Tab",
-  "Sertraline 100mg Tab",
-  "Fluoxetine 20mg Tab",
-  "Escitalopram 10mg Tab",
+  { id: 39, name: "Sertraline 50mg Tab" },
+  { id: 40, name: "Sertraline 100mg Tab" },
+  { id: 41, name: "Fluoxetine 20mg Tab" },
+  { id: 42, name: "Escitalopram 10mg Tab" },
   
   // Pain medications
-  "Tramadol 50mg Tab",
-  "Diclofenac 50mg Tab",
-  "Naproxen 500mg Tab",
-  "Morphine 10mg/ml Inj",
+  { id: 43, name: "Tramadol 50mg Tab" },
+  { id: 44, name: "Diclofenac 50mg Tab" },
+  { id: 45, name: "Naproxen 500mg Tab" },
+  { id: 46, name: "Morphine 10mg/ml Inj" },
   
   // Topical medications
-  "Diclofenac 1% Ointment",
-  "Hydrocortisone 1% Ointment",
-  "Clotrimazole 1% Ointment",
+  { id: 47, name: "Diclofenac 1% Ointment" },
+  { id: 48, name: "Hydrocortisone 1% Ointment" },
+  { id: 49, name: "Clotrimazole 1% Ointment" },
   
-  // Diabetes medications
-  "Metformin 500mg Tab",
-  "Glipizide 5mg Tab",
-  "Insulin Lispro 100IU/ml Inj",
+  // Diabetes medications (Note: Metformin already exists above)
+  { id: 50, name: "Glipizide 5mg Tab" },
+  { id: 51, name: "Insulin Lispro 100IU/ml Inj" },
   
   // Antifungal
-  "Fluconazole 150mg Tab",
-  "Ketoconazole 200mg Tab",
+  { id: 52, name: "Fluconazole 150mg Tab" },
+  { id: 53, name: "Ketoconazole 200mg Tab" },
   
   // Vitamins and supplements
-  "Vitamin D3 60000IU Tab",
-  "Vitamin B12 1000mcg Tab",
-  "Calcium Carbonate 500mg Tab",
-  "Iron Sulfate 325mg Tab",
+  { id: 54, name: "Vitamin D3 60000IU Tab" },
+  { id: 55, name: "Vitamin B12 1000mcg Tab" },
+  { id: 56, name: "Calcium Carbonate 500mg Tab" },
+  { id: 57, name: "Iron Sulfate 325mg Tab" },
   
   // Eye drops
-  "Timolol 0.5% Drop",
-  "Latanoprost 0.005% Drop",
-  "Ciprofloxacin 0.3% Drop",
+  { id: 58, name: "Timolol 0.5% Drop" },
+  { id: 59, name: "Latanoprost 0.005% Drop" },
+  { id: 60, name: "Ciprofloxacin 0.3% Drop" },
 ];
+
+// Helper function to get medicine by ID
+export const getMedicineById = (id) => {
+  return MEDICINES.find(medicine => medicine.id === id);
+};
+
+// Helper function to get medicine by name
+export const getMedicineByName = (name) => {
+  return MEDICINES.find(medicine => medicine.name === name);
+};
 
 export const GENDERS = [
   { value: "male", label: "Male" },

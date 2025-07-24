@@ -9,7 +9,7 @@ export const addToStock = async (req, res) => {
             medicines, // Array of medicine objects
             overallPrice,
             attachments = [],
-            miscellaneousAmount = 0 // Add support for miscellaneous amount
+            miscellaneousAmount = 0
         } = req.body;
 
         // Validate required fields
@@ -28,14 +28,25 @@ export const addToStock = async (req, res) => {
             });
         }
 
+        // Check for duplicate medicine IDs within the same batch
+        const medicineIds = medicines.map(med => med.medicineId).filter(id => id !== null);
+        const uniqueMedicineIds = [...new Set(medicineIds)];
+        
+        if (medicineIds.length !== uniqueMedicineIds.length) {
+            return res.status(400).json({
+                success: false,
+                message: "Duplicate medicines are not allowed in the same batch"
+            });
+        }
+
         // Validate each medicine in the array
         for (const medicine of medicines) {
-            const { medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel } = medicine;
+            const { medicineId, medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel } = medicine;
             
-            if (!medicineName || !quantity || !price || !expiryDate || !dateOfPurchase || reorderLevel === undefined) {
+            if (!medicineId || !medicineName || !quantity || !price || !expiryDate || !dateOfPurchase || reorderLevel === undefined) {
                 return res.status(400).json({
                     success: false,
-                    message: "All medicine fields are required: medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel"
+                    message: "All medicine fields are required: medicineId, medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel"
                 });
             }
 
@@ -82,7 +93,7 @@ export const addToStock = async (req, res) => {
             overallPrice,
             miscellaneousAmount,
             attachments,
-            createdBy: req.user.id // Assuming user info is available from auth middleware
+            createdBy: req.user.id
         });
 
         await newBatch.save();
@@ -439,14 +450,34 @@ export const updateBatchById = async (req, res) => {
                 });
             }
 
+            // Check for duplicate medicine IDs within the batch
+            const medicineIds = updateData.medicines.map(med => med.medicineId).filter(id => id !== null && id !== undefined);
+            const uniqueMedicineIds = [...new Set(medicineIds)];
+            
+            if (medicineIds.length !== uniqueMedicineIds.length) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Duplicate medicines are not allowed in the same batch. Each medicine can only be added once."
+                });
+            }
+
             // Validate each medicine in the array
             for (const medicine of updateData.medicines) {
-                const { medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel } = medicine;
+                const { medicineId, medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel } = medicine;
                 
-                if (!medicineName || !quantity || !price || !expiryDate || !dateOfPurchase || reorderLevel === undefined) {
+                // Validate required fields including medicineId
+                if (!medicineId || !medicineName || !quantity || !price || !expiryDate || !dateOfPurchase || reorderLevel === undefined) {
                     return res.status(400).json({
                         success: false,
-                        message: "All medicine fields are required: medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel"
+                        message: "All medicine fields are required: medicineId, medicineName, quantity, price, expiryDate, dateOfPurchase, reorderLevel"
+                    });
+                }
+
+                // Validate medicineId is a positive number
+                if (!Number.isInteger(medicineId) || medicineId <= 0) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Medicine ID must be a positive integer"
                     });
                 }
 
@@ -457,39 +488,102 @@ export const updateBatchById = async (req, res) => {
                     });
                 }
 
+                // Validate quantity and price are numbers
+                if (!Number.isInteger(quantity) || isNaN(parseFloat(price))) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Quantity must be an integer and price must be a valid number"
+                    });
+                }
+
+                // Validate dates
+                if (isNaN(Date.parse(expiryDate)) || isNaN(Date.parse(dateOfPurchase))) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Invalid date format for expiryDate or dateOfPurchase"
+                    });
+                }
+
+                // Validate reorderLevel
+                if (!Number.isInteger(reorderLevel) || reorderLevel < 0) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Reorder level must be a non-negative integer"
+                    });
+                }
+
                 // Calculate total amount for each medicine
                 medicine.totalAmount = quantity * price;
             }
         }
 
         // Validate miscellaneous amount if provided
-        if (updateData.miscellaneousAmount !== undefined && updateData.miscellaneousAmount < 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Miscellaneous amount cannot be negative"
-            });
+        if (updateData.miscellaneousAmount !== undefined) {
+            if (isNaN(parseFloat(updateData.miscellaneousAmount)) || updateData.miscellaneousAmount < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Miscellaneous amount must be a non-negative number"
+                });
+            }
         }
 
         // Validate other numeric fields if provided
-        if (updateData.overallPrice !== undefined && updateData.overallPrice < 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Overall price must be greater than or equal to 0"
-            });
+        if (updateData.overallPrice !== undefined) {
+            if (isNaN(parseFloat(updateData.overallPrice)) || updateData.overallPrice < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Overall price must be a non-negative number"
+                });
+            }
         }
 
-        // If both medicines and miscellaneous amount are being updated, validate total
+        // If both medicines and overallPrice are being updated, validate total
         if (updateData.medicines && updateData.overallPrice !== undefined) {
             const totalMedicinesPrice = updateData.medicines.reduce((sum, medicine) => sum + medicine.totalAmount, 0);
-            const miscellaneousAmount = updateData.miscellaneousAmount || 0;
+            const miscellaneousAmount = updateData.miscellaneousAmount !== undefined ? updateData.miscellaneousAmount : (existingBatch.miscellaneousAmount || 0);
             const totalWithMiscellaneous = totalMedicinesPrice + miscellaneousAmount;
             const priceDifference = Math.abs(totalWithMiscellaneous - updateData.overallPrice);
+            
+            if (priceDifference > 0.01) { // Allow small floating point tolerance
+                return res.status(400).json({
+                    success: false,
+                    message: `Total medicines price (${totalMedicinesPrice.toFixed(2)}) plus miscellaneous amount (${miscellaneousAmount.toFixed(2)}) must equal overall price (${parseFloat(updateData.overallPrice).toFixed(2)}). Current difference: ${priceDifference.toFixed(2)}`
+                });
+            }
+        }
+
+        // If only medicines are being updated but overallPrice exists, validate against existing overallPrice
+        if (updateData.medicines && updateData.overallPrice === undefined && existingBatch.overallPrice) {
+            const totalMedicinesPrice = updateData.medicines.reduce((sum, medicine) => sum + medicine.totalAmount, 0);
+            const miscellaneousAmount = updateData.miscellaneousAmount !== undefined ? updateData.miscellaneousAmount : (existingBatch.miscellaneousAmount || 0);
+            const totalWithMiscellaneous = totalMedicinesPrice + miscellaneousAmount;
+            const priceDifference = Math.abs(totalWithMiscellaneous - existingBatch.overallPrice);
             
             if (priceDifference > 0.01) {
                 return res.status(400).json({
                     success: false,
-                    message: `Total medicines price (${totalMedicinesPrice}) plus miscellaneous amount (${miscellaneousAmount}) must equal overall price (${updateData.overallPrice})`
+                    message: `Total medicines price (${totalMedicinesPrice.toFixed(2)}) plus miscellaneous amount (${miscellaneousAmount.toFixed(2)}) must equal existing overall price (${existingBatch.overallPrice.toFixed(2)}). Current difference: ${priceDifference.toFixed(2)}`
                 });
+            }
+        }
+
+        // Validate attachments array if provided
+        if (updateData.attachments !== undefined) {
+            if (!Array.isArray(updateData.attachments)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Attachments must be an array"
+                });
+            }
+
+            // Validate each attachment URL
+            for (const attachment of updateData.attachments) {
+                if (typeof attachment !== 'string' || attachment.trim() === '') {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Each attachment must be a valid URL string"
+                    });
+                }
             }
         }
 
@@ -503,10 +597,28 @@ export const updateBatchById = async (req, res) => {
             }
         ).populate('createdBy', 'name email');
 
+        // Prepare response with summary information
+        const totalMedicines = updatedBatch.medicines.length;
+        const totalQuantity = updatedBatch.medicines.reduce((sum, med) => sum + med.quantity, 0);
+        const totalMedicinesPrice = updatedBatch.medicines.reduce((sum, med) => sum + med.totalAmount, 0);
+        const lowStockMedicines = updatedBatch.medicines.filter(med => med.quantity <= med.reorderLevel).length;
+        const expiredMedicines = updatedBatch.medicines.filter(med => new Date(med.expiryDate) < new Date()).length;
+
         return res.status(200).json({
             success: true,
             message: "Batch updated successfully",
-            data: updatedBatch
+            data: {
+                ...updatedBatch.toObject(),
+                summary: {
+                    totalMedicines,
+                    totalQuantity,
+                    totalMedicinesPrice,
+                    miscellaneousAmount: updatedBatch.miscellaneousAmount || 0,
+                    lowStockMedicines,
+                    expiredMedicines,
+                    batchStatus: lowStockMedicines > 0 ? "Has Low Stock" : expiredMedicines > 0 ? "Has Expired Items" : "Good"
+                }
+            }
         });
 
     } catch (error) {
@@ -520,24 +632,27 @@ export const updateBatchById = async (req, res) => {
         }
 
         if (error.code === 11000) {
+            // Handle duplicate key errors
+            const duplicateField = Object.keys(error.keyPattern)[0];
             return res.status(400).json({
                 success: false,
-                message: "Batch number already exists"
+                message: `${duplicateField} already exists. Please use a different value.`
             });
         }
 
         if (error.name === 'ValidationError') {
+            const validationErrors = Object.values(error.errors).map(err => err.message);
             return res.status(400).json({
                 success: false,
                 message: "Validation error",
-                error: error.message
+                errors: validationErrors
             });
         }
 
         return res.status(500).json({
             success: false,
             message: "Internal server error",
-            error: error.message
+            error: process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred'
         });
     }
 };

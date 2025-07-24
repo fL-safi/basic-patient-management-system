@@ -245,9 +245,9 @@ const BatchByID = () => {
       >
         <button
           onClick={() => navigate(-1)}
-          className={`flex items-center space-x-2 py-2 ${theme.cardSecondary} hover:bg-opacity-70 transition-colors rounded-lg`}
+          className={`flex items-center space-x-2 py-2 px-2 ${theme.cardSecondary} hover:bg-opacity-70 transition-colors rounded-lg`}
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className={`w-5 h-5 ${theme.textPrimary}`} />
           <span className={theme.textPrimary}>Back to Inventory</span>
         </button>
       </motion.div>
@@ -373,7 +373,7 @@ const BatchByID = () => {
                     <Info className={`w-4 h-4 ${theme.textMuted}`} />
                     <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs p-2 rounded w-48 z-10 left-1/2 transform -translate-x-1/2 bottom-full mb-2">
                       {batchData.miscellaneousAmount > 0 
-                        ? "Miscellaneous Amount added to the batch" 
+                        ? "Miscellaneous Amount added to this batch" 
                         : "Discount or adjustment deducted from the batch"}
                     </div>
                   </div>
