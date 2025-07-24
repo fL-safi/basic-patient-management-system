@@ -639,7 +639,7 @@ const UpdateBatch = () => {
                                 <span
                                   className={`text-xs ${theme.textMuted} ml-2`}
                                 >
-                                  (ID: {medicine.medicineId})
+                                  {medicine.medicineId}
                                 </span>
                               )}
                             </div>
