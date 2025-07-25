@@ -96,7 +96,6 @@ const BatchByID = () => {
       try {
         setLoading(true);
         const data = await getBatchById(batchId);
-        console.log(data)
         setBatchData(data.data);
       } catch (err) {
         setError("Failed to fetch batch data");
