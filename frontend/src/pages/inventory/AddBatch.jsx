@@ -16,6 +16,9 @@ import {
   AlertCircle,
   Box,
   DollarSign,
+  Check,
+  X,
+  Edit,
 } from "lucide-react";
 import {
   MEDICINES,
@@ -24,6 +27,7 @@ import {
 } from "../../constants/selectOptions";
 import { addToStock } from "../../api/api";
 import { useAuthStore } from "../../store/authStore";
+import Modal from "../../components/UI/Modal";
 
 const AddBatch = () => {
   const { theme } = useTheme();
@@ -38,6 +42,9 @@ const AddBatch = () => {
   const [success, setSuccess] = useState("");
   const [showMedicineDropdown, setShowMedicineDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editValues, setEditValues] = useState({ price: "", quantity: "" });
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false); // State for cancel modal
   const dropdownRef = useRef(null);
 
   const [medicines, setMedicines] = useState([]);
@@ -53,6 +60,23 @@ const AddBatch = () => {
       navigate("/inventory-management");
     }
   }, [batchDetails, navigate]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowMedicineDropdown(false);
+      }
+    };
+
+    if (showMedicineDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMedicineDropdown]);
 
   // Determine redirect path based on user role
   const redirectPath =
@@ -160,6 +184,17 @@ const AddBatch = () => {
       const miscAmount = parseFloat(currentMedicine.price) || 0;
       setMiscellaneousAmount(miscAmount);
     } else {
+      // Calculate what the new total would be if we add this medicine
+      const newMedicineTotal = 
+        parseFloat(currentMedicine.price) * parseInt(currentMedicine.quantity);
+      const newGrandTotal = totalMedicinePrice + newMedicineTotal + miscellaneousAmount;
+      
+      // Check if adding this medicine would exceed the total price
+      if (newGrandTotal > parseFloat(batchDetails?.overallPrice || 0)) {
+        setError("Adding this medicine would exceed the total batch price.");
+        return;
+      }
+
       const expiryDate = new Date();
       expiryDate.setFullYear(expiryDate.getFullYear() + 2);
       const expiryDateString = expiryDate.toISOString().split("T")[0];
@@ -186,10 +221,78 @@ const AddBatch = () => {
 
   const removeMedicine = (index) => {
     setMedicines((prev) => prev.filter((_, i) => i !== index));
+    // Cancel editing if the medicine being edited is deleted
+    if (editingIndex === index) {
+      setEditingIndex(null);
+      setEditValues({ price: "", quantity: "" });
+    }
   };
 
   const removeMiscellaneous = () => {
     setMiscellaneousAmount(0);
+  };
+
+  // Edit functionality
+  const handleEdit = (index) => {
+    const medicine = medicines[index];
+    setEditingIndex(index);
+    setEditValues({
+      price: medicine.price.toString(),
+      quantity: medicine.quantity.toString(),
+    });
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditValues((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveEdit = (index) => {
+    const newPrice = parseFloat(editValues.price);
+    const newQuantity = parseInt(editValues.quantity);
+
+    // Validation
+    if (isNaN(newPrice) || newPrice <= 0) {
+      setError("Please enter a valid price");
+      return;
+    }
+    if (isNaN(newQuantity) || newQuantity <= 0) {
+      setError("Please enter a valid quantity");
+      return;
+    }
+
+    // Calculate the current total for this medicine
+    const currentMedicineTotal = medicines[index].price * medicines[index].quantity;
+    const newMedicineTotal = newPrice * newQuantity;
+    
+    // Calculate the difference this edit would make
+    const difference = newMedicineTotal - currentMedicineTotal;
+    const newGrandTotal = totalWithMiscellaneous + difference;
+    
+    // Check if editing would exceed the total price
+    if (newGrandTotal > parseFloat(batchDetails?.overallPrice || 0)) {
+      setError("Editing this medicine would exceed the total batch price.");
+      return;
+    }
+
+    // Update the medicine
+    setMedicines((prev) =>
+      prev.map((medicine, i) =>
+        i === index
+          ? { ...medicine, price: newPrice, quantity: newQuantity }
+          : medicine
+      )
+    );
+
+    // Reset edit state
+    setEditingIndex(null);
+    setEditValues({ price: "", quantity: "" });
+    setError("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditValues({ price: "", quantity: "" });
   };
 
   const handleSubmit = async (e) => {
@@ -202,7 +305,9 @@ const AddBatch = () => {
 
     if (hasPriceMismatch) {
       if (isPriceExceeded) {
-        setError("Total medicine price has exceeded against this Cheque Number");
+        setError(
+          "Total medicine price has exceeded against this Cheque Number"
+        );
       }
       return;
     }
@@ -245,70 +350,81 @@ const AddBatch = () => {
     }
   };
 
+  // Handle cancel confirmation
+  const handleCancelConfirmation = () => {
+    setIsCancelModalOpen(true);
+  };
+
+  // Handle cancel redirect
+  const handleCancelRedirect = () => {
+    navigate(redirectPath);
+  };
+
   const isMiscellaneousSelected = currentMedicine.medicineId === 1;
 
   return (
     <div className={`${theme.background} min-h-screen p-6`}>
       <div className="max-w-6xl mx-auto">
-        <button
-          onClick={() => navigate(redirectPath)}
-          className={`flex items-center ${theme.textPrimary} mb-6`}
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back to Inventory
-        </button>
-
-        <h1 className={`text-2xl font-bold ${theme.textPrimary} mb-2`}>
-          Add Medicines to Batch
+        <h1 className={`text-2xl font-bold ${theme.textPrimary} mb-8`}>
+          Batch Details
         </h1>
-        <p className={`${theme.textSecondary} mb-8`}>
-          Add medicines to batch: {batchDetails?.batchNumber}
-        </p>
 
         {/* Batch Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div
             className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
           >
-            <div className="flex items-center">
-              <Barcode className="w-5 h-5 text-blue-500 mr-2" />
-              <div>
-                <p className={`text-sm ${theme.textMuted}`}>Batch Number</p>
-                <p className={`text-lg font-bold ${theme.textPrimary}`}>
-                  {batchDetails?.batchNumber}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center min-w-0 flex-1">
+                <Barcode className="w-5 h-5 text-blue-500 mr-3 flex-shrink-0" />
+                <p className={`text-sm ${theme.textMuted} truncate`}>
+                  Batch Number
                 </p>
               </div>
+              <p
+                className={`text-lg font-bold ${theme.textPrimary} ml-2 flex-shrink-0`}
+              >
+                {batchDetails?.batchNumber}
+              </p>
             </div>
           </div>
 
           <div
             className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
           >
-            <div className="flex items-center">
-              <FileDigit className="w-5 h-5 text-green-500 mr-2" />
-              <div>
-                <p className={`text-sm ${theme.textMuted}`}>Cheque Number</p>
-                <p className={`text-lg font-bold ${theme.textPrimary}`}>
-                  {batchDetails?.billID}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center min-w-0 flex-1">
+                <FileDigit className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                <p className={`text-sm ${theme.textMuted} truncate`}>
+                  Cheque Number
                 </p>
               </div>
+              <p
+                className={`text-lg font-bold ${theme.textPrimary} ml-2 flex-shrink-0`}
+              >
+                {batchDetails?.billID}
+              </p>
             </div>
           </div>
 
           <div
             className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
           >
-            <div className="flex items-center">
-              <Banknote className="w-5 h-5 text-purple-500 mr-2" />
-              <div>
-                <p className={`text-sm ${theme.textMuted}`}>Overall Price</p>
-                <p className={`text-lg font-bold ${theme.textPrimary}`}>
-                  PKR{" "}
-                  {batchDetails?.overallPrice
-                    ? parseFloat(batchDetails.overallPrice).toFixed(2)
-                    : "0.00"}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center min-w-0 flex-1">
+                <Banknote className="w-5 h-5 text-purple-500 mr-3 flex-shrink-0" />
+                <p className={`text-sm ${theme.textMuted} truncate`}>
+                  Total Amount
                 </p>
               </div>
+              <p
+                className={`text-lg font-bold ${theme.textPrimary} ml-2 flex-shrink-0`}
+              >
+                PKR{" "}
+                {batchDetails?.overallPrice
+                  ? parseFloat(batchDetails.overallPrice).toFixed(2)
+                  : "0.00"}
+              </p>
             </div>
           </div>
         </div>
@@ -352,6 +468,14 @@ const AddBatch = () => {
                     }));
                   }}
                   onFocus={() => setShowMedicineDropdown(true)}
+                  onBlur={(e) => {
+                    // Small delay to allow dropdown item clicks to register
+                    setTimeout(() => {
+                      if (!dropdownRef.current?.contains(document.activeElement)) {
+                        setShowMedicineDropdown(false);
+                      }
+                    }, 150);
+                  }}
                   className={`w-full pl-10 pr-10 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
                   placeholder="Search medicine..."
                 />
@@ -429,7 +553,7 @@ const AddBatch = () => {
                   <label
                     className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
                   >
-                    Price *
+                    Price * <span className="text-xs">(max 9 digits)</span>
                   </label>
                   <div className="relative">
                     <Banknote
@@ -442,6 +566,27 @@ const AddBatch = () => {
                       onChange={handleMedicineInputChange}
                       step="0.01"
                       min="0.01"
+                      max="999999999.99"
+                      onInput={(e) => {
+                        // Remove any non-digit and non-decimal characters
+                        let value = e.target.value.replace(/[^0-9.]/g, "");
+
+                        // Ensure only one decimal point
+                        const parts = value.split(".");
+                        if (parts.length > 2) {
+                          value = parts[0] + "." + parts.slice(1).join("");
+                        }
+
+                        // Limit to 9 digits before decimal and 2 after
+                        if (parts[0] && parts[0].length > 9) {
+                          parts[0] = parts[0].substring(0, 9);
+                        }
+                        if (parts[1] && parts[1].length > 2) {
+                          parts[1] = parts[1].substring(0, 2);
+                        }
+
+                        e.target.value = parts.join(".");
+                      }}
                       className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
                       placeholder="Enter price"
                     />
@@ -452,7 +597,7 @@ const AddBatch = () => {
                   <label
                     className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
                   >
-                    Quantity *
+                    Quantity * <span className="text-xs">(max 5 digits)</span>
                   </label>
                   <div className="relative">
                     <Hash
@@ -464,6 +609,18 @@ const AddBatch = () => {
                       value={currentMedicine.quantity}
                       onChange={handleMedicineInputChange}
                       min="1"
+                      max="99999"
+                      onInput={(e) => {
+                        // Remove any non-digit characters
+                        let value = e.target.value.replace(/[^0-9]/g, "");
+
+                        // Limit to 5 digits
+                        if (value.length > 5) {
+                          value = value.substring(0, 5);
+                        }
+
+                        e.target.value = value;
+                      }}
                       className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
                       placeholder="Enter quantity"
                     />
@@ -542,28 +699,121 @@ const AddBatch = () => {
                         <td
                           className={`px-4 py-3 text-center ${theme.textPrimary}`}
                         >
-                          {medicine.quantity}
+                          {editingIndex === index ? (
+                            <input
+                              type="number"
+                              name="quantity"
+                              value={editValues.quantity}
+                              onChange={handleEditInputChange}
+                              min="1"
+                              max="99999"
+                              onInput={(e) => {
+                                // Remove any non-digit characters
+                                let value = e.target.value.replace(/[^0-9]/g, "");
+
+                                // Limit to 5 digits
+                                if (value.length > 5) {
+                                  value = value.substring(0, 5);
+                                }
+
+                                e.target.value = value;
+                                handleEditInputChange(e);
+                              }}
+                              className={`w-20 px-2 py-1 text-center ${theme.input} rounded ${theme.borderSecondary} border ${theme.focus} focus:ring-1`}
+                            />
+                          ) : (
+                            medicine.quantity
+                          )}
                         </td>
                         <td
                           className={`px-4 py-3 text-center ${theme.textPrimary}`}
                         >
-                          PKR {medicine.price.toFixed(2)}
+                          {editingIndex === index ? (
+                            <input
+                              type="number"
+                              name="price"
+                              value={editValues.price}
+                              onChange={handleEditInputChange}
+                              step="0.01"
+                              min="0.01"
+                              onInput={(e) => {
+                                // Remove any non-digit and non-decimal characters
+                                let value = e.target.value.replace(/[^0-9.]/g, "");
+
+                                // Ensure only one decimal point
+                                const parts = value.split(".");
+                                if (parts.length > 2) {
+                                  value = parts[0] + "." + parts.slice(1).join("");
+                                }
+
+                                // Limit to 9 digits before decimal and 2 after
+                                if (parts[0] && parts[0].length > 9) {
+                                  parts[0] = parts[0].substring(0, 9);
+                                }
+                                if (parts[1] && parts[1].length > 2) {
+                                  parts[1] = parts[1].substring(0, 2);
+                                }
+
+                                e.target.value = parts.join(".");
+                                handleEditInputChange(e);
+                              }}
+                              className={`w-24 px-2 py-1 text-center ${theme.input} rounded ${theme.borderSecondary} border ${theme.focus} focus:ring-1`}
+                            />
+                          ) : (
+                            `PKR ${medicine.price.toFixed(2)}`
+                          )}
                         </td>
                         <td
                           className={`px-4 py-3 text-center ${theme.textPrimary} font-medium`}
                         >
-                          PKR {(medicine.quantity * medicine.price).toFixed(2)}
+                          PKR{" "}
+                          {editingIndex === index
+                            ? (
+                                parseFloat(editValues.price || 0) *
+                                parseInt(editValues.quantity || 0)
+                              ).toFixed(2)
+                            : (medicine.quantity * medicine.price).toFixed(2)}
                         </td>
                         <td
                           className={`px-4 py-3 text-center ${theme.textPrimary}`}
                         >
-                          <button
-                            type="button"
-                            onClick={() => removeMedicine(index)}
-                            className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-red-500 hover:text-white transition-colors`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex justify-center items-center space-x-2">
+                            {editingIndex === index ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveEdit(index)}
+                                  className={`p-1.5 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors`}
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleCancelEdit}
+                                  className={`p-1.5 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition-colors`}
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleEdit(index)}
+                                  className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-blue-500 hover:text-white transition-colors`}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeMedicine(index)}
+                                  className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-red-500 hover:text-white transition-colors`}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -695,7 +945,18 @@ const AddBatch = () => {
           )}
 
           {/* Submit Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-4">
+            {/* Cancel Button */}
+            <button
+              type="button"
+              onClick={handleCancelConfirmation}
+              className={`flex items-center justify-center space-x-2 px-6 py-3 ${theme.cardSecondary} border ${theme.borderSecondary} text-${theme.textPrimary} font-medium rounded-lg shadow-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200`}
+            >
+              {/* <X className="w-5 h-5" /> */}
+              <span>Cancel</span>
+            </button>
+
+            {/* Add Batch Button */}
             <button
               type="submit"
               disabled={loading || !canAddBatch}
@@ -704,18 +965,47 @@ const AddBatch = () => {
               {loading ? (
                 <>
                   <Loader className="w-5 h-5 animate-spin" />
-                  <span>Adding Batch...</span>
+                  <span>Saving...</span>
                 </>
               ) : (
                 <>
-                  <Plus className="w-5 h-5" />
-                  <span>Add Batch</span>
+                  {/* <Plus className="w-5 h-5" /> */}
+                  <span>Save</span>
                 </>
               )}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      <Modal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        title="Cancel Batch Creation"
+        subtitle="Are you sure you want to cancel? All entered data will be lost."
+      >
+        <div className="p-6">
+          <p className={`mb-6 ${theme.textPrimary}`}>
+            This action cannot be undone. All medicines and miscellaneous amounts
+            you've added will be permanently deleted.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setIsCancelModalOpen(false)}
+              className={`px-4 py-2 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary} text-${theme.textPrimary} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`}
+            >
+              Go Back
+            </button>
+            <button
+              onClick={handleCancelRedirect}
+              className={`px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors`}
+            >
+              Proceed to Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
