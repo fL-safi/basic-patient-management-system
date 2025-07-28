@@ -1,3 +1,4 @@
+// UpdateBatch.jsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -16,8 +17,10 @@ import {
   AlertCircle,
   Box,
   DollarSign,
+  Edit,
+  Check,
+  X,
 } from "lucide-react";
-// Updated import to include helper functions
 import {
   MEDICINES,
   getMedicineById,
@@ -25,6 +28,7 @@ import {
 } from "../../constants/selectOptions";
 import { getBatchById, updateBatchById } from "../../api/api";
 import { useAuthStore } from "../../store/authStore";
+import Modal from "../../components/UI/Modal";
 
 const UpdateBatch = () => {
   const { theme } = useTheme();
@@ -40,6 +44,11 @@ const UpdateBatch = () => {
   const [success, setSuccess] = useState("");
   const [showMedicineDropdown, setShowMedicineDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCancelModal, setShowCancelModal] = useState(false); // State for cancel modal
+
+  // Edit mode state
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editValues, setEditValues] = useState({ price: "", quantity: "" });
 
   const [batchDetails, setBatchDetails] = useState({
     batchNumber: "",
@@ -49,7 +58,6 @@ const UpdateBatch = () => {
   const [medicines, setMedicines] = useState([]);
   const [miscellaneousAmount, setMiscellaneousAmount] = useState(0);
 
-  // Updated currentMedicine state to include medicineId
   const [currentMedicine, setCurrentMedicine] = useState({
     medicineId: null,
     medicineName: "",
@@ -57,7 +65,6 @@ const UpdateBatch = () => {
     price: "",
   });
 
-  // Determine redirect path based on user role
   const redirectPath =
     user?.role === "admin"
       ? "/admin/inventory-management"
@@ -65,7 +72,6 @@ const UpdateBatch = () => {
       ? "/pharmacist_inventory/inventory-management"
       : "/inventory-management";
 
-  // Determine submit redirect path based on user role
   const submitRedirectPath =
     user?.role === "admin"
       ? `/admin/inventory-management/${batchId}`
@@ -73,24 +79,33 @@ const UpdateBatch = () => {
       ? `/pharmacist_inventory/inventory-management/${batchId}`
       : "/inventory-management";
 
-  // Updated fetch batch data to handle medicine IDs
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowMedicineDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchBatchData = async () => {
       try {
         setLoading(true);
         const batch = await getBatchById(batchId);
 
-        // Set batch details for the form fields
         setBatchDetails({
           batchNumber: batch.data.batchNumber,
           billID: batch.data.billID,
           overallPrice: batch.data.overallPrice,
         });
 
-        // Convert existing medicines to include IDs if they don't have them
         const existingMedicines = Array.isArray(batch.data.medicines)
           ? batch.data.medicines.map((medicine) => {
-              // If medicine doesn't have ID, find it by name
               if (!medicine.medicineId) {
                 const foundMedicine = getMedicineByName(medicine.medicineName);
                 return {
@@ -115,19 +130,24 @@ const UpdateBatch = () => {
     fetchBatchData();
   }, [batchId]);
 
-  // Updated medicine form validation to check for medicineId
   const isMedicineFormValid = useMemo(() => {
     if (currentMedicine.medicineId === 1) {
-      // MISCELLANEOUS ID
-      return true; // Miscellaneous doesn't need quantity/price validation
+      return true;
     }
+    
+    const priceValid = currentMedicine.price && 
+                      parseFloat(currentMedicine.price) > 0 && 
+                      currentMedicine.price.toString().replace('.', '').length <= 9;
+    
+    const quantityValid = currentMedicine.quantity && 
+                         parseInt(currentMedicine.quantity) > 0 && 
+                         currentMedicine.quantity.toString().length <= 5;
+
     return (
       currentMedicine.medicineId &&
       currentMedicine.medicineName &&
-      currentMedicine.quantity &&
-      parseInt(currentMedicine.quantity) > 0 &&
-      currentMedicine.price &&
-      parseFloat(currentMedicine.price) > 0
+      quantityValid &&
+      priceValid
     );
   }, [currentMedicine]);
 
@@ -169,10 +189,8 @@ const UpdateBatch = () => {
     totalWithMiscellaneous > parseFloat(batchDetails?.overallPrice || 0);
   const canUpdateBatch = !hasPriceMismatch && medicines && medicines.length > 0;
 
-  // Update miscellaneous amount when remaining amount changes
   useEffect(() => {
     if (currentMedicine.medicineId === 1) {
-      // MISCELLANEOUS ID
       setCurrentMedicine((prev) => ({
         ...prev,
         price: remainingAmount.toFixed(2),
@@ -190,43 +208,80 @@ const UpdateBatch = () => {
 
   const handleMedicineInputChange = (e) => {
     const { name, value } = e.target;
-    setCurrentMedicine((prev) => ({ ...prev, [name]: value }));
+    
+    let processedValue = value;
+    if (name === 'price' && value) {
+      const digitsOnly = value.replace('.', '');
+      if (digitsOnly.length > 9) {
+        return;
+      }
+    }
+    if (name === 'quantity' && value) {
+      if (value.length > 5) {
+        return;
+      }
+    }
+    
+    setCurrentMedicine((prev) => ({ ...prev, [name]: processedValue }));
     if (error) setError("");
   };
 
-  // Updated medicine selection handler to include ID
   const handleMedicineSelect = (medicine) => {
     setCurrentMedicine((prev) => ({
       ...prev,
       medicineId: medicine.id,
       medicineName: medicine.name,
-      quantity: medicine.id === 1 ? "" : prev.quantity, // MISCELLANEOUS
+      quantity: medicine.id === 1 ? "" : prev.quantity,
       price: medicine.id === 1 ? remainingAmount.toFixed(2) : prev.price,
     }));
     setShowMedicineDropdown(false);
     setSearchTerm("");
   };
 
-  // Updated add medicine function with duplicate checking
+  // NEW: Check if adding medicine would exceed total price
+  const checkPriceExceeded = (price, quantity) => {
+    const medicineTotal = parseFloat(price) * parseInt(quantity);
+    const newTotal = totalWithMiscellaneous + medicineTotal;
+    return newTotal > parseFloat(batchDetails.overallPrice);
+  };
+
+  // NEW: Check if editing medicine would exceed total price
+  const checkEditPriceExceeded = (index, newPrice, newQuantity) => {
+    const medicine = medicines[index];
+    const currentMedicineTotal = parseFloat(medicine.price) * parseInt(medicine.quantity);
+    const newMedicineTotal = parseFloat(newPrice) * parseInt(newQuantity);
+    
+    const newTotal = totalWithMiscellaneous - currentMedicineTotal + newMedicineTotal;
+    return newTotal > parseFloat(batchDetails.overallPrice);
+  };
+
   const addMedicineToList = () => {
     if (!isMedicineFormValid) {
       setError("Please fill all required fields with valid values");
       return;
     }
 
-    // Check for duplicate medicine by ID
-    const existingMedicine = medicines.find(
-      (med) => med.medicineId === currentMedicine.medicineId
-    );
-    if (existingMedicine) {
-      setError(
-        "This medicine is already added to the list. Please select a different medicine or update the existing entry."
+    // Skip duplicate check for miscellaneous
+    if (currentMedicine.medicineId !== 1) {
+      const existingMedicine = medicines.find(
+        (med) => med.medicineId === currentMedicine.medicineId
       );
+      if (existingMedicine) {
+        setError(
+          "This medicine is already added to the list. Please select a different medicine or update the existing entry."
+        );
+        return;
+      }
+    }
+
+    // NEW: Check if adding would exceed total price
+    if (currentMedicine.medicineId !== 1 && 
+        checkPriceExceeded(currentMedicine.price, currentMedicine.quantity)) {
+      setError("Adding this medicine would exceed the total batch price");
       return;
     }
 
     if (currentMedicine.medicineId === 1) {
-      // MISCELLANEOUS
       const miscAmount = parseFloat(currentMedicine.price) || 0;
       setMiscellaneousAmount(miscAmount);
     } else {
@@ -256,13 +311,79 @@ const UpdateBatch = () => {
 
   const removeMedicine = (index) => {
     setMedicines((prev) => prev.filter((_, i) => i !== index));
+    if (editingIndex === index) {
+      setEditingIndex(null);
+      setEditValues({ price: "", quantity: "" });
+    }
   };
 
   const removeMiscellaneous = () => {
     setMiscellaneousAmount(0);
   };
 
-  // Updated submit handler to include medicine IDs
+  const startEdit = (index, medicine) => {
+    setEditingIndex(index);
+    setEditValues({
+      price: medicine.price.toString(),
+      quantity: medicine.quantity.toString(),
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingIndex(null);
+    setEditValues({ price: "", quantity: "" });
+  };
+
+  const saveEdit = (index) => {
+    const priceValid = editValues.price && 
+                      parseFloat(editValues.price) > 0 && 
+                      editValues.price.replace('.', '').length <= 9;
+    
+    const quantityValid = editValues.quantity && 
+                         parseInt(editValues.quantity) > 0 && 
+                         editValues.quantity.length <= 5;
+
+    if (!priceValid || !quantityValid) {
+      setError("Please enter valid price (max 9 digits) and quantity (max 5 digits)");
+      return;
+    }
+
+    // NEW: Check if editing would exceed total price
+    if (checkEditPriceExceeded(index, editValues.price, editValues.quantity)) {
+      setError("Editing this medicine would exceed the total batch price");
+      return;
+    }
+
+    setMedicines((prev) =>
+      prev.map((medicine, i) =>
+        i === index
+          ? {
+              ...medicine,
+              price: parseFloat(editValues.price),
+              quantity: parseInt(editValues.quantity),
+            }
+          : medicine
+      )
+    );
+    setEditingIndex(null);
+    setEditValues({ price: "", quantity: "" });
+    setError("");
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'price' && value) {
+      const digitsOnly = value.replace('.', '');
+      if (digitsOnly.length > 9) return;
+    }
+    if (name === 'quantity' && value) {
+      if (value.length > 5) return;
+    }
+    
+    setEditValues((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -315,7 +436,16 @@ const UpdateBatch = () => {
     }
   };
 
-  // Updated condition check for miscellaneous
+  // NEW: Handle cancel confirmation
+  const handleCancel = () => {
+    setShowCancelModal(true);
+  };
+
+  // NEW: Proceed with cancellation
+  const proceedCancel = () => {
+    navigate(redirectPath);
+  };
+
   const isMiscellaneousSelected = currentMedicine.medicineId === 1;
 
   if (loading) {
@@ -345,65 +475,66 @@ const UpdateBatch = () => {
   return (
     <div className={`${theme.background} min-h-screen p-6`}>
       <div className="max-w-6xl mx-auto">
-        <button
-          onClick={() => navigate(redirectPath)}
-          className={`flex items-center ${theme.textPrimary} mb-6`}
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back to Inventory
-        </button>
-
-        <h1 className={`text-2xl font-bold ${theme.textPrimary} mb-2`}>
+        <h1 className={`text-2xl font-bold ${theme.textPrimary} mb-8`}>
           Update Batch
         </h1>
-        <p className={`${theme.textSecondary} mb-8`}>
-          Update details for batch: {batchDetails.batchNumber}
-        </p>
 
         {/* Batch Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div
             className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
           >
-            <div className="flex items-center">
-              <Barcode className="w-5 h-5 text-blue-500 mr-2" />
-              <div>
-                <p className={`text-sm ${theme.textMuted}`}>Batch Number</p>
-                <p className={`text-lg font-bold ${theme.textPrimary}`}>
-                  {batchDetails?.batchNumber}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center min-w-0 flex-1">
+                <Barcode className="w-5 h-5 text-blue-500 mr-3 flex-shrink-0" />
+                <p className={`text-sm ${theme.textMuted} truncate`}>
+                  Batch Number
                 </p>
               </div>
+              <p
+                className={`text-lg font-bold ${theme.textPrimary} ml-2 flex-shrink-0`}
+              >
+                {batchDetails?.batchNumber}
+              </p>
             </div>
           </div>
 
           <div
             className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
           >
-            <div className="flex items-center">
-              <FileDigit className="w-5 h-5 text-green-500 mr-2" />
-              <div>
-                <p className={`text-sm ${theme.textMuted}`}>Cheque Number</p>
-                <p className={`text-lg font-bold ${theme.textPrimary}`}>
-                  {batchDetails?.billID}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center min-w-0 flex-1">
+                <FileDigit className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                <p className={`text-sm ${theme.textMuted} truncate`}>
+                  Cheque Number
                 </p>
               </div>
+              <p
+                className={`text-lg font-bold ${theme.textPrimary} ml-2 flex-shrink-0`}
+              >
+                {batchDetails?.billID}
+              </p>
             </div>
           </div>
 
           <div
             className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
           >
-            <div className="flex items-center">
-              <Banknote className="w-5 h-5 text-purple-500 mr-2" />
-              <div>
-                <p className={`text-sm ${theme.textMuted}`}>Overall Price</p>
-                <p className={`text-lg font-bold ${theme.textPrimary}`}>
-                  PKR{" "}
-                  {batchDetails?.overallPrice
-                    ? parseFloat(batchDetails.overallPrice).toFixed(2)
-                    : "0.00"}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center min-w-0 flex-1">
+                <Banknote className="w-5 h-5 text-purple-500 mr-3 flex-shrink-0" />
+                <p className={`text-sm ${theme.textMuted} truncate`}>
+                  Total Amount
                 </p>
               </div>
+              <p
+                className={`text-lg font-bold ${theme.textPrimary} ml-2 flex-shrink-0`}
+              >
+                PKR{" "}
+                {batchDetails?.overallPrice
+                  ? parseFloat(batchDetails.overallPrice).toFixed(2)
+                  : "0.00"}
+              </p>
             </div>
           </div>
         </div>
@@ -423,7 +554,6 @@ const UpdateBatch = () => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Medicine Name - Updated dropdown */}
             <div className="relative" ref={dropdownRef}>
               <label
                 className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
@@ -459,7 +589,6 @@ const UpdateBatch = () => {
                 </button>
               </div>
 
-              {/* Updated dropdown to use medicine objects */}
               {showMedicineDropdown && (
                 <div
                   className={`absolute z-10 w-full mt-1 max-h-60 overflow-auto rounded-md ${theme.card} shadow-lg ${theme.border} border`}
@@ -491,7 +620,6 @@ const UpdateBatch = () => {
               )}
             </div>
 
-            {/* Conditional Fields */}
             {isMiscellaneousSelected ? (
               <div>
                 <label
@@ -525,7 +653,7 @@ const UpdateBatch = () => {
                   <label
                     className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
                   >
-                    Price *
+                    Price * <span className="text-xs">(max 9 digits)</span>
                   </label>
                   <div className="relative">
                     <Banknote
@@ -548,7 +676,7 @@ const UpdateBatch = () => {
                   <label
                     className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
                   >
-                    Quantity *
+                    Quantity * <span className="text-xs">(max 5 digits)</span>
                   </label>
                   <div className="relative">
                     <Hash
@@ -583,7 +711,6 @@ const UpdateBatch = () => {
             </button>
           </div>
 
-          {/* Medicines Table - No changes needed here as it displays existing data */}
           <div
             className={`${theme.card} rounded-lg overflow-hidden border ${theme.borderSecondary} mb-4`}
           >
@@ -622,7 +749,7 @@ const UpdateBatch = () => {
                   {medicines && medicines.length > 0 ? (
                     medicines.map((medicine, index) => (
                       <tr
-                        key={`${medicine.medicineId}-${index}`} // Updated key to use medicineId
+                        key={`${medicine.medicineId}-${index}`}
                         className={`${
                           index % 2 === 0 ? theme.card : theme.cardSecondary
                         } border-b ${theme.borderSecondary}`}
@@ -637,31 +764,90 @@ const UpdateBatch = () => {
                             </div>
                           </div>
                         </td>
-                        <td
-                          className={`px-4 py-3 text-center ${theme.textPrimary}`}
-                        >
-                          {medicine.quantity}
+                        
+                        <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>
+                          {editingIndex === index ? (
+                            <input
+                              type="number"
+                              name="quantity"
+                              value={editValues.quantity}
+                              onChange={handleEditInputChange}
+                              min="1"
+                              className={`w-20 px-2 py-1 text-center ${theme.input} rounded border ${theme.borderSecondary}`}
+                            />
+                          ) : (
+                            medicine.quantity
+                          )}
                         </td>
-                        <td
-                          className={`px-4 py-3 text-center ${theme.textPrimary}`}
-                        >
-                          PKR {medicine.price.toFixed(2)}
+                        
+                        <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>
+                          {editingIndex === index ? (
+                            <input
+                              type="number"
+                              name="price"
+                              value={editValues.price}
+                              onChange={handleEditInputChange}
+                              step="0.01"
+                              min="0.01"
+                              className={`w-24 px-2 py-1 text-center ${theme.input} rounded border ${theme.borderSecondary}`}
+                            />
+                          ) : (
+                            `PKR ${medicine.price.toFixed(2)}`
+                          )}
                         </td>
+                        
                         <td
                           className={`px-4 py-3 text-center ${theme.textPrimary} font-medium`}
                         >
-                          PKR {(medicine.quantity * medicine.price).toFixed(2)}
+                          {editingIndex === index ? (
+                            `PKR ${(parseFloat(editValues.quantity || 0) * parseFloat(editValues.price || 0)).toFixed(2)}`
+                          ) : (
+                            `PKR ${(medicine.quantity * medicine.price).toFixed(2)}`
+                          )}
                         </td>
-                        <td
-                          className={`px-4 py-3 text-center ${theme.textPrimary}`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => removeMedicine(index)}
-                            className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-red-500 hover:text-white transition-colors`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        
+                        <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>
+                          <div className="flex justify-center space-x-2">
+                            {editingIndex === index ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => saveEdit(index)}
+                                  className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-green-500 hover:text-white transition-colors`}
+                                  title="Save changes"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={cancelEdit}
+                                  className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-gray-500 hover:text-white transition-colors`}
+                                  title="Cancel edit"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => startEdit(index, medicine)}
+                                  className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-blue-500 hover:text-white transition-colors`}
+                                  title="Edit medicine"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeMedicine(index)}
+                                  className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-red-500 hover:text-white transition-colors`}
+                                  title="Delete medicine"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -680,8 +866,6 @@ const UpdateBatch = () => {
             </div>
           </div>
 
-          {/* Rest of the component remains the same */}
-          {/* Miscellaneous Section */}
           {miscellaneousAmount > 0 && (
             <div
               className={`${theme.card} rounded-lg border ${theme.borderSecondary} mb-8 p-4`}
@@ -709,7 +893,6 @@ const UpdateBatch = () => {
             </div>
           )}
 
-          {/* Summary Section */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <div
               className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
@@ -770,7 +953,6 @@ const UpdateBatch = () => {
             </div>
           </div>
 
-          {/* Price Mismatch Warning */}
           {medicines &&
             medicines.length > 0 &&
             hasPriceMismatch &&
@@ -793,8 +975,17 @@ const UpdateBatch = () => {
               </div>
             )}
 
-          {/* Update Button */}
-          <div className="flex justify-end">
+          {/* Update Button with Cancel Button */}
+          <div className="flex justify-end space-x-4">
+            {/* NEW: Cancel Button */}
+            <button
+              type="button"
+              onClick={handleCancel}
+              className={`px-6 py-3 ${theme.buttonSecondary} text-${theme.textPrimary} font-medium rounded-lg shadow-lg transition-all duration-200`}
+            >
+              Cancel
+            </button>
+            
             <button
               type="submit"
               disabled={updateLoading || !canUpdateBatch}
@@ -803,18 +994,46 @@ const UpdateBatch = () => {
               {updateLoading ? (
                 <>
                   <Loader className="w-5 h-5 animate-spin" />
-                  <span>Updating Batch...</span>
+                  <span>Saving...</span>
                 </>
               ) : (
                 <>
-                  <Plus className="w-5 h-5" />
-                  <span>Update Batch</span>
+                  {/* <Plus className="w-5 h-5" /> */}
+                  <span>Save</span>
                 </>
               )}
             </button>
           </div>
         </form>
       </div>
+
+      {/* NEW: Cancel Confirmation Modal */}
+      <Modal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Cancel Update"
+        subtitle="Are you sure you want to cancel? All unsaved changes will be lost."
+      >
+        <div className="p-6">
+          <p className={`${theme.textPrimary} mb-4`}>
+            This action cannot be undone. Any changes you've made will be lost.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setShowCancelModal(false)}
+              className={`px-4 py-2 ${theme.buttonSecondary} rounded-lg`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={proceedCancel}
+              className={`px-4 py-2 bg-gradient-to-r ${theme.buttonGradient} text-white rounded-lg`}
+            >
+              Proceed
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
