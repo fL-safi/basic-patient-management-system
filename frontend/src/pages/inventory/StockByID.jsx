@@ -22,6 +22,7 @@ import {
 import { useTheme } from "../../hooks/useTheme";
 import { useParams, useNavigate } from "react-router-dom";
 import { getStockById } from "../../api/api";
+import formatDate from "../../utils/date";
 
 const StockById = () => {
     const { stockId } = useParams();
@@ -85,13 +86,6 @@ const StockById = () => {
       </div>
     );
   }
-
-
-  // Helper function to format date
-  const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
 
   // Helper function to get medicine status
   const getMedicineStatus = (medicine) => {
@@ -431,6 +425,9 @@ const StockById = () => {
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
                   </th>
+                  <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider min-w-32`}>
+                    Expiry Date
+                  </th>
                   {/* <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider min-w-36`}>
                     Status
                   </th> */}
@@ -468,6 +465,14 @@ const StockById = () => {
                       </td>
                       <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
                         {formatDate(item.createdAt)}
+                      </td>
+                      <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
+                        <div className="flex flex-col items-center">
+                          <span>{formatDate(item.medicine.expiryDate)}</span>
+                          <span className="text-xs text-gray-500">
+                            ({Math.ceil((new Date(item.medicine.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))} days)
+                          </span>
+                        </div>
                       </td>
                       {/* <td className="px-4 py-4 text-center">
                         <span

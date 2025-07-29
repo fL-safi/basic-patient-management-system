@@ -471,9 +471,9 @@ const BatchByID = () => {
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
                   </th>
-                  {/* <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}>
+                  <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}>
                     Expiry Date
-                  </th> */}
+                  </th>
                   {/* <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}>
                     Status
                   </th> */}
@@ -516,14 +516,14 @@ const BatchByID = () => {
                       <td className={`px-4 py-4 text-center text-sm font-semibold ${theme.textPrimary}`}>
                         PKR {medicine.totalAmount}
                       </td>
-                      {/* <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
+                      <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
                         <div className="flex flex-col items-center">
                           <span>{formatDate(medicine.expiryDate)}</span>
                           <span className="text-xs text-gray-500">
                             ({Math.ceil((new Date(medicine.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))} days)
                           </span>
                         </div>
-                      </td> */}
+                      </td>
                       {/* <td className="px-4 py-4 text-center">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${

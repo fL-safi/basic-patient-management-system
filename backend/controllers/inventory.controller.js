@@ -297,7 +297,27 @@ export const allStocksList = async (req, res) => {
                 avgPrice: { $avg: "$medicines.price" },
                 minReorderLevel: { $min: "$medicines.reorderLevel" },
                 batchCount: { $sum: 1 },
-                medicineId: { $first: "$medicines.medicineId" }
+                medicineId: { $first: "$medicines.medicineId" },
+                // Check if any batch of this medicine expires within 10 days
+                expiringBatches: {
+                    $push: {
+                        $cond: {
+                            if: {
+                                $lte: [
+                                    "$medicines.expiryDate",
+                                    { $dateAdd: { startDate: new Date(), unit: "day", amount: 10 } }
+                                ]
+                            },
+                            then: {
+                                batchId: "$_id",
+                                batchNumber: "$batchNumber",
+                                expiryDate: "$medicines.expiryDate",
+                                quantity: "$medicines.quantity"
+                            },
+                            else: null
+                        }
+                    }
+                }
             }
         });
 
@@ -312,7 +332,7 @@ export const allStocksList = async (req, res) => {
                 avgPrice: { $round: ["$avgPrice", 2] },
                 batchCount: 1,
                 batches: 1,
-                lastBatch: 1, // Include last batch details
+                lastBatch: 1,
                 reorderLevel: "$minReorderLevel",
                 status: {
                     $cond: {
@@ -320,6 +340,27 @@ export const allStocksList = async (req, res) => {
                         then: "Low Stock",
                         else: "In Stock"
                     }
+                },
+                // Filter out null values from expiringBatches
+                expiringBatches: {
+                    $filter: {
+                        input: "$expiringBatches",
+                        cond: { $ne: ["$$this", null] }
+                    }
+                },
+                // Check if this medicine has expiring batches
+                hasExpiringBatches: {
+                    $gt: [
+                        {
+                            $size: {
+                                $filter: {
+                                    input: "$expiringBatches",
+                                    cond: { $ne: ["$$this", null] }
+                                }
+                            }
+                        },
+                        0
+                    ]
                 }
             }
         });
@@ -347,6 +388,14 @@ export const allStocksList = async (req, res) => {
         const hasNextPage = parseInt(page) < totalPages;
         const hasPrevPage = parseInt(page) > 1;
 
+        // Calculate summary statistics
+        const lowStockCount = medicines.filter(item => item.status === "Low Stock").length;
+        const totalBatches = medicines.reduce((sum, item) => sum + item.batchCount, 0);
+        const totalInventoryValue = medicines.reduce((sum, item) => sum + item.totalValue, 0);
+        
+        // Count medicines with expiring batches (within 10 days)
+        const expiringMedicinesCount = medicines.filter(item => item.hasExpiringBatches).length;
+
         return res.status(200).json({
             success: true,
             data: {
@@ -361,9 +410,10 @@ export const allStocksList = async (req, res) => {
                 },
                 summary: {
                     totalMedicines: totalCount,
-                    lowStockMedicines: medicines.filter(item => item.status === "Low Stock").length,
-                    totalBatches: medicines.reduce((sum, item) => sum + item.batchCount, 0),
-                    totalInventoryValue: medicines.reduce((sum, item) => sum + item.totalValue, 0)
+                    lowStockMedicines: lowStockCount,
+                    totalBatches: totalBatches,
+                    totalInventoryValue: totalInventoryValue,
+                    expiringWithin10Days: expiringMedicinesCount 
                 }
             }
         });
