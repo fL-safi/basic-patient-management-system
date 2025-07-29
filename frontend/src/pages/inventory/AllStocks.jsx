@@ -65,8 +65,6 @@ const AllStocks = () => {
 
   useEffect(() => {
     fetchData(currentPage, itemsPerPage);
-    console.log(role);
-    console.log(stockData);
   }, [currentPage, itemsPerPage]);
 
   const medicines = stockData?.data?.medicines || [];
@@ -145,7 +143,7 @@ const AllStocks = () => {
     },
     {
       title: "Near expire stock",
-      value: 0,
+      value: stockData?.data?.summary?.expiringWithin10Days,
       icon: Layers,
       color: "text-purple-500",
       bgColor: "bg-purple-500 bg-opacity-20 border-purple-500",

@@ -19,6 +19,7 @@ import {
   Check,
   X,
   Edit,
+  Calendar,
 } from "lucide-react";
 import {
   MEDICINES,
@@ -43,8 +44,12 @@ const AddBatch = () => {
   const [showMedicineDropdown, setShowMedicineDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingIndex, setEditingIndex] = useState(null);
-  const [editValues, setEditValues] = useState({ price: "", quantity: "" });
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false); // State for cancel modal
+  const [editValues, setEditValues] = useState({ 
+    price: "", 
+    quantity: "", 
+    expiryDate: "" 
+  });
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   const [medicines, setMedicines] = useState([]);
@@ -53,6 +58,7 @@ const AddBatch = () => {
     medicineName: "",
     quantity: "",
     price: "",
+    expiryDate: "",
   });
 
   useEffect(() => {
@@ -60,6 +66,18 @@ const AddBatch = () => {
       navigate("/inventory-management");
     }
   }, [batchDetails, navigate]);
+
+  // Set default expiry date (2 years from now) when component mounts
+  useEffect(() => {
+    const defaultExpiryDate = new Date();
+    defaultExpiryDate.setFullYear(defaultExpiryDate.getFullYear() + 2);
+    const defaultExpiryString = defaultExpiryDate.toISOString().split("T")[0];
+    
+    setCurrentMedicine(prev => ({
+      ...prev,
+      // expiryDate: defaultExpiryString
+    }));
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -97,7 +115,8 @@ const AddBatch = () => {
       currentMedicine.quantity &&
       parseInt(currentMedicine.quantity) > 0 &&
       currentMedicine.price &&
-      parseFloat(currentMedicine.price) > 0
+      parseFloat(currentMedicine.price) > 0 &&
+      currentMedicine.expiryDate
     );
   }, [currentMedicine]);
 
@@ -155,8 +174,9 @@ const AddBatch = () => {
       ...prev,
       medicineId: medicine.id,
       medicineName: medicine.name,
-      quantity: medicine.id === 1 ? "" : prev.quantity, // MISCELLANEOUS
+      quantity: medicine.id === 1 ? "" : prev.quantity,
       price: medicine.id === 1 ? remainingAmount.toFixed(2) : prev.price,
+      expiryDate: medicine.id === 1 ? "" : prev.expiryDate,
     }));
     setShowMedicineDropdown(false);
     setSearchTerm("");
@@ -195,26 +215,28 @@ const AddBatch = () => {
         return;
       }
 
-      const expiryDate = new Date();
-      expiryDate.setFullYear(expiryDate.getFullYear() + 2);
-      const expiryDateString = expiryDate.toISOString().split("T")[0];
-
       setMedicines((prev) => [
         ...prev,
         {
           ...currentMedicine,
           quantity: parseInt(currentMedicine.quantity),
           price: parseFloat(currentMedicine.price),
-          expiryDate: expiryDateString,
+          expiryDate: currentMedicine.expiryDate,
         },
       ]);
     }
+
+    // Reset form with default expiry date
+    const defaultExpiryDate = new Date();
+    defaultExpiryDate.setFullYear(defaultExpiryDate.getFullYear() + 2);
+    const defaultExpiryString = defaultExpiryDate.toISOString().split("T")[0];
 
     setCurrentMedicine({
       medicineId: null,
       medicineName: "",
       quantity: "",
       price: "",
+      expiryDate: "",
     });
     setError("");
   };
@@ -224,7 +246,7 @@ const AddBatch = () => {
     // Cancel editing if the medicine being edited is deleted
     if (editingIndex === index) {
       setEditingIndex(null);
-      setEditValues({ price: "", quantity: "" });
+      setEditValues({ price: "", quantity: "", expiryDate: "" });
     }
   };
 
@@ -239,6 +261,7 @@ const AddBatch = () => {
     setEditValues({
       price: medicine.price.toString(),
       quantity: medicine.quantity.toString(),
+      expiryDate: medicine.expiryDate,
     });
   };
 
@@ -250,6 +273,7 @@ const AddBatch = () => {
   const handleSaveEdit = (index) => {
     const newPrice = parseFloat(editValues.price);
     const newQuantity = parseInt(editValues.quantity);
+    const newExpiryDate = editValues.expiryDate;
 
     // Validation
     if (isNaN(newPrice) || newPrice <= 0) {
@@ -258,6 +282,10 @@ const AddBatch = () => {
     }
     if (isNaN(newQuantity) || newQuantity <= 0) {
       setError("Please enter a valid quantity");
+      return;
+    }
+    if (!newExpiryDate) {
+      setError("Please select an expiry date");
       return;
     }
 
@@ -279,20 +307,25 @@ const AddBatch = () => {
     setMedicines((prev) =>
       prev.map((medicine, i) =>
         i === index
-          ? { ...medicine, price: newPrice, quantity: newQuantity }
+          ? { 
+              ...medicine, 
+              price: newPrice, 
+              quantity: newQuantity,
+              expiryDate: newExpiryDate
+            }
           : medicine
       )
     );
 
     // Reset edit state
     setEditingIndex(null);
-    setEditValues({ price: "", quantity: "" });
+    setEditValues({ price: "", quantity: "", expiryDate: "" });
     setError("");
   };
 
   const handleCancelEdit = () => {
     setEditingIndex(null);
-    setEditValues({ price: "", quantity: "" });
+    setEditValues({ price: "", quantity: "", expiryDate: "" });
   };
 
   const handleSubmit = async (e) => {
@@ -443,7 +476,7 @@ const AddBatch = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 gap-6 mb-6">
             {/* Medicine Name */}
             <div className="relative" ref={dropdownRef}>
               <label
@@ -519,7 +552,7 @@ const AddBatch = () => {
               )}
             </div>
 
-            {/* Conditional Fields */}
+            {/* Fields Row - Price, Quantity, and Expiry Date OR Miscellaneous Amount */}
             {isMiscellaneousSelected ? (
               <div>
                 <label
@@ -548,7 +581,7 @@ const AddBatch = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label
                     className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
@@ -626,6 +659,27 @@ const AddBatch = () => {
                     />
                   </div>
                 </div>
+
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                  >
+                    Expiry Date *
+                  </label>
+                  <div className="relative">
+                    <Calendar
+                      className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                    />
+                    <input
+                      type="date"
+                      name="expiryDate"
+                      value={currentMedicine.expiryDate}
+                      onChange={handleMedicineInputChange}
+                      min={new Date().toISOString().split("T")[0]}
+                      className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -666,6 +720,11 @@ const AddBatch = () => {
                       className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}
                     >
                       Price
+                    </th>
+                    <th
+                      className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}
+                    >
+                      Expiry Date
                     </th>
                     <th
                       className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}
@@ -764,6 +823,22 @@ const AddBatch = () => {
                           )}
                         </td>
                         <td
+                          className={`px-4 py-3 text-center ${theme.textPrimary}`}
+                        >
+                          {editingIndex === index ? (
+                            <input
+                              type="date"
+                              name="expiryDate"
+                              value={editValues.expiryDate}
+                              onChange={handleEditInputChange}
+                              min={new Date().toISOString().split("T")[0]}
+                              className={`w-32 px-2 py-1 text-center ${theme.input} rounded ${theme.borderSecondary} border ${theme.focus} focus:ring-1`}
+                            />
+                          ) : (
+                            new Date(medicine.expiryDate).toLocaleDateString()
+                          )}
+                        </td>
+                        <td
                           className={`px-4 py-3 text-center ${theme.textPrimary} font-medium`}
                         >
                           PKR{" "}
@@ -820,7 +895,7 @@ const AddBatch = () => {
                   ) : (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="6"
                         className={`text-center py-4 ${theme.textPrimary}`}
                       >
                         No medicines added yet
@@ -952,7 +1027,6 @@ const AddBatch = () => {
               onClick={handleCancelConfirmation}
               className={`flex items-center justify-center space-x-2 px-6 py-3 ${theme.cardSecondary} border ${theme.borderSecondary} text-${theme.textPrimary} font-medium rounded-lg shadow-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200`}
             >
-              {/* <X className="w-5 h-5" /> */}
               <span>Cancel</span>
             </button>
 
@@ -969,7 +1043,6 @@ const AddBatch = () => {
                 </>
               ) : (
                 <>
-                  {/* <Plus className="w-5 h-5" /> */}
                   <span>Save</span>
                 </>
               )}

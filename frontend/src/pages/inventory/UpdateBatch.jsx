@@ -1,4 +1,3 @@
-// UpdateBatch.jsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -20,6 +19,7 @@ import {
   Edit,
   Check,
   X,
+  Calendar,
 } from "lucide-react";
 import {
   MEDICINES,
@@ -44,11 +44,11 @@ const UpdateBatch = () => {
   const [success, setSuccess] = useState("");
   const [showMedicineDropdown, setShowMedicineDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showCancelModal, setShowCancelModal] = useState(false); // State for cancel modal
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
-  // Edit mode state
+  // Edit mode state - Updated to include expiry date
   const [editingIndex, setEditingIndex] = useState(null);
-  const [editValues, setEditValues] = useState({ price: "", quantity: "" });
+  const [editValues, setEditValues] = useState({ price: "", quantity: "", expiryDate: "" });
 
   const [batchDetails, setBatchDetails] = useState({
     batchNumber: "",
@@ -58,11 +58,13 @@ const UpdateBatch = () => {
   const [medicines, setMedicines] = useState([]);
   const [miscellaneousAmount, setMiscellaneousAmount] = useState(0);
 
+  // Updated currentMedicine state to include expiryDate
   const [currentMedicine, setCurrentMedicine] = useState({
     medicineId: null,
     medicineName: "",
     quantity: "",
     price: "",
+    expiryDate: "", // Added expiry date field
   });
 
   const redirectPath =
@@ -130,6 +132,7 @@ const UpdateBatch = () => {
     fetchBatchData();
   }, [batchId]);
 
+  // Updated validation to include expiry date for non-miscellaneous items
   const isMedicineFormValid = useMemo(() => {
     if (currentMedicine.medicineId === 1) {
       return true;
@@ -143,11 +146,15 @@ const UpdateBatch = () => {
                          parseInt(currentMedicine.quantity) > 0 && 
                          currentMedicine.quantity.toString().length <= 5;
 
+    const expiryDateValid = currentMedicine.expiryDate && 
+                           new Date(currentMedicine.expiryDate) > new Date();
+
     return (
       currentMedicine.medicineId &&
       currentMedicine.medicineName &&
       quantityValid &&
-      priceValid
+      priceValid &&
+      expiryDateValid
     );
   }, [currentMedicine]);
 
@@ -227,25 +234,29 @@ const UpdateBatch = () => {
   };
 
   const handleMedicineSelect = (medicine) => {
+    // Set default expiry date to 2 years from now when medicine is selected
+    const defaultExpiryDate = new Date();
+    defaultExpiryDate.setFullYear(defaultExpiryDate.getFullYear() + 2);
+    const defaultExpiryDateString = defaultExpiryDate.toISOString().split("T")[0];
+
     setCurrentMedicine((prev) => ({
       ...prev,
       medicineId: medicine.id,
       medicineName: medicine.name,
       quantity: medicine.id === 1 ? "" : prev.quantity,
       price: medicine.id === 1 ? remainingAmount.toFixed(2) : prev.price,
+      expiryDate: medicine.id === 1 ? "" : "", // Set default expiry for non-miscellaneous
     }));
     setShowMedicineDropdown(false);
     setSearchTerm("");
   };
 
-  // NEW: Check if adding medicine would exceed total price
   const checkPriceExceeded = (price, quantity) => {
     const medicineTotal = parseFloat(price) * parseInt(quantity);
     const newTotal = totalWithMiscellaneous + medicineTotal;
     return newTotal > parseFloat(batchDetails.overallPrice);
   };
 
-  // NEW: Check if editing medicine would exceed total price
   const checkEditPriceExceeded = (index, newPrice, newQuantity) => {
     const medicine = medicines[index];
     const currentMedicineTotal = parseFloat(medicine.price) * parseInt(medicine.quantity);
@@ -274,7 +285,6 @@ const UpdateBatch = () => {
       }
     }
 
-    // NEW: Check if adding would exceed total price
     if (currentMedicine.medicineId !== 1 && 
         checkPriceExceeded(currentMedicine.price, currentMedicine.quantity)) {
       setError("Adding this medicine would exceed the total batch price");
@@ -285,17 +295,13 @@ const UpdateBatch = () => {
       const miscAmount = parseFloat(currentMedicine.price) || 0;
       setMiscellaneousAmount(miscAmount);
     } else {
-      const expiryDate = new Date();
-      expiryDate.setFullYear(expiryDate.getFullYear() + 2);
-      const expiryDateString = expiryDate.toISOString().split("T")[0];
-
       setMedicines((prev) => [
         ...prev,
         {
           ...currentMedicine,
           quantity: parseInt(currentMedicine.quantity),
           price: parseFloat(currentMedicine.price),
-          expiryDate: expiryDateString,
+          expiryDate: currentMedicine.expiryDate, // Use the selected expiry date
         },
       ]);
     }
@@ -305,6 +311,7 @@ const UpdateBatch = () => {
       medicineName: "",
       quantity: "",
       price: "",
+      expiryDate: "", // Reset expiry date
     });
     setError("");
   };
@@ -313,7 +320,7 @@ const UpdateBatch = () => {
     setMedicines((prev) => prev.filter((_, i) => i !== index));
     if (editingIndex === index) {
       setEditingIndex(null);
-      setEditValues({ price: "", quantity: "" });
+      setEditValues({ price: "", quantity: "", expiryDate: "" });
     }
   };
 
@@ -326,12 +333,13 @@ const UpdateBatch = () => {
     setEditValues({
       price: medicine.price.toString(),
       quantity: medicine.quantity.toString(),
+      expiryDate: medicine.expiryDate || "", // Include expiry date in edit values
     });
   };
 
   const cancelEdit = () => {
     setEditingIndex(null);
-    setEditValues({ price: "", quantity: "" });
+    setEditValues({ price: "", quantity: "", expiryDate: "" });
   };
 
   const saveEdit = (index) => {
@@ -343,12 +351,14 @@ const UpdateBatch = () => {
                          parseInt(editValues.quantity) > 0 && 
                          editValues.quantity.length <= 5;
 
-    if (!priceValid || !quantityValid) {
-      setError("Please enter valid price (max 9 digits) and quantity (max 5 digits)");
+    const expiryDateValid = editValues.expiryDate && 
+                           new Date(editValues.expiryDate) > new Date();
+
+    if (!priceValid || !quantityValid || !expiryDateValid) {
+      setError("Please enter valid price (max 9 digits), quantity (max 5 digits), and future expiry date");
       return;
     }
 
-    // NEW: Check if editing would exceed total price
     if (checkEditPriceExceeded(index, editValues.price, editValues.quantity)) {
       setError("Editing this medicine would exceed the total batch price");
       return;
@@ -361,12 +371,13 @@ const UpdateBatch = () => {
               ...medicine,
               price: parseFloat(editValues.price),
               quantity: parseInt(editValues.quantity),
+              expiryDate: editValues.expiryDate, // Update expiry date
             }
           : medicine
       )
     );
     setEditingIndex(null);
-    setEditValues({ price: "", quantity: "" });
+    setEditValues({ price: "", quantity: "", expiryDate: "" });
     setError("");
   };
 
@@ -436,12 +447,10 @@ const UpdateBatch = () => {
     }
   };
 
-  // NEW: Handle cancel confirmation
   const handleCancel = () => {
     setShowCancelModal(true);
   };
 
-  // NEW: Proceed with cancellation
   const proceedCancel = () => {
     navigate(redirectPath);
   };
@@ -553,7 +562,9 @@ const UpdateBatch = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Updated form layout to include expiry date */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Medicine Name Field */}
             <div className="relative" ref={dropdownRef}>
               <label
                 className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
@@ -620,43 +631,17 @@ const UpdateBatch = () => {
               )}
             </div>
 
-            {isMiscellaneousSelected ? (
-              <div>
-                <label
-                  className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
-                >
-                  Miscellaneous Amount *
-                </label>
-                <div className="relative">
-                  <DollarSign
-                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
-                  />
-                  <input
-                    type="number"
-                    name="price"
-                    value={currentMedicine.price}
-                    onChange={handleMedicineInputChange}
-                    step="0.01"
-                    min="0"
-                    max={remainingAmount}
-                    className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                    placeholder={`Remaining: ${remainingAmount.toFixed(2)}`}
-                  />
-                </div>
-                <p className={`text-xs ${theme.textMuted} mt-1`}>
-                  Remaining amount: PKR {remainingAmount.toFixed(2)}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Right side - Price, Quantity, and Expiry Date fields */}
+            <div>
+              {isMiscellaneousSelected ? (
                 <div>
                   <label
                     className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
                   >
-                    Price * <span className="text-xs">(max 9 digits)</span>
+                    Miscellaneous Amount *
                   </label>
                   <div className="relative">
-                    <Banknote
+                    <DollarSign
                       className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
                     />
                     <input
@@ -665,36 +650,89 @@ const UpdateBatch = () => {
                       value={currentMedicine.price}
                       onChange={handleMedicineInputChange}
                       step="0.01"
-                      min="0.01"
+                      min="0"
+                      max={remainingAmount}
                       className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                      placeholder="Enter price"
+                      placeholder={`Remaining: ${remainingAmount.toFixed(2)}`}
                     />
                   </div>
+                  <p className={`text-xs ${theme.textMuted} mt-1`}>
+                    Remaining amount: PKR {remainingAmount.toFixed(2)}
+                  </p>
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Price Field */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                    >
+                      Price * <span className="text-xs">(max 9 digits)</span>
+                    </label>
+                    <div className="relative">
+                      <Banknote
+                        className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                      />
+                      <input
+                        type="number"
+                        name="price"
+                        value={currentMedicine.price}
+                        onChange={handleMedicineInputChange}
+                        step="0.01"
+                        min="0.01"
+                        className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                        placeholder="Enter price"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <label
-                    className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
-                  >
-                    Quantity * <span className="text-xs">(max 5 digits)</span>
-                  </label>
-                  <div className="relative">
-                    <Hash
-                      className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
-                    />
-                    <input
-                      type="number"
-                      name="quantity"
-                      value={currentMedicine.quantity}
-                      onChange={handleMedicineInputChange}
-                      min="1"
-                      className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
-                      placeholder="Enter quantity"
-                    />
+                  {/* Quantity Field */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                    >
+                      Quantity * <span className="text-xs">(max 5 digits)</span>
+                    </label>
+                    <div className="relative">
+                      <Hash
+                        className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                      />
+                      <input
+                        type="number"
+                        name="quantity"
+                        value={currentMedicine.quantity}
+                        onChange={handleMedicineInputChange}
+                        min="1"
+                        className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                        placeholder="Enter quantity"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Expiry Date Field */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium ${theme.textSecondary} mb-2`}
+                    >
+                      Expiry Date *
+                    </label>
+                    <div className="relative">
+                      <Calendar
+                        className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${theme.textMuted}`}
+                      />
+                      <input
+                        type="date"
+                        name="expiryDate"
+                        value={currentMedicine.expiryDate}
+                        onChange={handleMedicineInputChange}
+                        min={new Date().toISOString().split('T')[0]} // Minimum date is today
+                        className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end mb-8">
@@ -711,6 +749,7 @@ const UpdateBatch = () => {
             </button>
           </div>
 
+          {/* Updated table to include expiry date column */}
           <div
             className={`${theme.card} rounded-lg overflow-hidden border ${theme.borderSecondary} mb-4`}
           >
@@ -732,6 +771,11 @@ const UpdateBatch = () => {
                       className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}
                     >
                       Price
+                    </th>
+                    <th
+                      className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}
+                    >
+                      Expiry Date
                     </th>
                     <th
                       className={`px-4 py-3 text-center text-sm font-medium ${theme.textPrimary}`}
@@ -793,6 +837,22 @@ const UpdateBatch = () => {
                             />
                           ) : (
                             `PKR ${medicine.price.toFixed(2)}`
+                          )}
+                        </td>
+
+                        {/* Expiry Date Column */}
+                        <td className={`px-4 py-3 text-center ${theme.textPrimary}`}>
+                          {editingIndex === index ? (
+                            <input
+                              type="date"
+                              name="expiryDate"
+                              value={editValues.expiryDate}
+                              onChange={handleEditInputChange}
+                              min={new Date().toISOString().split('T')[0]}
+                              className={`w-32 px-2 py-1 text-center ${theme.input} rounded border ${theme.borderSecondary}`}
+                            />
+                          ) : (
+                            medicine.expiryDate ? new Date(medicine.expiryDate).toLocaleDateString() : 'N/A'
                           )}
                         </td>
                         
