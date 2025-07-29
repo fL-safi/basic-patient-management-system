@@ -315,7 +315,7 @@ const batches = allStockData?.data?.batches || [];
               />
               <input
                 type="text"
-                placeholder="Search batches or bills..."
+                placeholder="Search batches..."
                 value={searchTerm}
                 onChange={handleSearch}
                 className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
