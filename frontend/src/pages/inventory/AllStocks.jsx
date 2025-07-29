@@ -149,6 +149,13 @@ const AllStocks = () => {
       bgColor: "bg-purple-500 bg-opacity-20 border-purple-500",
     },
     {
+      title: "Expired stock",
+      value: stockData?.data?.summary?.expiredMedicines,
+      icon: Layers,
+      color: "text-purple-500",
+      bgColor: "bg-purple-500 bg-opacity-20 border-purple-500",
+    },
+    {
       title: "Total Value",
       value: stockData?.data?.summary?.totalInventoryValue
         ? `Rs.${stockData.data.summary.totalInventoryValue.toFixed(0)}`
@@ -207,7 +214,7 @@ const AllStocks = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 max-w-4xl"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8 max-w-5xl"
       >
         {summaryCards.map((card, index) => (
           <div
