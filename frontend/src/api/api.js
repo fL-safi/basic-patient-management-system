@@ -198,6 +198,22 @@ export const getBatchById = async (batchId) => {
   }
 };
 
+// Get stock by medicine name
+export const getStockById = async (medicineName) => {
+  try {
+    // Encode the medicine name to handle special characters and spaces
+    const encodedMedicineName = encodeURIComponent(medicineName);
+
+    const response = await axiosInstance.get(
+      `/inventory/stock/${encodedMedicineName}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching stock by medicine name:", error);
+    throw error;
+  }
+};
+
 // Update batch by ID
 export const updateBatchById = async (batchId, updateData) => {
   try {

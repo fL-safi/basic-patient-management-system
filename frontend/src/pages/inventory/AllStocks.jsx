@@ -17,8 +17,10 @@ import {
   DollarSign,
 } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
-import { getAllStocksData } from "../../api/api";
+import { getAllStocksData, getStockById } from "../../api/api";
 import Pagination from "../../components/UI/Pagination";
+import { useAuthStore } from "../../store/authStore";
+import { useNavigate } from "react-router-dom";
 
 const AllStocks = () => {
   const { theme } = useTheme();
@@ -34,6 +36,11 @@ const AllStocks = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [paginationData, setPaginationData] = useState(null);
+
+  const navigate = useNavigate();
+
+  const { user } = useAuthStore();
+  const role = user?.role;
 
   // Fetch all stocks data from API
   const fetchData = async (
@@ -58,6 +65,8 @@ const AllStocks = () => {
 
   useEffect(() => {
     fetchData(currentPage, itemsPerPage);
+    console.log(role);
+    console.log(stockData);
   }, [currentPage, itemsPerPage]);
 
   const medicines = stockData?.data?.medicines || [];
@@ -144,8 +153,8 @@ const AllStocks = () => {
     {
       title: "Total Value",
       value: stockData?.data?.summary?.totalInventoryValue
-        ? `Rs.${stockData.data.summary.totalInventoryValue.toLocaleString()}`
-        : "$0",
+        ? `Rs.${stockData.data.summary.totalInventoryValue.toFixed(0)}`
+        : "Rs. 0",
       icon: DollarSign,
       color: "text-emerald-500",
       bgColor: "bg-emerald-500 bg-opacity-20 border-emerald-500",
@@ -188,7 +197,7 @@ const AllStocks = () => {
         className="mb-8"
       >
         <h1 className={`text-3xl font-bold ${theme.textPrimary} mb-2`}>
-          Inventory Summary
+          Stock Details
         </h1>
         <p className={`${theme.textMuted}`}>
           View aggregated medicine stock levels across all batches
@@ -200,25 +209,25 @@ const AllStocks = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 max-w-4xl"
       >
         {summaryCards.map((card, index) => (
           <div
             key={index}
-            className={`p-6 ${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl ${theme.border} border`}
+            className={`py-4 px-6 ${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl ${theme.border} border`}
           >
             <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm font-medium ${theme.textMuted}`}>
-                  {card.title}
-                </p>
-                <p className={`text-3xl font-bold ${theme.textPrimary} mt-2`}>
-                  {card.value}
-                </p>
-              </div>
-              <div className={`p-3 rounded-full ${card.bgColor} border`}>
+              {/* <div className={`p-3 rounded-full ${card.bgColor} border`}>
                 <card.icon className={`w-6 h-6 ${card.color}`} />
-              </div>
+              </div> */}
+              {/* <div className="flex flex-col justify-end items-end" > */}
+              <p className={`text-sm font-medium ${theme.textMuted}`}>
+                {card.title}
+              </p>
+              <p className={`text-lg font-bold ${theme.textPrimary}`}>
+                {card.value}
+              </p>
+              {/* </div> */}
             </div>
           </div>
         ))}
@@ -233,7 +242,7 @@ const AllStocks = () => {
       >
         <div className="p-6">
           {/* Header */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <h2 className={`text-2xl font-bold ${theme.textPrimary} mb-2`}>
               Medicine Stock Summary
             </h2>
@@ -241,7 +250,7 @@ const AllStocks = () => {
               View aggregated stock levels grouped by medicine across all
               batches
             </p>
-          </div>
+          </div> */}
 
           {/* Search */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -251,7 +260,7 @@ const AllStocks = () => {
               />
               <input
                 type="text"
-                placeholder="Search medicines, batch numbers, or bill IDs..."
+                placeholder="Search medicines here"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full pl-10 pr-4 py-3 ${theme.input} rounded-lg ${theme.borderSecondary} border ${theme.focus} focus:ring-2 ${theme.textPrimary} transition duration-200`}
@@ -270,7 +279,7 @@ const AllStocks = () => {
                   >
                     <div className={`flex items-center ${theme.textPrimary}`}>
                       <span className={`${theme.textMuted} tracking-wider`}>
-                        Medicine Name
+                        Name
                       </span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -322,7 +331,7 @@ const AllStocks = () => {
                       className={`flex items-center ${theme.textPrimary} justify-center`}
                     >
                       <span className={`${theme.textMuted} tracking-wider`}>
-                        Batch Count
+                        Last Batch
                       </span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -363,13 +372,17 @@ const AllStocks = () => {
                     className={`${theme.borderSecondary} border-b hover:bg-opacity-50 ${theme.cardSecondary} transition-colors`}
                   >
                     <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div
+                      <div className="flex items-center cursor-pointer">
+                        {/* <div
                           className={`w-10 h-10 rounded-full ${theme.cardSecondary} flex items-center justify-center mr-3`}
                         >
                           <Pill className="w-5 h-5 text-emerald-500" />
-                        </div>
-                        <div>
+                        </div> */}
+                        <div
+                          onClick={() =>
+                            navigate(`/${role}/all-stocks/${item.medicineName}`)
+                          }
+                        >
                           <div className={`font-medium ${theme.textPrimary}`}>
                             {item.medicineName}
                           </div>
@@ -427,10 +440,7 @@ const AllStocks = () => {
                       className={`px-6 py-4 text-center min-w-40 text-sm ${theme.textSecondary}`}
                     >
                       <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                        <span>
-                          {item.batchCount} batch
-                          {item.batchCount !== 1 ? "es" : ""}
-                        </span>
+                        <span>{item.lastBatch.batchNumber || "N/A"}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 min-w-36 text-center">
@@ -452,20 +462,11 @@ const AllStocks = () => {
                         <button
                           title="View Batches"
                           className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
+                          onClick={() =>
+                            navigate(`/${role}/all-stocks/${item.medicineName}`)
+                          }
                         >
                           <Eye className="w-4 h-4 text-blue-500" />
-                        </button>
-                        <button
-                          title="Edit Medicine"
-                          className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
-                        >
-                          <Edit className="w-4 h-4 text-green-500" />
-                        </button>
-                        <button
-                          title="Delete Medicine"
-                          className={`p-1.5 rounded-lg ${theme.cardSecondary} hover:bg-opacity-70 transition-colors`}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
                         </button>
                       </div>
                     </td>

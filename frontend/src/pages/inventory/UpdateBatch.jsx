@@ -480,7 +480,7 @@ const UpdateBatch = () => {
         </h1>
 
         {/* Batch Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-5xl">
           <div
             className={`p-4 rounded-lg ${theme.cardSecondary} border ${theme.borderSecondary}`}
           >
@@ -981,7 +981,7 @@ const UpdateBatch = () => {
             <button
               type="button"
               onClick={handleCancel}
-              className={`px-6 py-3 ${theme.buttonSecondary} text-${theme.textPrimary} font-medium rounded-lg shadow-lg transition-all duration-200`}
+              className={`flex items-center justify-center space-x-2 px-6 py-3 ${theme.cardSecondary} border ${theme.borderSecondary} text-${theme.textPrimary} font-medium rounded-lg shadow-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200`}
             >
               Cancel
             </button>
