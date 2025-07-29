@@ -30,6 +30,7 @@ import InventroyAdminDashboard from "./pages/inventory/InventroyAdminDashboard";
 import AddBatch from "./pages/inventory/AddBatch";
 import UpdateBatch from "./pages/inventory/UpdateBatch";
 import BatchByID from "./pages/inventory/BatchByID";
+import StockByID from "./pages/inventory/StockByID";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -319,6 +320,16 @@ function App() {
               <ProtectedRoute>
                 <RoleProtectedRoute allowedRoles={["admin", "pharmacist_inventory"]}>
                   <BatchByID />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/:role/all-stocks/:stockId"
+            element={
+              <ProtectedRoute>
+                <RoleProtectedRoute allowedRoles={["admin", "pharmacist_inventory"]}>
+                  <StockByID />
                 </RoleProtectedRoute>
               </ProtectedRoute>
             }

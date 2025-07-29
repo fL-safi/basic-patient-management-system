@@ -251,6 +251,9 @@ export const allStocksList = async (req, res) => {
             pipeline.push({ $match: matchStage });
         }
 
+        // Sort by creation date to get the latest batch first for each medicine
+        pipeline.push({ $sort: { createdAt: -1 } });
+
         // Group by medicine name to aggregate quantities across batches
         pipeline.push({
             $group: {
@@ -259,6 +262,7 @@ export const allStocksList = async (req, res) => {
                 totalValue: { $sum: "$medicines.totalAmount" },
                 batches: {
                     $push: {
+                        batchId: "$_id",
                         batchNumber: "$batchNumber",
                         billID: "$billID",
                         quantity: "$medicines.quantity",
@@ -266,12 +270,34 @@ export const allStocksList = async (req, res) => {
                         expiryDate: "$medicines.expiryDate",
                         dateOfPurchase: "$medicines.dateOfPurchase",
                         reorderLevel: "$medicines.reorderLevel",
-                        totalAmount: "$medicines.totalAmount"
+                        totalAmount: "$medicines.totalAmount",
+                        createdAt: "$createdAt",
+                        medicineId: "$medicines.medicineId"
+                    }
+                },
+                // Get the last (most recent) batch details
+                lastBatch: {
+                    $first: {
+                        batchId: "$_id",
+                        batchNumber: "$batchNumber",
+                        billID: "$billID",
+                        quantity: "$medicines.quantity",
+                        price: "$medicines.price",
+                        expiryDate: "$medicines.expiryDate",
+                        dateOfPurchase: "$medicines.dateOfPurchase",
+                        reorderLevel: "$medicines.reorderLevel",
+                        totalAmount: "$medicines.totalAmount",
+                        createdAt: "$createdAt",
+                        medicineId: "$medicines.medicineId",
+                        overallPrice: "$overallPrice",
+                        miscellaneousAmount: "$miscellaneousAmount",
+                        attachments: "$attachments"
                     }
                 },
                 avgPrice: { $avg: "$medicines.price" },
                 minReorderLevel: { $min: "$medicines.reorderLevel" },
-                batchCount: { $sum: 1 }
+                batchCount: { $sum: 1 },
+                medicineId: { $first: "$medicines.medicineId" }
             }
         });
 
@@ -279,12 +305,14 @@ export const allStocksList = async (req, res) => {
         pipeline.push({
             $project: {
                 _id: 0,
+                medicineId: 1,
                 medicineName: "$_id",
                 totalQuantity: 1,
                 totalValue: 1,
                 avgPrice: { $round: ["$avgPrice", 2] },
                 batchCount: 1,
                 batches: 1,
+                lastBatch: 1, // Include last batch details
                 reorderLevel: "$minReorderLevel",
                 status: {
                     $cond: {
@@ -342,6 +370,190 @@ export const allStocksList = async (req, res) => {
 
     } catch (error) {
         console.error("Error in allStocksList:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
+
+export const getStockById = async (req, res) => {
+    try {
+        const { medicineName } = req.params;
+        const {
+            page = 1,
+            limit = 10,
+            sortBy = "createdAt",
+            sortOrder = "desc"
+        } = req.query;
+
+        if (!medicineName) {
+            return res.status(400).json({
+                success: false,
+                message: "Medicine name is required"
+            });
+        }
+
+        // Decode the medicine name in case it's URL encoded
+        const decodedMedicineName = decodeURIComponent(medicineName);
+
+        // Build aggregation pipeline
+        const pipeline = [];
+
+        // Match documents that contain the specific medicine
+        pipeline.push({
+            $match: {
+                "medicines.medicineName": { $regex: new RegExp(`^${decodedMedicineName}$`, "i") }
+            }
+        });
+
+        // Unwind medicines array
+        pipeline.push({ $unwind: "$medicines" });
+
+        // Match only the specific medicine after unwinding
+        pipeline.push({
+            $match: {
+                "medicines.medicineName": { $regex: new RegExp(`^${decodedMedicineName}$`, "i") }
+            }
+        });
+
+        // Add batch information to each medicine entry
+        pipeline.push({
+            $project: {
+                _id: 1,
+                batchNumber: 1,
+                billID: 1,
+                overallPrice: 1,
+                miscellaneousAmount: 1,
+                attachments: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                createdBy: 1,
+                medicine: {
+                    medicineId: "$medicines.medicineId",
+                    medicineName: "$medicines.medicineName",
+                    quantity: "$medicines.quantity",
+                    price: "$medicines.price",
+                    expiryDate: "$medicines.expiryDate",
+                    dateOfPurchase: "$medicines.dateOfPurchase",
+                    reorderLevel: "$medicines.reorderLevel",
+                    totalAmount: "$medicines.totalAmount",
+                    status: {
+                        $cond: {
+                            if: { $lte: ["$medicines.quantity", "$medicines.reorderLevel"] },
+                            then: "Low Stock",
+                            else: "In Stock"
+                        }
+                    },
+                    expiryStatus: {
+                        $cond: {
+                            if: { $lt: ["$medicines.expiryDate", new Date()] },
+                            then: "Expired",
+                            else: {
+                                $cond: {
+                                    if: { 
+                                        $lte: [
+                                            "$medicines.expiryDate", 
+                                            { $add: [new Date(), 30 * 24 * 60 * 60 * 1000] } // 30 days from now
+                                        ] 
+                                    },
+                                    then: "Expiring Soon",
+                                    else: "Good"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Sort stage
+        const sortObj = {};
+        sortObj[sortBy] = sortOrder === "asc" ? 1 : -1;
+        pipeline.push({ $sort: sortObj });
+
+        // Get total count
+        const countPipeline = [...pipeline, { $count: "total" }];
+        const countResult = await Inventory.aggregate(countPipeline);
+        const totalCount = countResult.length > 0 ? countResult[0].total : 0;
+
+        if (totalCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: `No stock found for medicine: ${decodedMedicineName}`
+            });
+        }
+
+        // Add pagination
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        pipeline.push({ $skip: skip });
+        pipeline.push({ $limit: parseInt(limit) });
+
+        // Populate createdBy field
+        pipeline.push({
+            $lookup: {
+                from: "users",
+                localField: "createdBy",
+                foreignField: "_id",
+                as: "createdBy",
+                pipeline: [
+                    { $project: { name: 1, email: 1 } }
+                ]
+            }
+        });
+
+        pipeline.push({
+            $unwind: {
+                path: "$createdBy",
+                preserveNullAndEmptyArrays: true
+            }
+        });
+
+        // Execute aggregation
+        const stockEntries = await Inventory.aggregate(pipeline);
+
+        // Calculate summary statistics
+        const totalQuantity = stockEntries.reduce((sum, entry) => sum + entry.medicine.quantity, 0);
+        const totalValue = stockEntries.reduce((sum, entry) => sum + entry.medicine.totalAmount, 0);
+        const avgPrice = stockEntries.length > 0 ? totalValue / totalQuantity : 0;
+        const lowStockEntries = stockEntries.filter(entry => entry.medicine.status === "Low Stock").length;
+        const expiredEntries = stockEntries.filter(entry => entry.medicine.expiryStatus === "Expired").length;
+        const expiringSoonEntries = stockEntries.filter(entry => entry.medicine.expiryStatus === "Expiring Soon").length;
+
+        // Calculate pagination info
+        const totalPages = Math.ceil(totalCount / parseInt(limit));
+        const hasNextPage = parseInt(page) < totalPages;
+        const hasPrevPage = parseInt(page) > 1;
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                medicineName: decodedMedicineName,
+                stockEntries,
+                pagination: {
+                    currentPage: parseInt(page),
+                    totalPages,
+                    totalItems: totalCount,
+                    itemsPerPage: parseInt(limit),
+                    hasNextPage,
+                    hasPrevPage
+                },
+                summary: {
+                    totalBatches: totalCount,
+                    totalQuantity: totalQuantity,
+                    totalValue: Math.round(totalValue * 100) / 100,
+                    averagePrice: Math.round(avgPrice * 100) / 100,
+                    lowStockBatches: lowStockEntries,
+                    expiredBatches: expiredEntries,
+                    expiringSoonBatches: expiringSoonEntries,
+                    overallStatus: lowStockEntries > 0 ? "Low Stock" : expiredEntries > 0 ? "Has Expired Items" : expiringSoonEntries > 0 ? "Has Expiring Items" : "Good"
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Error in getStockById:", error);
         return res.status(500).json({
             success: false,
             message: "Internal server error",
