@@ -49,7 +49,7 @@ const getMedicineStatus = (medicine) => {
   const now = new Date();
   const expiryDate = new Date(medicine.expiryDate);
   const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
-  
+
   if (medicine.quantity <= medicine.reorderLevel) {
     return { status: "Low Stock", color: "red", priority: 3 };
   } else if (daysUntilExpiry <= 30) {
@@ -63,8 +63,8 @@ const getMedicineStatus = (medicine) => {
 // Helper function to get batch overall status
 const getBatchOverallStatus = (medicines) => {
   const statuses = medicines.map(getMedicineStatus);
-  const maxPriority = Math.max(...statuses.map(s => s.priority));
-  
+  const maxPriority = Math.max(...statuses.map((s) => s.priority));
+
   if (maxPriority === 3) return { status: "Critical", color: "red" };
   if (maxPriority === 2) return { status: "Warning", color: "orange" };
   if (maxPriority === 1) return { status: "Caution", color: "yellow" };
@@ -103,26 +103,25 @@ const BatchByID = () => {
         setLoading(false);
       }
     };
-    
+
     if (batchId) {
       fetchBatchData();
     }
   }, [batchId]);
 
   // Calculate derived data
-  const totalMedicinePrice = batchData?.medicines 
-    ? calculateTotalMedicinePrice(batchData.medicines) 
+  const totalMedicinePrice = batchData?.medicines
+    ? calculateTotalMedicinePrice(batchData.medicines)
     : 0;
-  
-  const batchStatus = batchData?.medicines 
-    ? getBatchOverallStatus(batchData.medicines) 
+
+  const batchStatus = batchData?.medicines
+    ? getBatchOverallStatus(batchData.medicines)
     : { status: "Loading...", color: "gray" };
-  
+
   const hasMiscAmount = batchData?.miscellaneousAmount !== 0;
   const miscAmountSign = batchData?.miscellaneousAmount > 0 ? "+" : "-";
-  const miscAmountColor = batchData?.miscellaneousAmount > 0 
-    ? "text-yellow-500" 
-    : "text-red-500";
+  const miscAmountColor =
+    batchData?.miscellaneousAmount > 0 ? "text-yellow-500" : "text-red-500";
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -145,7 +144,7 @@ const BatchByID = () => {
     // Apply search filter
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
-      medicines = medicines.filter(medicine =>
+      medicines = medicines.filter((medicine) =>
         medicine.medicineName.toLowerCase().includes(lowerSearch)
       );
     }
@@ -186,7 +185,8 @@ const BatchByID = () => {
     },
     {
       title: "Total Quantity",
-      value: batchData?.medicines?.reduce((sum, med) => sum + med.quantity, 0) || 0,
+      value:
+        batchData?.medicines?.reduce((sum, med) => sum + med.quantity, 0) || 0,
       icon: Package2,
       color: "text-green-500",
       bgColor: "bg-green-500 bg-opacity-20 border-green-500",
@@ -260,13 +260,17 @@ const BatchByID = () => {
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className={`text-2xl sm:text-3xl font-bold ${theme.textPrimary} mb-2`}>
+            <h1
+              className={`text-2xl sm:text-3xl font-bold ${theme.textPrimary} mb-2`}
+            >
               Batch: {batchData.batchNumber}
             </h1>
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <div className="flex items-center space-x-2">
                 <FileText className={`w-4 h-4 ${theme.textMuted}`} />
-                <span className={theme.textMuted}>Cheque Number: {batchData.billID}</span>
+                <span className={theme.textMuted}>
+                  Cheque Number: {batchData.billID}
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <Users className={`w-4 h-4 ${theme.textMuted}`} />
@@ -288,7 +292,7 @@ const BatchByID = () => {
               </div>
             </div>
           </div>
-          
+
           {isAdmin && (
             <div className="flex flex-wrap gap-2">
               <motion.button
@@ -353,7 +357,9 @@ const BatchByID = () => {
         className={`${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl ${theme.border} border mb-8`}
       >
         <div className="p-4 sm:p-6">
-          <h2 className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mb-4`}>
+          <h2
+            className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mb-4`}
+          >
             Price Breakdown
           </h2>
           <div className="space-y-4">
@@ -363,16 +369,18 @@ const BatchByID = () => {
                 PKR {totalMedicinePrice}
               </span>
             </div>
-            
+
             {hasMiscAmount && (
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-2">
-                  <span className={theme.textSecondary}>Miscellaneous Amount:</span>
+                  <span className={theme.textSecondary}>
+                    Miscellaneous Amount:
+                  </span>
                   <div className="relative group">
                     <Info className={`w-4 h-4 ${theme.textMuted}`} />
                     <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs p-2 rounded w-48 z-10 left-1/2 transform -translate-x-1/2 bottom-full mb-2">
-                      {batchData.miscellaneousAmount > 0 
-                        ? "Miscellaneous Amount added to this batch" 
+                      {batchData.miscellaneousAmount > 0
+                        ? "Miscellaneous Amount added to this batch"
                         : "Discount or adjustment deducted from the batch"}
                     </div>
                   </div>
@@ -382,9 +390,13 @@ const BatchByID = () => {
                 </span>
               </div>
             )}
-            
-            <div className={`flex justify-between items-center pt-4 border-t ${theme.borderSecondary}`}>
-              <span className={`font-bold ${theme.textPrimary}`}>Total Amount:</span>
+
+            <div
+              className={`flex justify-between items-center pt-4 border-t ${theme.borderSecondary}`}
+            >
+              <span className={`font-bold ${theme.textPrimary}`}>
+                Total Amount:
+              </span>
               <span className={`text-xl font-bold ${theme.textPrimary}`}>
                 PKR {batchData.overallPrice}
               </span>
@@ -392,8 +404,6 @@ const BatchByID = () => {
           </div>
         </div>
       </motion.div>
-
-
 
       {/* Medicine Details */}
       <motion.div
@@ -405,7 +415,9 @@ const BatchByID = () => {
         <div className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start mb-6">
             <div>
-              <h2 className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mb-2`}>
+              <h2
+                className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mb-2`}
+              >
                 Medicine Details
               </h2>
               <p className={`${theme.textMuted}`}>
@@ -439,7 +451,9 @@ const BatchByID = () => {
                     className="px-4 py-3 text-left text-xs font-medium cursor-pointer"
                     onClick={() => requestSort("medicineName")}
                   >
-                    <div className={`flex items-center ${theme.textMuted} tracking-wider`}>
+                    <div
+                      className={`flex items-center ${theme.textMuted} tracking-wider`}
+                    >
                       <span>Medicine Name</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -448,7 +462,9 @@ const BatchByID = () => {
                     className="px-4 py-3 text-center text-xs font-medium cursor-pointer"
                     onClick={() => requestSort("quantity")}
                   >
-                    <div className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}>
+                    <div
+                      className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}
+                    >
                       <span>Quantity</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -457,7 +473,9 @@ const BatchByID = () => {
                     className="px-4 py-3 text-center text-xs font-medium cursor-pointer"
                     onClick={() => requestSort("price")}
                   >
-                    <div className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}>
+                    <div
+                      className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}
+                    >
                       <span>Unit Price</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -466,12 +484,16 @@ const BatchByID = () => {
                     className="px-4 py-3 text-center text-xs font-medium cursor-pointer"
                     onClick={() => requestSort("totalAmount")}
                   >
-                    <div className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}>
+                    <div
+                      className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}
+                    >
                       <span>Total Amount</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
                   </th>
-                  <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}>
+                  <th
+                    className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}
+                  >
                     Expiry Date
                   </th>
                   {/* <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}>
@@ -492,11 +514,15 @@ const BatchByID = () => {
                     >
                       <td className="px-4 py-4">
                         <div className="flex items-center">
-                          <div className={`w-10 h-10 rounded-full ${theme.cardSecondary} flex items-center justify-center mr-3`}>
+                          <div
+                            className={`w-10 h-10 rounded-full ${theme.cardSecondary} flex items-center justify-center mr-3`}
+                          >
                             <Pill className="w-5 h-5 text-emerald-500" />
                           </div>
                           <div>
-                            <div className={`font-medium ${theme.textPrimary} text-sm sm:text-base`}>
+                            <div
+                              className={`font-medium ${theme.textPrimary} text-sm sm:text-base`}
+                            >
                               {medicine.medicineName}
                             </div>
                             {/* <div className={`text-xs ${theme.textMuted}`}>
@@ -505,22 +531,41 @@ const BatchByID = () => {
                           </div>
                         </div>
                       </td>
-                      <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
-                        <span className={medicine.quantity <= medicine.reorderLevel ? "text-red-500" : "text-green-500"}>
+                      <td
+                        className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
+                        <span
+                          className={
+                            medicine.quantity <= medicine.reorderLevel
+                              ? "text-red-500"
+                              : "text-green-500"
+                          }
+                        >
                           {medicine.quantity} units
                         </span>
                       </td>
-                      <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
+                      <td
+                        className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
                         PKR {medicine.price}
                       </td>
-                      <td className={`px-4 py-4 text-center text-sm font-semibold ${theme.textPrimary}`}>
+                      <td
+                        className={`px-4 py-4 text-center text-sm font-semibold ${theme.textPrimary}`}
+                      >
                         PKR {medicine.totalAmount}
                       </td>
-                      <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
+                      <td
+                        className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
                         <div className="flex flex-col items-center">
                           <span>{formatDate(medicine.expiryDate)}</span>
                           <span className="text-xs text-gray-500">
-                            ({Math.ceil((new Date(medicine.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))} days)
+                            (
+                            {Math.ceil(
+                              (new Date(medicine.expiryDate) - new Date()) /
+                                (1000 * 60 * 60 * 24)
+                            )}{" "}
+                            days)
                           </span>
                         </div>
                       </td>
@@ -565,7 +610,7 @@ const BatchByID = () => {
         </div>
       </motion.div>
 
-            {/* Attachments Section */}
+      {/* Attachments Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -573,7 +618,9 @@ const BatchByID = () => {
         className={`${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl ${theme.border} border my-8`}
       >
         <div className="p-4 sm:p-6">
-          <h2 className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mb-4`}>
+          <h2
+            className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mb-4`}
+          >
             Attachments
           </h2>
           {batchData.attachments?.length > 0 ? (
@@ -600,8 +647,12 @@ const BatchByID = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <Package className={`w-16 h-16 ${theme.textMuted} mx-auto mb-4`} />
-              <p className={`${theme.textMuted}`}>No attachments found for this batch</p>
+              <Package
+                className={`w-16 h-16 ${theme.textMuted} mx-auto mb-4`}
+              />
+              <p className={`${theme.textMuted}`}>
+                No attachments found for this batch
+              </p>
             </div>
           )}
         </div>
@@ -612,7 +663,9 @@ const BatchByID = () => {
         isOpen={attachmentModalOpen}
         onClose={() => setAttachmentModalOpen(false)}
         title="Batch Attachments"
-        subtitle={`${currentAttachmentIndex + 1} of ${selectedAttachments.length}`}
+        subtitle={`${currentAttachmentIndex + 1} of ${
+          selectedAttachments.length
+        }`}
       >
         <div className="relative w-full h-96 flex items-center justify-center">
           {selectedAttachments.length > 0 ? (
@@ -630,7 +683,9 @@ const BatchByID = () => {
                     onClick={(e) => {
                       e.stopPropagation();
                       setCurrentAttachmentIndex(
-                        (prev) => (prev - 1 + selectedAttachments.length) % selectedAttachments.length
+                        (prev) =>
+                          (prev - 1 + selectedAttachments.length) %
+                          selectedAttachments.length
                       );
                     }}
                     className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75"
@@ -662,7 +717,9 @@ const BatchByID = () => {
                         setCurrentAttachmentIndex(index);
                       }}
                       className={`w-3 h-3 rounded-full ${
-                        index === currentAttachmentIndex ? "bg-blue-500" : "bg-gray-300"
+                        index === currentAttachmentIndex
+                          ? "bg-blue-500"
+                          : "bg-gray-300"
                       }`}
                     />
                   ))}
