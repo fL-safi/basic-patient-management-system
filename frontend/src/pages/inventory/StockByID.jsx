@@ -81,7 +81,7 @@ const StockById = () => {
             onClick={() => navigate(-1)}
             className={`px-4 py-2 ${theme.button} rounded-lg transition-colors`}
           >
-            Back to Inventory
+            Back to All Stocks
           </button>
         </div>
       </div>
@@ -125,6 +125,9 @@ const StockById = () => {
       if (sortConfig.key === "createdAt") {
         aValue = new Date(a.createdAt);
         bValue = new Date(b.createdAt);
+      } else if (sortConfig.key === "expiryDate") {
+        aValue = new Date(a.medicine.expiryDate);
+        bValue = new Date(b.medicine.expiryDate);
       } else if (sortConfig.key === "quantity") {
         aValue = a.medicine.quantity;
         bValue = b.medicine.quantity;
@@ -203,10 +206,10 @@ const StockById = () => {
       >
         <button
           onClick={() => navigate(-1)}
-          className={`flex items-center space-x-2 py-2 px-2 ${theme.cardSecondary} hover:bg-opacity-70 transition-colors rounded-lg`}
+          className={`flex items-center space-x-2 py-2 ${theme.cardSecondary} hover:bg-opacity-70 transition-colors rounded-lg`}
         >
           <ChevronLeft className={`w-5 h-5 ${theme.textPrimary}`} />
-          <span className={theme.textPrimary}>Back to Inventory</span>
+          <span className={theme.textPrimary}>Back to All Stocks</span>
         </button>
       </motion.div>
 
@@ -456,9 +459,15 @@ const StockById = () => {
                     </div>
                   </th>
                   <th
-                    className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider min-w-32`}
+                    className="px-4 py-3 text-center text-xs font-medium cursor-pointer min-w-36"
+                    onClick={() => requestSort("expiryDate")}
                   >
-                    Expiry Date
+                    <div
+                      className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}
+                    >
+                      <span>Expiry Date</span>
+                      <ArrowDownUp className="w-3 h-3 ml-1" />
+                    </div>
                   </th>
                   {/* <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider min-w-36`}>
                     Status

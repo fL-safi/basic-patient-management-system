@@ -328,14 +328,26 @@ const UpdateBatch = () => {
     setMiscellaneousAmount(0);
   };
 
-  const startEdit = (index, medicine) => {
-    setEditingIndex(index);
-    setEditValues({
-      price: medicine.price.toString(),
-      quantity: medicine.quantity.toString(),
-      expiryDate: medicine.expiryDate || "", // Include expiry date in edit values
-    });
-  };
+const startEdit = (index, medicine) => {
+  setEditingIndex(index);
+  
+  // Format the expiry date for the date input field
+  let formattedExpiryDate = "";
+  if (medicine.expiryDate) {
+    // If the date is already in YYYY-MM-DD format, use it directly
+    // Otherwise, convert it to the correct format
+    const date = new Date(medicine.expiryDate);
+    if (!isNaN(date.getTime())) {
+      formattedExpiryDate = date.toISOString().split('T')[0];
+    }
+  }
+  
+  setEditValues({
+    price: medicine.price.toString(),
+    quantity: medicine.quantity.toString(),
+    expiryDate: formattedExpiryDate, // Use formatted date
+  });
+};
 
   const cancelEdit = () => {
     setEditingIndex(null);
