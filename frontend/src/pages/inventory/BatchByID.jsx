@@ -161,6 +161,11 @@ const BatchByID = () => {
           bValue = parseFloat(bValue);
         }
 
+        if (sortConfig.key === "expiryDate") {
+          aValue = new Date(a.expiryDate);
+          bValue = new Date(b.expiryDate);
+        }
+
         if (aValue < bValue) {
           return sortConfig.direction === "asc" ? -1 : 1;
         }
@@ -492,9 +497,15 @@ const BatchByID = () => {
                     </div>
                   </th>
                   <th
-                    className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}
+                    className="px-4 py-3 text-center text-xs font-medium cursor-pointer"
+                    onClick={() => requestSort("expiryDate")}
                   >
-                    Expiry Date
+                    <div
+                      className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}
+                    >
+                      <span>Expiry Date</span>
+                      <ArrowDownUp className="w-3 h-3 ml-1" />
+                    </div>
                   </th>
                   {/* <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider`}>
                     Status
