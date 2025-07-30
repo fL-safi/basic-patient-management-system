@@ -1,23 +1,23 @@
-import React, { useState, useEffect  } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { 
-  Package, 
-  Pill, 
-  Calendar, 
-  Box, 
-  Layers, 
-  DollarSign, 
-  Search, 
-  ArrowDownUp, 
-  Eye, 
-  ChevronLeft, 
-  FileText, 
-  Clock, 
+import {
+  Package,
+  Pill,
+  Calendar,
+  Box,
+  Layers,
+  DollarSign,
+  Search,
+  ArrowDownUp,
+  Eye,
+  ChevronLeft,
+  FileText,
+  Clock,
   Shield,
   Activity,
   Info,
   AlertCircle,
-  Gauge
+  Gauge,
 } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
 import { useParams, useNavigate } from "react-router-dom";
@@ -25,10 +25,9 @@ import { getStockById } from "../../api/api";
 import formatDate from "../../utils/date";
 
 const StockById = () => {
-    const { stockId } = useParams();
+  const { stockId } = useParams();
   const { theme } = useTheme();
   const navigate = useNavigate();
-
 
   const [stockData, setStockData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +38,7 @@ const StockById = () => {
     direction: "desc",
   });
 
-    useEffect(() => {
+  useEffect(() => {
     const fetchStockData = async () => {
       try {
         setLoading(true);
@@ -56,7 +55,7 @@ const StockById = () => {
     fetchStockData();
   }, [stockId]);
 
-    if (loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-emerald-500"></div>
@@ -64,11 +63,13 @@ const StockById = () => {
     );
   }
 
-    // Handle error state
+  // Handle error state
   if (error || !stockData || !stockData.success) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
-        <div className={`text-center p-8 ${theme.cardOpacity} rounded-xl max-w-md`}>
+        <div
+          className={`text-center p-8 ${theme.cardOpacity} rounded-xl max-w-md`}
+        >
           <AlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
           <h3 className={`text-xl font-bold ${theme.textPrimary} mb-2`}>
             {error || "Failed to load stock data"}
@@ -91,8 +92,10 @@ const StockById = () => {
   const getMedicineStatus = (medicine) => {
     const now = new Date();
     const expiryDate = new Date(medicine.expiryDate);
-    const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
-    
+    const daysUntilExpiry = Math.ceil(
+      (expiryDate - now) / (1000 * 60 * 60 * 24)
+    );
+
     if (medicine.quantity <= medicine.reorderLevel) {
       return { status: "Low Stock", color: "red" };
     } else if (daysUntilExpiry <= 30) {
@@ -118,7 +121,7 @@ const StockById = () => {
 
     return [...stockData.data.stockEntries].sort((a, b) => {
       let aValue, bValue;
-      
+
       if (sortConfig.key === "createdAt") {
         aValue = new Date(a.createdAt);
         bValue = new Date(b.createdAt);
@@ -216,7 +219,9 @@ const StockById = () => {
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className={`text-2xl sm:text-3xl font-bold ${theme.textPrimary} mb-2`}>
+            <h1
+              className={`text-2xl sm:text-3xl font-bold ${theme.textPrimary} mb-2`}
+            >
               {stockData.data.medicineName}
             </h1>
             <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -225,18 +230,19 @@ const StockById = () => {
                 <div className="flex items-center space-x-2">
                   <Pill className={`w-4 h-4 ${theme.textMuted}`} />
                   <span className={theme.textMuted}>
-                    Medicine ID: {stockData.data.stockEntries[0].medicine.medicineId}
+                    Medicine ID:{" "}
+                    {stockData.data.stockEntries[0].medicine.medicineId}
                   </span>
                 </div>
               )}
-              
+
               {/* <div className="flex items-center space-x-2 ">
                 <Activity className={`w-4 h-4 ${theme.textMuted}`} />
                 <span className={theme.textMuted}>
                   Status: {stockData.data.summary.overallStatus}
                 </span>
               </div> */}
-              
+
               {/* Reorder Level - Only show if available */}
               {/* {stockData.data.stockEntries.length > 0 && (
                 <div className="flex items-center space-x-2">
@@ -271,7 +277,9 @@ const StockById = () => {
                 <p className={`text-sm font-medium ${theme.textMuted}`}>
                   {card.title}
                 </p>
-                <p className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mt-2`}>
+                <p
+                  className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mt-2`}
+                >
                   {card.value}
                 </p>
               </div>
@@ -291,7 +299,9 @@ const StockById = () => {
         className={`${theme.cardOpacity} backdrop-filter backdrop-blur-lg rounded-xl ${theme.border} border mb-8`}
       >
         <div className="p-4 sm:p-6">
-          <h2 className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mb-4`}>
+          <h2
+            className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mb-4`}
+          >
             Detailed Summary
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -303,7 +313,13 @@ const StockById = () => {
             </div>
             <div>
               <p className={`text-sm ${theme.textMuted}`}>Low Stock Batches</p>
-              <p className={`text-lg font-semibold ${stockData.data.summary.lowStockBatches > 0 ? 'text-amber-500' : theme.textPrimary}`}>
+              <p
+                className={`text-lg font-semibold ${
+                  stockData.data.summary.lowStockBatches > 0
+                    ? "text-amber-500"
+                    : theme.textPrimary
+                }`}
+              >
                 {stockData.data.summary.lowStockBatches}
               </p>
             </div>
@@ -345,14 +361,16 @@ const StockById = () => {
         <div className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
             <div>
-              <h2 className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mb-2`}>
+              <h2
+                className={`text-xl sm:text-2xl font-bold ${theme.textPrimary} mb-2`}
+              >
                 Batch History
               </h2>
               <p className={`${theme.textMuted}`}>
                 All batches for {stockData.data.medicineName}
               </p>
             </div>
-            
+
             {/* Search */}
             <div className="w-full sm:w-64">
               <div className="relative">
@@ -376,7 +394,9 @@ const StockById = () => {
               <thead>
                 <tr className={`${theme.borderSecondary} border-b`}>
                   <th className="px-4 py-3 text-left text-xs font-medium">
-                    <div className={`flex items-center ${theme.textMuted} tracking-wider`}>
+                    <div
+                      className={`flex items-center ${theme.textMuted} tracking-wider`}
+                    >
                       <span>Batch Number</span>
                     </div>
                   </th>
@@ -384,7 +404,9 @@ const StockById = () => {
                     className="px-4 py-3 text-center text-xs font-medium cursor-pointer min-w-44"
                     onClick={() => requestSort("billID")}
                   >
-                    <div className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}>
+                    <div
+                      className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}
+                    >
                       <span>Cheque Number</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -393,7 +415,9 @@ const StockById = () => {
                     className="px-4 py-3 text-center text-xs font-medium cursor-pointer min-w-36"
                     onClick={() => requestSort("quantity")}
                   >
-                    <div className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}>
+                    <div
+                      className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}
+                    >
                       <span>Quantity</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -402,7 +426,9 @@ const StockById = () => {
                     className="px-4 py-3 text-center text-xs font-medium cursor-pointer min-w-36"
                     onClick={() => requestSort("price")}
                   >
-                    <div className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}>
+                    <div
+                      className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}
+                    >
                       <span>Unit Price</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -411,7 +437,9 @@ const StockById = () => {
                     className="px-4 py-3 text-center text-xs font-medium cursor-pointer min-w-36"
                     onClick={() => requestSort("totalAmount")}
                   >
-                    <div className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}>
+                    <div
+                      className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}
+                    >
                       <span>Total Amount</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
@@ -420,12 +448,16 @@ const StockById = () => {
                     className="px-4 py-3 text-center text-xs font-medium cursor-pointer min-w-36"
                     onClick={() => requestSort("createdAt")}
                   >
-                    <div className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}>
+                    <div
+                      className={`flex items-center justify-center ${theme.textMuted} tracking-wider`}
+                    >
                       <span>Date Added</span>
                       <ArrowDownUp className="w-3 h-3 ml-1" />
                     </div>
                   </th>
-                  <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider min-w-32`}>
+                  <th
+                    className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider min-w-32`}
+                  >
                     Expiry Date
                   </th>
                   {/* <th className={`px-4 py-3 text-center text-xs font-medium ${theme.textMuted} tracking-wider min-w-36`}>
@@ -449,28 +481,52 @@ const StockById = () => {
                           {item.batchNumber}
                         </div>
                       </td>
-                      <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
+                      <td
+                        className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
                         {item.billID}
                       </td>
-                      <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
-                        <span className={item.medicine.quantity <= item.medicine.reorderLevel ? "text-amber-500" : "text-emerald-500"}>
+                      <td
+                        className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
+                        <span
+                          className={
+                            item.medicine.quantity <= item.medicine.reorderLevel
+                              ? "text-amber-500"
+                              : "text-emerald-500"
+                          }
+                        >
                           {item.medicine.quantity} units
                         </span>
                       </td>
-                      <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
+                      <td
+                        className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
                         PKR {item.medicine.price}
                       </td>
-                      <td className={`px-4 py-4 text-center text-sm font-semibold ${theme.textPrimary}`}>
+                      <td
+                        className={`px-4 py-4 text-center text-sm font-semibold ${theme.textPrimary}`}
+                      >
                         PKR {item.medicine.totalAmount}
                       </td>
-                      <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
+                      <td
+                        className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
                         {formatDate(item.createdAt)}
                       </td>
-                      <td className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}>
+                      <td
+                        className={`px-4 py-4 text-center text-sm ${theme.textSecondary}`}
+                      >
                         <div className="flex flex-col items-center">
                           <span>{formatDate(item.medicine.expiryDate)}</span>
                           <span className="text-xs text-gray-500">
-                            ({Math.ceil((new Date(item.medicine.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))} days)
+                            (
+                            {Math.ceil(
+                              (new Date(item.medicine.expiryDate) -
+                                new Date()) /
+                                (1000 * 60 * 60 * 24)
+                            )}{" "}
+                            days)
                           </span>
                         </div>
                       </td>
@@ -527,7 +583,6 @@ const StockById = () => {
           )}
         </div>
       </motion.div>
-
     </div>
   );
 };
